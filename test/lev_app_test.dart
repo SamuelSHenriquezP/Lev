@@ -105,8 +105,8 @@ void main() {
 
       final state = container.read(sanctuaryProvider);
       expect(state.careDrops, 25);
-      expect(state.sanctuaryLevelName, 'Semilla de Luz');
-      expect(state.sanctuaryLevelEmoji, '✨');
+      expect(state.sanctuaryLevelName, 'Planta Joven');
+      expect(state.sanctuaryLevelEmoji, '🍃');
     });
 
     test('Companion handles insomnia, guilt and task paralysis with empathy', () async {
@@ -144,8 +144,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text(testHabit.title), findsOneWidget);
-      expect(find.text('segundos'), findsOneWidget);
-      expect(find.text('Pasos conscientes:'), findsOneWidget);
+      expect(find.text('60 s'), findsOneWidget);
     });
 
     testWidgets('Navigation bar displays all tabs and switches screens smoothly', (WidgetTester tester) async {
@@ -157,9 +156,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Santuario'), findsOneWidget);
-      expect(find.text('Lev'), findsOneWidget);
       expect(find.text('Hábitos'), findsOneWidget);
-      expect(find.text('Diario'), findsOneWidget);
+      expect(find.text('Progreso'), findsOneWidget);
 
       // Open Hábitos tab
       await tester.tap(find.text('Hábitos'));

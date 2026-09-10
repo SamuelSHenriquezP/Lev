@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/lev_theme.dart';
 import '../../../core/utils/haptics_helper.dart';
 import '../../habits/data/habits_database.dart';
 import '../../habits/presentation/habit_timer_screen.dart';
 
-class CrisisSosModal extends StatelessWidget {
+/// Modal de emergencia/crisis.
+/// Colombia aparece PRIMERO. Los teléfonos son táctiles y llaman de verdad.
+class CrisisSosModal extends StatefulWidget {
   const CrisisSosModal({super.key});
 
   static void show(BuildContext context) {
@@ -22,20 +25,52 @@ class CrisisSosModal extends StatelessWidget {
   }
 
   @override
+  State<CrisisSosModal> createState() => _CrisisSosModalState();
+}
+
+class _CrisisSosModalState extends State<CrisisSosModal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _callNumber(String number) async {
+    HapticsHelper.medium();
+    final cleaned = number.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$cleaned');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.82,
+      initialChildSize: 0.88,
       minChildSize: 0.5,
-      maxChildSize: 0.94,
+      maxChildSize: 0.96,
       expand: false,
       builder: (context, scrollController) {
         return SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Barra superior de arrastre
+              // Barra de arrastre
               Center(
                 child: Container(
                   width: 44,
@@ -48,7 +83,7 @@ class CrisisSosModal extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Cabecera compasiva
+              // Cabecera
               Row(
                 children: [
                   Container(
@@ -56,11 +91,10 @@ class CrisisSosModal extends StatelessWidget {
                     height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: LevTheme.levPeach.withValues(alpha: 0.25),
+                      color: const Color(0xFFE76F51).withValues(alpha: 0.15),
                     ),
-                    child: const Center(
-                      child: Text('🛟', style: TextStyle(fontSize: 26)),
-                    ),
+                    child: const Icon(Icons.emergency_rounded,
+                        color: Color(0xFFE76F51), size: 26),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -68,7 +102,7 @@ class CrisisSosModal extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Salvavidas Emocional',
+                          'Ayuda Emocional',
                           style: GoogleFonts.quicksand(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -79,7 +113,7 @@ class CrisisSosModal extends StatelessWidget {
                           'Estás a salvo aquí y ahora',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
-                            color: LevTheme.levPeachDark,
+                            color: const Color(0xFFE76F51),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -89,6 +123,8 @@ class CrisisSosModal extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
+
+              // Mensaje de calma
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -107,7 +143,7 @@ class CrisisSosModal extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Herramientas de rescate somático inmediato
+              // Regulación somática urgente
               Text(
                 'Regulación somática urgente:',
                 style: GoogleFonts.quicksand(
@@ -117,34 +153,37 @@ class CrisisSosModal extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
               _buildActionTile(
                 context: context,
-                emoji: '🫁',
-                title: 'Suspiro Fisiológico de Emergencia',
+                icon: Icons.air_rounded,
+                title: 'Suspiro Fisiológico',
                 subtitle: 'Calma el ritmo cardíaco en 3 respiraciones exactas.',
                 habitId: 'anx_01',
                 badgeColor: LevTheme.levSky,
               ),
               const SizedBox(height: 10),
-
               _buildActionTile(
                 context: context,
-                emoji: '🎯',
+                icon: Icons.my_location_rounded,
                 title: 'Anclaje Sensorial 3-2-1',
-                subtitle: 'Frena la despersonalización y el pánico tocando tu entorno.',
+                subtitle: 'Frena la despersonalización tocando tu entorno.',
                 habitId: 'anx_02',
                 badgeColor: LevTheme.levPeach,
               ),
               const SizedBox(height: 28),
 
-              // Directorio de Líneas de Ayuda en Crisis
+              // COLOMBIA PRIMERO — Botón grande de llamada
+              _buildColombiaHero(),
+              const SizedBox(height: 20),
+
+              // Más líneas de ayuda
               Row(
                 children: [
-                  const Text('📞', style: TextStyle(fontSize: 18)),
+                  const Icon(Icons.phone_rounded,
+                      size: 18, color: LevTheme.levTextDark),
                   const SizedBox(width: 8),
                   Text(
-                    'Líneas de apoyo gratuitas (24/7):',
+                    'Otras líneas de apoyo (24/7):',
                     style: GoogleFonts.quicksand(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -157,28 +196,36 @@ class CrisisSosModal extends StatelessWidget {
               Text(
                 'Atendidas por psicólogos, totalmente confidenciales y gratuitas.',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: LevTheme.levTextMuted,
-                ),
+                    fontSize: 12, color: LevTheme.levTextMuted),
               ),
               const SizedBox(height: 14),
 
-              _buildHelplineCard('🇪🇸 España', '024 (Línea de Vida) / 717 003 717 (Teléfono de la Esperanza)'),
+              _buildHelplineCard(
+                  country: 'España',
+                  number: '717003717',
+                  label: '024 · Línea de Vida / 717 003 717'),
               const SizedBox(height: 8),
-              _buildHelplineCard('🇲🇽 México', '800 911 2000 (Línea de la Vida, 24 horas)'),
+              _buildHelplineCard(
+                  country: 'México',
+                  number: '8009112000',
+                  label: '800 911 2000 · Línea de la Vida'),
               const SizedBox(height: 8),
-              _buildHelplineCard('🇨🇴 Colombia', 'Línea 106 (Salud Mental y Escucha Telefónica)'),
+              _buildHelplineCard(
+                  country: 'Argentina',
+                  number: '135',
+                  label: '135 · Centro de Asistencia al Suicida'),
               const SizedBox(height: 8),
-              _buildHelplineCard('🇦🇷 Argentina', '135 o (011) 5275-1135 (Centro de Asistencia al Suicida)'),
-              const SizedBox(height: 8),
-              _buildHelplineCard('🌎 Internacional / EE.UU.', '988 (Crisis & Suicide Lifeline / SMS o Llamada)'),
+              _buildHelplineCard(
+                  country: 'Int. / EE.UU.',
+                  number: '988',
+                  label: '988 · Crisis & Suicide Lifeline'),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    'Cerrar salvavidas',
+                    'Cerrar',
                     style: GoogleFonts.plusJakartaSans(
                       color: LevTheme.levTextMuted,
                       fontWeight: FontWeight.w600,
@@ -193,9 +240,181 @@ class CrisisSosModal extends StatelessWidget {
     );
   }
 
+  Widget _buildColombiaHero() {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE76F51).withValues(
+                    alpha: 0.20 + _pulseController.value * 0.15),
+                blurRadius: 20 + _pulseController.value * 10,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFE76F51), Color(0xFFC4553C)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => _callNumber('106'),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    child: const Icon(Icons.phone_in_talk_rounded,
+                        color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Colombia · Línea 106',
+                          style: GoogleFonts.quicksand(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Salud mental · 24/7 · Gratuita y confidencial',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'LLAMAR',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHelplineCard({
+    required String country,
+    required String number,
+    required String label,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: LevTheme.levCream,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LevTheme.levBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _callNumber(number),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        country,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levTextMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: GoogleFonts.quicksand(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levTextDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: LevTheme.levMatchaLight,
+                    borderRadius: LevTheme.pillRadius,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone_rounded,
+                          size: 14, color: LevTheme.levMatchaDark),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Llamar',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levMatchaDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionTile({
     required BuildContext context,
-    required String emoji,
+    required IconData icon,
     required String title,
     required String subtitle,
     required String habitId,
@@ -214,7 +433,7 @@ class CrisisSosModal extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            Navigator.of(context).pop(); // Cierra modal
+            Navigator.of(context).pop();
             final habit = HabitsDatabase.getById(habitId);
             if (habit != null) {
               Navigator.of(context).push(
@@ -235,9 +454,8 @@ class CrisisSosModal extends StatelessWidget {
                     color: badgeColor.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 22)),
-                  ),
+                  child: Icon(icon,
+                      color: badgeColor, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -263,11 +481,8 @@ class CrisisSosModal extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: LevTheme.levTextMuted,
-                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16, color: LevTheme.levTextMuted),
               ],
             ),
           ),
@@ -275,46 +490,4 @@ class CrisisSosModal extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildHelplineCard(String country, String phone) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: LevTheme.levCream,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: LevTheme.levBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  country,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: LevTheme.levTextDark,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  phone,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: LevTheme.levMatchaDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

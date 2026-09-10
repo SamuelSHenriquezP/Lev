@@ -21,7 +21,7 @@ void main() {
 
     final doomHabit = HabitsDatabase.getById('doom_01');
     expect(doomHabit, isNotNull);
-    expect(doomHabit!.title, contains('Regla 20-20-20'));
+    expect(doomHabit!.title, contains('20-20-20'));
     expect(doomHabit.durationSeconds, 60);
     expect(doomHabit.steps.length, 3);
 
@@ -45,17 +45,14 @@ void main() {
         child: LevApp(),
       ),
     );
-    // Usar pump con duración en lugar de pumpAndSettle porque el estanque tiene animación continua
     await tester.pump(const Duration(milliseconds: 300));
 
-    // Verificar pestañas de navegación
+    // Verificar pestañas limpias de navegación
     expect(find.text('Santuario'), findsOneWidget);
-    expect(find.text('Lev'), findsOneWidget);
     expect(find.text('Hábitos'), findsOneWidget);
-    expect(find.text('Diario'), findsOneWidget);
+    expect(find.text('Progreso'), findsOneWidget);
 
-    // Verificar encabezado y pastillas interactivas en la pantalla de Lev
-    expect(find.textContaining('Brote de Paz'), findsWidgets);
+    // Pastillas de interacción somática
     expect(find.text('Respirar'), findsOneWidget);
     expect(find.text('Acariciar'), findsOneWidget);
     expect(find.text('Abrazo'), findsOneWidget);

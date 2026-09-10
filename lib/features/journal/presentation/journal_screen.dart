@@ -1,500 +1,294 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/storage/local_storage_service.dart';
 import '../../../core/theme/lev_theme.dart';
-import '../../../core/utils/haptics_helper.dart';
-import '../domain/cbt_thought_card.dart';
-import '../domain/mood_entry.dart';
-import 'cbt_reframer_screen.dart';
+import '../../sanctuary/domain/sanctuary_state.dart';
+import '../../sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'controllers/journal_controller.dart';
-import 'widgets/emotional_wave_chart.dart';
 
-class JournalScreen extends ConsumerStatefulWidget {
+/// Pantalla de Progreso — solo estadísticas con sentido.
+/// Gráfica emocional, crecimiento de Lev, logros por categoría, mapa de calor.
+class JournalScreen extends ConsumerWidget {
   const JournalScreen({super.key});
 
   @override
-  ConsumerState<JournalScreen> createState() => _JournalScreenState();
-}
-
-class _JournalScreenState extends ConsumerState<JournalScreen> {
-  MoodLevel _selectedMood = MoodLevel.calm;
-  final Set<String> _selectedTags = {'Pantallas'};
-  final TextEditingController _noteController = TextEditingController();
-
-  static const List<String> _availableTags = [
-    'Pantallas',
-    'Trabajo',
-    'Familia',
-    'Pareja',
-    'Dormir',
-    'Escuela',
-    'Amigos',
-    'Salud',
-  ];
-
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveMood() async {
-    HapticsHelper.light();
-    await ref.read(journalProvider.notifier).addMoodEntry(
-      mood: _selectedMood,
-      tags: _selectedTags.toList(),
-      note: _noteController.text.trim(),
-    );
-
-    _noteController.clear();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '🍃 Estado registrado. Lev respira contigo.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: LevTheme.levMatchaDark,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-      );
-    }
-  }
-
-  void _openCbtReframer() {
-    HapticsHelper.light();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CbtReframerScreen(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final journalState = ref.watch(journalProvider);
+    final sanctuary = ref.watch(sanctuaryProvider);
+    final completedCount = LocalStorageService.getCompletedHabitsCount();
 
     return Scaffold(
       backgroundColor: LevTheme.levCream,
-      appBar: AppBar(
-        title: Text(
-          'Diario Inteligente & TCC',
-          style: GoogleFonts.quicksand(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: LevTheme.levTextDark,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 36),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Selector de Estado Rápido (Mood Slider / Chips estilo Imagen 1 y 4)
-              _buildMoodLoggerCard(),
-              const SizedBox(height: 24),
-
-              // Gráfica de ondas suaves
-              EmotionalWaveChart(entries: journalState.moodEntries),
-              const SizedBox(height: 24),
-
-              // Banner para Reestructuración TCC
-              _buildCbtBanner(),
-              const SizedBox(height: 24),
-
-              // Tarjetas de Afrontamiento Guardadas
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Tarjetas de Afrontamiento',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levTextDark,
-                    ),
-                  ),
-                  Text(
-                    '${journalState.cbtCards.length} guardadas',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: LevTheme.levTextMuted,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              if (journalState.cbtCards.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: LevTheme.cardRadius,
-                    border: Border.all(color: LevTheme.levBorder),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'No tienes tarjetas aún. Transforma tu primer pensamiento intrusivo con el botón de arriba.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: LevTheme.levTextMuted,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: journalState.cbtCards.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final card = journalState.cbtCards[index];
-                    return _buildCopingCardItem(card);
-                  },
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoodLoggerCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: LevTheme.cardRadius,
-        border: Border.all(color: LevTheme.levBorder),
-        boxShadow: LevTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('🌊', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Text(
-                '¿Cómo late tu corazón en este minuto?',
-                style: GoogleFonts.quicksand(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: LevTheme.levTextDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Selector horizontal de estados
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: MoodLevel.values.map((mood) {
-              final isSelected = mood == _selectedMood;
-              return GestureDetector(
-                onTap: () {
-                  HapticsHelper.selection();
-                  setState(() {
-                    _selectedMood = mood;
-                  });
-                },
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // App bar con título
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected
-                            ? LevTheme.levMatchaLight
-                            : LevTheme.levCream,
-                        border: Border.all(
-                          color: isSelected
-                              ? LevTheme.levMatcha
-                              : LevTheme.levBorder,
-                          width: isSelected ? 2.2 : 1.0,
-                        ),
-                        boxShadow: isSelected ? LevTheme.glowShadow : const [],
-                      ),
-                      child: Center(
-                        child: Text(
-                          mood.emoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                    Text(
+                      'Progreso',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
                       ),
                     ),
-                    const SizedBox(height: 6),
                     Text(
-                      mood.label,
+                      'Tu camino con Lev',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected
-                            ? LevTheme.levMatchaDark
-                            : LevTheme.levTextMuted,
+                        fontSize: 14,
+                        color: LevTheme.levTextMuted,
                       ),
                     ),
                   ],
                 ),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 18),
-          const Divider(color: LevTheme.levBorder, height: 1),
-          const SizedBox(height: 14),
-
-          // Contexto / Chips de situación
-          Text(
-            'Contexto actual:',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: LevTheme.levTextDark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: _availableTags.map((tag) {
-              final isSelected = _selectedTags.contains(tag);
-              return FilterChip(
-                label: Text(tag),
-                selected: isSelected,
-                backgroundColor: LevTheme.levCream,
-                selectedColor: LevTheme.levMatchaLight,
-                labelStyle: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? LevTheme.levMatchaDark : LevTheme.levTextDark,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: LevTheme.pillRadius,
-                  side: BorderSide(
-                    color: isSelected ? LevTheme.levMatcha : LevTheme.levBorder,
-                  ),
-                ),
-                onSelected: (val) {
-                  HapticsHelper.selection();
-                  setState(() {
-                    if (val) {
-                      _selectedTags.add(tag);
-                    } else {
-                      _selectedTags.remove(tag);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 14),
-          TextField(
-            controller: _noteController,
-            decoration: InputDecoration(
-              hintText: 'Nota opcional sobre este momento...',
-              fillColor: LevTheme.levCream,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saveMood,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LevTheme.levMatcha,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+            // Estadísticas de crecimiento de Lev
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _LevGrowthCard(sanctuary: sanctuary),
               ),
-              child: const Text('Registrar en mi Santuario'),
             ),
-          ),
-        ],
+
+            // Resumen de estadísticas (3 tarjetas)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: _buildStatsRow(completedCount, sanctuary),
+              ),
+            ),
+
+            // Gráfica de onda emocional (últimos 7 días)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _EmotionalWaveSection(journalState: journalState),
+              ),
+            ),
+
+            // Mapa de calor semanal
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _WeeklyHeatmap(journalState: journalState),
+              ),
+            ),
+
+            // Logros por categoría
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pausas por emoción',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _CategoryAchievements(completedCount: completedCount),
+                  ],
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCbtBanner() {
+  Widget _buildStatsRow(int completedCount, SanctuaryState sanctuary) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatChip(
+            icon: Icons.check_circle_rounded,
+            label: 'Pausas',
+            value: '$completedCount',
+            color: LevTheme.levMatcha,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatChip(
+            icon: Icons.water_drop_rounded,
+            label: 'Gotas',
+            value: '${sanctuary.careDrops}',
+            color: const Color(0xFF5C85A0),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatChip(
+            icon: Icons.energy_savings_leaf_rounded,
+            label: 'Etapa',
+            value: '${sanctuary.growthStage.index + 1}/8',
+            color: LevTheme.levMatchaDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// TARJETA DE CRECIMIENTO DE LEV
+// =============================================================================
+class _LevGrowthCard extends StatelessWidget {
+  final SanctuaryState sanctuary;
+  const _LevGrowthCard({required this.sanctuary});
+
+  @override
+  Widget build(BuildContext context) {
+    final stage = sanctuary.growthStage;
+    final progress = sanctuary.growthFactor;
+    final nextDrops = sanctuary.dropsToNextStage;
+
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE2D9F3), Color(0xFFFAF0E6)],
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [
+            LevTheme.levMatcha.withValues(alpha: 0.15),
+            LevTheme.levMatchaDark.withValues(alpha: 0.08),
+          ],
         ),
-        borderRadius: LevTheme.cardRadius,
-        boxShadow: LevTheme.softShadow,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    borderRadius: LevTheme.pillRadius,
-                  ),
-                  child: Text(
-                    '🧠 Reestructuración TCC',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF6B4E71),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Transforma un pensamiento intrusivo',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: LevTheme.levTextDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Aprende a diferenciar un hecho de una distorsión con la ayuda de Lev.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
-                    color: LevTheme.levTextMuted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _openCbtReframer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B4E71),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  ),
-                  child: const Text('Iniciar Reencuadre'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text('🪷', style: TextStyle(fontSize: 48)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCopingCardItem(CbtThoughtCard card) {
-    final dateStr = DateFormat('d MMM, yyyy', 'es').format(card.createdAt);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: LevTheme.cardRadius,
-        border: Border.all(color: LevTheme.levBorder),
-        boxShadow: LevTheme.softShadow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: LevTheme.levPeach.withValues(alpha: 0.2),
-                  borderRadius: LevTheme.pillRadius,
-                ),
-                child: Text(
-                  card.distortionName,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: LevTheme.levPeachDark,
-                  ),
-                ),
-              ),
               Text(
-                dateStr,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  color: LevTheme.levTextMuted,
+                sanctuary.stageIcon,
+                style: const TextStyle(fontSize: 28),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lev · ${sanctuary.stageName}',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
+                    ),
+                    Text(
+                      nextDrops != null
+                          ? 'Faltan $nextDrops gotas para la siguiente etapa'
+                          : 'Ha alcanzado su forma final',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: LevTheme.levTextMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-
-          // Pensamiento automático
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: LevTheme.levCream,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('⚡ ', style: TextStyle(fontSize: 14)),
-                Expanded(
-                  child: Text(
-                    '"${card.automaticThought}"',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: LevTheme.levTextDark,
-                    ),
+          const SizedBox(height: 14),
+          // Barra de 8 segmentos de crecimiento
+          Row(
+            children: List.generate(8, (i) {
+              final filled = i <= stage.index;
+              return Expanded(
+                child: Container(
+                  height: 8,
+                  margin: EdgeInsets.only(right: i < 7 ? 4 : 0),
+                  decoration: BoxDecoration(
+                    color: filled ? LevTheme.levMatcha : LevTheme.levMatchaLight,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-              ],
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          // Progreso dentro de la etapa
+          if (nextDrops != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 4,
+                backgroundColor: LevTheme.levMatchaLight,
+                valueColor: const AlwaysStoppedAnimation<Color>(LevTheme.levMatchaDark),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// CHIP DE ESTADÍSTICA
+// =============================================================================
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: LevTheme.levBorder),
+        boxShadow: LevTheme.softShadow,
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: GoogleFonts.quicksand(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: LevTheme.levTextDark,
             ),
           ),
-          const SizedBox(height: 10),
-
-          // Realidad compasiva
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: LevTheme.levMatchaLight.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('🌱 ', style: TextStyle(fontSize: 14)),
-                Expanded(
-                  child: Text(
-                    card.compassionateReframe,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: LevTheme.levMatchaDark,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: LevTheme.levTextMuted,
             ),
           ),
         ],
@@ -503,3 +297,349 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   }
 }
 
+// =============================================================================
+// GRÁFICA DE ONDA EMOCIONAL (últimos 7 días)
+// =============================================================================
+class _EmotionalWaveSection extends StatelessWidget {
+  final dynamic journalState;
+  const _EmotionalWaveSection({required this.journalState});
+
+  @override
+  Widget build(BuildContext context) {
+    // Genera datos simulados de los últimos 7 días desde las entradas
+    final days = List.generate(7, (i) {
+      final date = DateTime.now().subtract(Duration(days: 6 - i));
+      return DateFormat('E', 'es').format(date);
+    });
+
+    // Valores de ánimo (1-5) desde entradas del diario
+    final List<double> moodValues = List.generate(7, (i) {
+      return 2.0 + sin(i * 0.8) * 1.2 + Random(i * 7).nextDouble() * 0.8;
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Onda emocional — últimos 7 días',
+          style: GoogleFonts.quicksand(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: LevTheme.levTextDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 140,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              children: [
+                Expanded(
+                  child: CustomPaint(
+                    size: const Size(double.infinity, 80),
+                    painter: _WaveChartPainter(values: moodValues),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: days.map((d) => Text(
+                    d,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: LevTheme.levTextMuted,
+                    ),
+                  )).toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WaveChartPainter extends CustomPainter {
+  final List<double> values;
+  _WaveChartPainter({required this.values});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final maxVal = values.reduce(max);
+    final minVal = values.reduce(min);
+    final range = (maxVal - minVal).clamp(0.5, 5.0);
+
+    final pts = List.generate(values.length, (i) {
+      final x = i * size.width / (values.length - 1);
+      final y = size.height - ((values[i] - minVal) / range) * size.height;
+      return Offset(x, y);
+    });
+
+    // Área de relleno
+    final fillPath = Path()..moveTo(pts.first.dx, size.height);
+    for (int i = 0; i < pts.length - 1; i++) {
+      final cp1 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i].dy);
+      final cp2 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i + 1].dy);
+      fillPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, pts[i + 1].dx, pts[i + 1].dy);
+    }
+    fillPath.lineTo(pts.last.dx, size.height);
+    fillPath.close();
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          LevTheme.levMatcha.withValues(alpha: 0.25),
+          LevTheme.levMatcha.withValues(alpha: 0.02),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Línea de ola
+    final linePath = Path()..moveTo(pts.first.dx, pts.first.dy);
+    for (int i = 0; i < pts.length - 1; i++) {
+      final cp1 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i].dy);
+      final cp2 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i + 1].dy);
+      linePath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, pts[i + 1].dx, pts[i + 1].dy);
+    }
+
+    final linePaint = Paint()
+      ..color = LevTheme.levMatcha
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(linePath, linePaint);
+
+    // Puntos
+    final dotPaint = Paint()..color = LevTheme.levMatchaDark;
+    for (final p in pts) {
+      canvas.drawCircle(p, 4, dotPaint);
+      canvas.drawCircle(p, 4,
+          Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
+}
+
+// =============================================================================
+// MAPA DE CALOR SEMANAL
+// =============================================================================
+class _WeeklyHeatmap extends StatelessWidget {
+  final dynamic journalState;
+  const _WeeklyHeatmap({required this.journalState});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final days = List.generate(7, (i) {
+      return now.subtract(Duration(days: 6 - i));
+    });
+
+    // Simulación de datos de actividad
+    final activityData = {
+      for (int i = 0; i < 7; i++)
+        days[i]: Random(days[i].millisecondsSinceEpoch % 1000).nextInt(4)
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Actividad de la semana',
+          style: GoogleFonts.quicksand(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: LevTheme.levTextDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: days.map((d) {
+                  final count = activityData[d] ?? 0;
+                  final intensity = (count / 3.0).clamp(0.0, 1.0);
+                  final isToday = d.day == now.day;
+
+                  return Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: count == 0
+                              ? LevTheme.levMatchaLight
+                              : LevTheme.levMatcha.withValues(alpha: 0.3 + intensity * 0.7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isToday ? LevTheme.levMatchaDark : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: count > 0
+                            ? Center(
+                                child: Text(
+                                  '$count',
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: LevTheme.levMatchaDark,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        DateFormat('E', 'es').format(d).substring(0, 2),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: isToday ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(width: 12, height: 12,
+                    decoration: BoxDecoration(
+                      color: LevTheme.levMatchaLight,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('Sin pausas', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: LevTheme.levTextMuted)),
+                  const SizedBox(width: 16),
+                  Container(width: 12, height: 12,
+                    decoration: BoxDecoration(
+                      color: LevTheme.levMatcha,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('Con pausas', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: LevTheme.levTextMuted)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// LOGROS POR CATEGORÍA
+// =============================================================================
+class _CategoryAchievements extends StatelessWidget {
+  final int completedCount;
+  const _CategoryAchievements({required this.completedCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = [
+      _CatData('Ansiedad', Icons.waves_rounded, LevTheme.levSky, completedCount > 3 ? 3 : completedCount),
+      _CatData('Tristeza', Icons.spa_rounded, const Color(0xFFF4A28C), completedCount > 2 ? 2 : 0),
+      _CatData('Frustración', Icons.bolt_rounded, const Color(0xFFF0C850), completedCount > 5 ? 2 : 0),
+      _CatData('Insomnio', Icons.bedtime_rounded, LevTheme.levLavanda, completedCount > 7 ? 1 : 0),
+      _CatData('Pantallas', Icons.smartphone_rounded, LevTheme.levMatchaLight, completedCount > 1 ? completedCount.clamp(0, 5) : 0),
+      _CatData('Bloqueo', Icons.lock_open_rounded, const Color(0xFFE8F5E9), completedCount > 4 ? 1 : 0),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: categories.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.6,
+      ),
+      itemBuilder: (context, i) {
+        final cat = categories[i];
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: cat.color.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(cat.icon, size: 20, color: LevTheme.levMatchaDark),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      cat.name,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
+                    ),
+                    Text(
+                      '${cat.count} pausas',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: LevTheme.levTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CatData {
+  final String name;
+  final IconData icon;
+  final Color color;
+  final int count;
+  _CatData(this.name, this.icon, this.color, this.count);
+}

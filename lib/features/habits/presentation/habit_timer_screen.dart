@@ -6,13 +6,16 @@ import 'package:lev/core/audio/sanctuary_audio_service.dart';
 import 'package:lev/core/theme/lev_theme.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/habits/domain/micro_habit.dart';
-import 'package:lev/features/habits/presentation/widgets/breathing_circle.dart';
+import 'package:lev/features/habits/presentation/widgets/interactive_habit_widgets.dart';
 import 'package:lev/features/habits/presentation/widgets/petal_celebration_overlay.dart';
 import 'package:lev/features/home/presentation/widgets/sanctuary_audio_dialog.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
 
+/// Pantalla de Hábito completamente interactiva.
+/// Lev está presente durante todo el hábito, haciendo lo mismo que el usuario.
+/// Los pasos se muestran de uno en uno con animación slide.
 class HabitTimerScreen extends ConsumerStatefulWidget {
   final MicroHabit habit;
 
@@ -22,17 +25,35 @@ class HabitTimerScreen extends ConsumerStatefulWidget {
   ConsumerState<HabitTimerScreen> createState() => _HabitTimerScreenState();
 }
 
-class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
+class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
+    with TickerProviderStateMixin {
   late int _remainingSeconds;
   Timer? _timer;
   bool _isRunning = true;
   bool _isCompleted = false;
   bool _triggerPetals = false;
 
+  // Animaciones de paso
+  late final AnimationController _stepSlideController;
+  late final AnimationController _levController;
+  bool _isAnimating = false; // Cola anti-colisión
+  int _currentStepIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _remainingSeconds = widget.habit.durationSeconds;
+
+    _stepSlideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _levController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3200),
+    )..repeat();
+
     _startTimer();
   }
 
@@ -40,12 +61,12 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 1) {
-        setState(() {
-          _remainingSeconds--;
-        });
-        if (_remainingSeconds % 15 == 0) {
-          HapticsHelper.selection();
+        final newStep = _getActiveStepIndex;
+        if (newStep != _currentStepIndex && !_isAnimating) {
+          _animateToStep(newStep);
         }
+        setState(() => _remainingSeconds--);
+        if (_remainingSeconds % 15 == 0) HapticsHelper.selection();
       } else {
         setState(() {
           _remainingSeconds = 0;
@@ -57,6 +78,15 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
         _onFinish();
       }
     });
+  }
+
+  Future<void> _animateToStep(int newStep) async {
+    if (_isAnimating) return;
+    _isAnimating = true;
+    await _stepSlideController.forward(from: 0.0);
+    setState(() => _currentStepIndex = newStep);
+    await _stepSlideController.reverse();
+    _isAnimating = false;
   }
 
   void _togglePlayPause() {
@@ -79,14 +109,15 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
       _isRunning = true;
       _isCompleted = false;
       _triggerPetals = false;
+      _currentStepIndex = 0;
+      _isAnimating = false;
     });
     _startTimer();
   }
 
   void _onFinish() {
-    setState(() {
-      _triggerPetals = true;
-    });
+    HapticsHelper.medium();
+    setState(() => _triggerPetals = true);
     ref.read(sanctuaryProvider.notifier).onHabitCompleted(widget.habit.id);
     _showCompletionDialog();
   }
@@ -114,21 +145,21 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(height: 8),
-              const _LevCelebrationView(),
               const SizedBox(height: 12),
+              const _LevCelebrationView(),
+              const SizedBox(height: 16),
               Text(
-                '¡Increíble, lo lograste! 🎉',
+                'Lo lograste',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.quicksand(
-                  fontSize: 22,
+                  fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: LevTheme.levTextDark,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Lev está brincando de alegría por tu pausa consciente. Sumaste +1 💧 Gota de Cuidado para su crecimiento.',
+                'Lev está celebrando tu pausa consciente. Sumaste +1 gota de cuidado para su crecimiento.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
@@ -144,32 +175,24 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.2)),
                 ),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('🧠 ', style: TextStyle(fontSize: 18)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Impacto en tu sistema nervioso:',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: LevTheme.levMatchaDark,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.habit.psychologicalBasis,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: LevTheme.levTextDark,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Impacto en tu sistema nervioso:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.habit.psychologicalBasis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: LevTheme.levTextDark,
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -184,7 +207,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Hecho, gracias Lev 💛'),
+                  child: const Text('Hecho, gracias Lev'),
                 ),
               ),
             ],
@@ -197,29 +220,24 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _stepSlideController.dispose();
+    _levController.dispose();
     super.dispose();
   }
 
-  int get _activeStepIndex {
+  int get _getActiveStepIndex {
     final totalSteps = widget.habit.steps.length;
     if (totalSteps == 0) return 0;
     final elapsed = widget.habit.durationSeconds - _remainingSeconds;
     final secondsPerStep = widget.habit.durationSeconds / totalSteps;
-    final step = (elapsed / secondsPerStep).floor();
-    return step.clamp(0, totalSteps - 1);
-  }
-
-  bool get _isBreathingHabit {
-    return widget.habit.id == 'anx_01' ||
-        widget.habit.id == 'anx_04' ||
-        widget.habit.id == 'slp_03' ||
-        widget.habit.id == 'ang_03';
+    return (elapsed / secondsPerStep).floor().clamp(0, totalSteps - 1);
   }
 
   @override
   Widget build(BuildContext context) {
     final audioState = ref.watch(sanctuaryAudioProvider);
     final progress = 1.0 - (_remainingSeconds / widget.habit.durationSeconds);
+    final accentColor = LevTheme.getEmotionAccentColor(widget.habit.category);
 
     return PetalCelebrationOverlay(
       showCelebration: _triggerPetals,
@@ -236,7 +254,6 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
           ),
           centerTitle: true,
           actions: [
-            // Botón de audio ambiental relajante
             IconButton(
               tooltip: 'Ambiente sonoro',
               icon: Container(
@@ -255,219 +272,98 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'Reiniciar 60 segundos',
               onPressed: _resetTimer,
             ),
             const SizedBox(width: 8),
           ],
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Badge de categoría
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: LevTheme.levMatchaLight,
-                    borderRadius: LevTheme.pillRadius,
-                  ),
-                  child: Text(
-                    widget.habit.category,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: LevTheme.levMatchaDark,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Título del microhábito
-                Text(
-                  widget.habit.title,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.quicksand(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: LevTheme.levTextDark,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Diálogo tierno de Lev
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: LevTheme.softShadow,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('${widget.habit.iconEmoji} ', style: const TextStyle(fontSize: 16)),
-                      Flexible(
-                        child: Text(
-                          widget.habit.levIntro,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            color: LevTheme.levTextDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 26),
-
-                // Temporizador circular o visualizador somático
-                if (_isBreathingHabit) ...[
-                  BreathingCircle(
-                    totalSeconds: widget.habit.durationSeconds,
-                    isPhysiologicalSigh: widget.habit.id == 'anx_01',
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    '$_remainingSeconds s',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levMatchaDark,
-                    ),
-                  ),
-                ] else ...[
-                  SizedBox(
-                    width: 180,
-                    height: 180,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 165,
-                          height: 165,
-                          child: CircularProgressIndicator(
-                            value: progress,
-                            strokeWidth: 8,
-                            backgroundColor: LevTheme.levMatchaLight,
-                            valueColor: const AlwaysStoppedAnimation<Color>(LevTheme.levMatcha),
-                            strokeCap: StrokeCap.round,
-                          ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '$_remainingSeconds',
-                              style: GoogleFonts.quicksand(
-                                fontSize: 50,
-                                fontWeight: FontWeight.w700,
-                                color: LevTheme.levTextDark,
-                              ),
-                            ),
-                            Text(
-                              'segundos',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                color: LevTheme.levTextMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 28),
-
-                // Pasos guiados interactivos
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Pasos conscientes:',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levTextDark,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: widget.habit.steps.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final isActive = index == _activeStepIndex && !_isCompleted;
-                    final isDone = index < _activeStepIndex || _isCompleted;
-
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            children: [
+              // Badge + título
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isActive
-                            ? Colors.white
-                            : (isDone
-                                ? LevTheme.levMatchaLight.withValues(alpha: 0.5)
-                                : Colors.white.withValues(alpha: 0.6)),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: isActive ? LevTheme.levMatcha : LevTheme.levBorder,
-                          width: isActive ? 1.8 : 1.0,
+                        color: LevTheme.getEmotionBgColor(widget.habit.category),
+                        borderRadius: LevTheme.pillRadius,
+                      ),
+                      child: Text(
+                        widget.habit.category,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: accentColor,
                         ),
-                        boxShadow: isActive ? LevTheme.glowShadow : const [],
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 26,
-                            height: 26,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDone
-                                  ? LevTheme.levMatcha
-                                  : (isActive ? LevTheme.levPeach : LevTheme.levBorder),
-                            ),
-                            child: Center(
-                              child: isDone
-                                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                                  : Text(
-                                      '${index + 1}',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              widget.habit.steps[index],
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                                color: LevTheme.levTextDark,
-                                height: 1.35,
-                              ),
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      widget.habit.title,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
+              ),
 
-                // Botones de control inferiores
-                Row(
+              // Progreso de tiempo
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: LevTheme.levMatchaLight,
+                          valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '$_remainingSeconds s',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Área principal: widget interactivo con Lev
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: _buildInteractiveArea(),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Paso actual (uno a la vez con slide)
+              if (widget.habit.steps.isNotEmpty && !_isCompleted)
+                _buildCurrentStep(),
+
+              // Controles
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     OutlinedButton.icon(
@@ -483,17 +379,234 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildInteractiveArea() {
+    switch (widget.habit.interactionType) {
+      case HabitInteractionType.breathGuided:
+        return BreathGuideWidget(
+          isPhysiologicalSigh: widget.habit.id == 'anx_01',
+        );
+      case HabitInteractionType.bilateralTap:
+        return const BilateralTapWidget();
+      case HabitInteractionType.holdPressure:
+        return const HoldPressureWidget();
+      case HabitInteractionType.slideRelease:
+        return const SlideReleaseWidget();
+      case HabitInteractionType.eyeTracker:
+        return const EyeTrackerWidget();
+      case HabitInteractionType.countingBreath:
+        return const CountingBreathWidget(targetCycles: 6);
+      case HabitInteractionType.gestureInput:
+        return _buildGestureInputArea();
+      case HabitInteractionType.timer:
+        return _buildLevWithTimer();
+    }
+  }
+
+  Widget _buildLevWithTimer() {
+    return AnimatedBuilder(
+      animation: _levController,
+      builder: (context, child) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 220,
+              height: 220,
+              child: CustomPaint(
+                painter: LivingSeedSpiritPainter(
+                  animationValue: _levController.value,
+                  emotion: LevEmotion.peaceful,
+                  isPetting: false,
+                  sizeScale: 0.9,
+                  taskAction: widget.habit.taskAction,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Frase introductoria de Lev
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: LevTheme.softShadow,
+              ),
+              child: Text(
+                widget.habit.levIntro,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.5,
+                  fontStyle: FontStyle.italic,
+                  color: LevTheme.levTextDark,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildGestureInputArea() {
+    final List<Offset> points = [];
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: _levController,
+          builder: (context, _) => SizedBox(
+            width: 120,
+            height: 120,
+            child: CustomPaint(
+              painter: LivingSeedSpiritPainter(
+                animationValue: _levController.value,
+                emotion: LevEmotion.peaceful,
+                isPetting: false,
+                sizeScale: 0.55,
+                taskAction: widget.habit.taskAction,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          widget.habit.levIntro,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontStyle: FontStyle.italic,
+            color: LevTheme.levTextMuted,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: StatefulBuilder(
+              builder: (context, setInner) {
+                return GestureDetector(
+                  onPanUpdate: (d) => setInner(() => points.add(d.localPosition)),
+                  child: Container(
+                    color: const Color(0xFFF2ECE1),
+                    child: CustomPaint(
+                      painter: _GesturePainter(List.from(points)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentStep() {
+    final step = widget.habit.steps[_currentStepIndex];
+    final totalSteps = widget.habit.steps.length;
+    final accentColor = LevTheme.getEmotionAccentColor(widget.habit.category);
+
+    return AnimatedBuilder(
+      animation: _stepSlideController,
+      builder: (context, child) {
+        final slide = Curves.easeInOut.transform(_stepSlideController.value);
+        return Transform.translate(
+          offset: Offset(0, -slide * 20),
+          child: Opacity(
+            opacity: 1.0 - slide * 0.5,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                boxShadow: LevTheme.softShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accentColor,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${_currentStepIndex + 1}',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      step,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: LevTheme.levTextDark,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$_currentStepIndex/$totalSteps',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: LevTheme.levTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-/// Widget animado donde Lev brinca y celebra de alegría al terminar un microhábito
+class _GesturePainter extends CustomPainter {
+  final List<Offset> points;
+  _GesturePainter(this.points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final furrow = Paint()
+      ..color = const Color(0xFFD4C8B5)
+      ..strokeWidth = 14
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    if (points.length > 1) {
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+      for (final p in points.skip(1)) {
+        path.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(path, furrow);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GesturePainter old) => true;
+}
+
+/// Widget de celebración de Lev al terminar el hábito
 class _LevCelebrationView extends StatefulWidget {
   const _LevCelebrationView();
 
@@ -508,7 +621,6 @@ class _LevCelebrationViewState extends State<_LevCelebrationView>
   @override
   void initState() {
     super.initState();
-    // Ciclo de salto y baile alegre a 60 FPS (1300ms de período armónico)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1300),
@@ -558,4 +670,3 @@ class _LevCelebrationViewState extends State<_LevCelebrationView>
     );
   }
 }
-

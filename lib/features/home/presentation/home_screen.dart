@@ -3,21 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lev/core/theme/lev_theme.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
-import 'package:lev/features/crisis/presentation/crisis_sos_modal.dart';
 import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
+import 'package:lev/features/home/presentation/widgets/sanctuary_audio_dialog.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_pond_painter.dart';
-import 'widgets/sanctuary_audio_dialog.dart';
 
-/// Pantalla Principal: El Espacio Exclusivo de Lev con Transiciones Orgánicas Continuas.
-/// Los cambios de postura fluyen mediante interpolación suave (lerp/tween),
-/// asegurando que Lev NUNCA se congele ni se corte de golpe entre animaciones.
+/// Pantalla Principal del Santuario:
+/// Lev como protagonista absoluto en el centro con transiciones somáticas orgánicas
+/// a 60 FPS, los 8 sprites de crecimiento y barra de acciones táctiles limpias.
 class HomeScreen extends ConsumerStatefulWidget {
-  final Function(int) onNavigateToTab;
-
-  const HomeScreen({super.key, required this.onNavigateToTab});
+  final void Function(int)? onNavigateToTab;
+  const HomeScreen({super.key, this.onNavigateToTab});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -25,56 +23,74 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
-  // 1. Controlador ambiental infinito (Lev siempre respira y flota)
   late final AnimationController _ambientController;
-
-  // 2. Controladores de transición suave entre posturas (0.0 a 1.0)
   late final AnimationController _wrapController;
   late final AnimationController _sleepController;
   late final AnimationController _happyController;
   late final AnimationController _breathingController;
-
-  // 3. Controlador de física dedicada para el salto elástico
   late final AnimationController _jumpController;
+  late final AnimationController _curiousController;
+  late final AnimationController _sadController;
+  late final AnimationController _anxiousController;
+  late final AnimationController _tiredController;
+  late final AnimationController _celebrateController;
 
   @override
   void initState() {
     super.initState();
-
-    // Ciclo base continuo a 60 FPS (Lev nunca se queda quieto)
     _ambientController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3600),
     )..repeat();
 
-    // Transición suave de abrazo de hojas (500ms curva cúbica)
     _wrapController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-
-    // Transición suave de adormecimiento/despertar (600ms)
-    _sleepController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-
-    // Transición suave de caricias/cosquillas (400ms)
-    _happyController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-
-    // Transición suave de respiración somática (550ms)
-    _breathingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 550),
     );
 
-    // Salto elástico con física de anticipación y rebote (1300ms)
+    _sleepController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    _happyController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+
+    _breathingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
     _jumpController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1300),
+    );
+
+    _curiousController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _sadController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _anxiousController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _tiredController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _celebrateController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
     );
   }
 
@@ -86,6 +102,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _happyController.dispose();
     _breathingController.dispose();
     _jumpController.dispose();
+    _curiousController.dispose();
+    _sadController.dispose();
+    _anxiousController.dispose();
+    _tiredController.dispose();
+    _celebrateController.dispose();
     super.dispose();
   }
 
@@ -94,9 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final randHabit = HabitsDatabase.getRandomHabit();
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => HabitTimerScreen(habit: randHabit),
-      ),
+      MaterialPageRoute(builder: (context) => HabitTimerScreen(habit: randHabit)),
     );
   }
 
@@ -105,37 +124,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final sanctuary = ref.watch(sanctuaryProvider);
     final controller = ref.read(sanctuaryProvider.notifier);
 
-    // Escucha reactiva para interpolar suavemente los valores de transición
+    // Escucha de cambios de estado emocional con transiciones naturales
     ref.listen<SanctuaryState>(sanctuaryProvider, (previous, next) {
-      // 1. Transición de Abrazo protector
+      // Abrazo protector
       if (next.emotion == LevEmotion.sheltered) {
         _wrapController.animateTo(1.0, curve: Curves.easeInOutCubic);
       } else {
         _wrapController.animateTo(0.0, curve: Curves.easeInOutCubic);
       }
 
-      // 2. Transición de Sueño / Siesta
+      // Siesta
       if (next.emotion == LevEmotion.sleeping) {
         _sleepController.animateTo(1.0, curve: Curves.easeInOutCubic);
       } else {
         _sleepController.animateTo(0.0, curve: Curves.easeInOutCubic);
       }
 
-      // 3. Transición de Respiración Somática
+      // Respiración
       if (next.emotion == LevEmotion.breathing) {
         _breathingController.animateTo(1.0, curve: Curves.easeInOutCubic);
       } else {
         _breathingController.animateTo(0.0, curve: Curves.easeInOutCubic);
       }
 
-      // 4. Transición de Caricias / Cosquillas
+      // Cosquillas / Alegría
       if (next.isPetting || next.emotion == LevEmotion.happy) {
         _happyController.animateTo(1.0, curve: Curves.easeOutBack);
       } else {
         _happyController.animateTo(0.0, curve: Curves.easeInOutCubic);
       }
 
-      // 5. Salto de alegría
+      // Curiosidad
+      if (next.emotion == LevEmotion.curious) {
+        _curiousController.animateTo(1.0, curve: Curves.easeOutBack);
+      } else {
+        _curiousController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Tristeza
+      if (next.emotion == LevEmotion.sad) {
+        _sadController.animateTo(1.0, curve: Curves.easeInOutCubic);
+      } else {
+        _sadController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Ansiedad
+      if (next.emotion == LevEmotion.anxious) {
+        _anxiousController.animateTo(1.0, curve: Curves.easeIn);
+      } else {
+        _anxiousController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Cansancio
+      if (next.emotion == LevEmotion.tired) {
+        _tiredController.animateTo(1.0, curve: Curves.easeInOut);
+      } else {
+        _tiredController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Celebración
+      if (next.emotion == LevEmotion.celebrating) {
+        _celebrateController.animateTo(1.0, curve: Curves.easeOutBack);
+      } else {
+        _celebrateController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Salto elástico con física de 4 fases
       if (next.emotion == LevEmotion.joyJump) {
         _jumpController.forward(from: 0.0);
       }
@@ -146,39 +200,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // --- 1. CABECERA MINIMALISTA ---
+            // --- CABECERA ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: LevTheme.pillRadius,
-                      border: Border.all(color: LevTheme.levBorder),
-                      boxShadow: LevTheme.softShadow,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(sanctuary.sanctuaryLevelEmoji, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Lev • ${sanctuary.sanctuaryLevelName}',
-                          style: GoogleFonts.quicksand(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: LevTheme.levTextDark,
+                  // Etapa de crecimiento de Lev
+                  InkWell(
+                    onTap: () => _showGrowthInfo(context, sanctuary),
+                    borderRadius: LevTheme.pillRadius,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: LevTheme.pillRadius,
+                        border: Border.all(color: LevTheme.levBorder),
+                        boxShadow: LevTheme.softShadow,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            size: 16,
+                            color: LevTheme.levMatchaDark,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            sanctuary.growthStageName,
+                            style: GoogleFonts.quicksand(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: LevTheme.levMatchaDark,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: LevTheme.levTextMuted,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
+                  // Botones de acción derecha
                   Row(
                     children: [
+                      // Gotas de cuidado
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
@@ -188,16 +258,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           boxShadow: LevTheme.softShadow,
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('💧', style: TextStyle(fontSize: 13)),
+                            const Icon(
+                              Icons.water_drop_rounded,
+                              size: 15,
+                              color: Color(0xFF64B5F6),
+                            ),
                             const SizedBox(width: 5),
                             Text(
                               '${sanctuary.careDrops}',
-                              style: GoogleFonts.quicksand(
-                                fontSize: 13.5,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: LevTheme.levMatchaDark,
+                                color: LevTheme.levTextDark,
                               ),
                             ),
                           ],
@@ -205,32 +278,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                       const SizedBox(width: 8),
 
-                      IconButton(
-                        tooltip: 'Sonidos Relajantes',
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: LevTheme.levBorder),
-                            boxShadow: LevTheme.softShadow,
-                          ),
-                          child: const Text('🎧', style: TextStyle(fontSize: 15)),
+                      // Audio ambiental
+                      _HeaderIconBtn(
+                        icon: Icons.graphic_eq_rounded,
+                        tooltip: 'Sonidos del Santuario',
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (context) => const SanctuaryAudioDialog(),
                         ),
-                        onPressed: () => SanctuaryAudioDialog.show(context),
-                      ),
-
-                      IconButton(
-                        tooltip: 'Salvavidas Emocional / SOS',
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: LevTheme.levPeach.withValues(alpha: 0.25),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Text('🛟', style: TextStyle(fontSize: 15)),
-                        ),
-                        onPressed: () => CrisisSosModal.show(context),
                       ),
                     ],
                   ),
@@ -238,17 +293,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // --- 2. EL ESPACIO HEROICO DE LEV CON TRANSICIONES CONTINUAS ---
+            // --- ESPACIO CENTRAL: LEV COMO PROTAGONISTA ---
             Expanded(
               child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => controller.petLev(),
-                onDoubleTap: () => controller.triggerJoyJump(),
-                onLongPress: () => controller.hugLev(),
+                onTap: () {
+                  HapticsHelper.selection();
+                  controller.petLev();
+                },
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Fusión de todas las animaciones en un solo ciclo suave a 60 FPS
+                    // Canvas continuo a 60 FPS con todas las animaciones y sprites
                     AnimatedBuilder(
                       animation: Listenable.merge([
                         _ambientController,
@@ -257,6 +312,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         _happyController,
                         _breathingController,
                         _jumpController,
+                        _curiousController,
+                        _sadController,
+                        _anxiousController,
+                        _tiredController,
+                        _celebrateController,
                       ]),
                       builder: (context, child) {
                         return CustomPaint(
@@ -268,41 +328,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             bloomingFlowers: sanctuary.bloomingFlowers,
                             careDrops: sanctuary.careDrops,
                             isPetting: sanctuary.isPetting,
+                            growthStage: sanctuary.growthStage,
+                            growthFactor: sanctuary.growthFactor,
                             leafWrapProgress: _wrapController.value,
                             sleepProgress: _sleepController.value,
                             happyProgress: _happyController.value,
                             breathingProgress: _breathingController.value,
                             jumpProgress: _jumpController.value,
+                            curiousProgress: _curiousController.value,
+                            sadProgress: _sadController.value,
+                            anxiousProgress: _anxiousController.value,
+                            tiredProgress: _tiredController.value,
+                            celebrateProgress: _celebrateController.value,
                           ),
                         );
                       },
                     ),
 
-                    // Indicador flotante en modo respiración
-                    if (sanctuary.emotion == LevEmotion.breathing)
+                    // Indicador de modo respiración / calma
+                    if (sanctuary.emotion == LevEmotion.breathing ||
+                        sanctuary.emotion == LevEmotion.anxious)
                       Positioned(
-                        top: 20,
+                        top: 16,
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 400),
-                          opacity: sanctuary.emotion == LevEmotion.breathing ? 1.0 : 0.0,
+                          opacity: 1.0,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 9),
                             decoration: BoxDecoration(
-                              color: LevTheme.levMatchaDark,
+                              color: Colors.white.withValues(alpha: 0.92),
                               borderRadius: LevTheme.pillRadius,
-                              boxShadow: LevTheme.glowShadow,
+                              border: Border.all(
+                                color: LevTheme.levMatchaLight,
+                                width: 1.5,
+                              ),
+                              boxShadow: LevTheme.softShadow,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('🫁', style: TextStyle(fontSize: 16)),
+                                const Icon(
+                                  Icons.air_rounded,
+                                  size: 17,
+                                  color: LevTheme.levMatchaDark,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Inhala al expandirse... exhala al contraerse',
-                                  style: GoogleFonts.quicksand(
+                                  sanctuary.emotion == LevEmotion.anxious
+                                      ? 'Respirando contigo para calmarte'
+                                      : 'Respiración somática guiada',
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    color: LevTheme.levMatchaDark,
                                   ),
                                 ),
                               ],
@@ -311,61 +390,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
 
-                    // Burbuja de Diálogo e Inteligencia de Lev
+                    // Bocadillo de diálogo orgánico de Lev
                     Positioned(
                       bottom: 24,
                       left: 24,
                       right: 24,
-                      child: GestureDetector(
-                        onTap: () => controller.petLev(),
+                      child: Center(
                         child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 350),
+                          duration: const Duration(milliseconds: 320),
                           transitionBuilder: (child, animation) {
                             return FadeTransition(
                               opacity: animation,
-                              child: ScaleTransition(
-                                scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.12),
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                )),
                                 child: child,
                               ),
                             );
                           },
                           child: Container(
                             key: ValueKey(sanctuary.dialogue),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            constraints: const BoxConstraints(maxWidth: 340),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 13),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.96),
-                              borderRadius: BorderRadius.circular(24),
+                              color: Colors.white.withValues(alpha: 0.94),
+                              borderRadius: LevTheme.cardRadius,
                               border: Border.all(
-                                color: sanctuary.isPetting
-                                    ? LevTheme.levPeach
-                                    : LevTheme.levBorder,
-                                width: sanctuary.isPetting ? 1.6 : 1.0,
+                                color: LevTheme.levBorder,
+                                width: 1.0,
                               ),
                               boxShadow: LevTheme.softShadow,
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
+                                Icon(
                                   _getDialogueIcon(sanctuary.emotion, sanctuary.isPetting),
-                                  style: const TextStyle(fontSize: 18),
+                                  size: 18,
+                                  color: _getDialogueIconColor(sanctuary.emotion, sanctuary.isPetting),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
+                                const SizedBox(width: 10),
+                                Flexible(
                                   child: Text(
                                     sanctuary.dialogue,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w500,
                                       color: LevTheme.levTextDark,
-                                      height: 1.4,
+                                      height: 1.35,
                                     ),
+                                    textAlign: TextAlign.left,
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.touch_app_rounded,
-                                  size: 16,
-                                  color: LevTheme.levTextMuted,
                                 ),
                               ],
                             ),
@@ -378,16 +459,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // --- 3. BARRA DE PASTILLAS INTERACTIVAS (CON TRANSICIONES SUAVES) ---
+            // --- BARRA DE ACCIONES CON ICONOS Y MICRO-ANIMACIONES ---
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
                     _buildPillAction(
-                      emoji: '🫁',
+                      icon: Icons.air_rounded,
                       label: 'Respirar',
                       isActive: sanctuary.emotion == LevEmotion.breathing,
                       onTap: () {
@@ -400,14 +481,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      emoji: '💛',
+                      icon: Icons.favorite_rounded,
                       label: 'Acariciar',
                       isActive: sanctuary.isPetting || sanctuary.emotion == LevEmotion.happy,
                       onTap: () => controller.petLev(),
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      emoji: '🌿',
+                      icon: Icons.spa_rounded,
                       label: 'Abrazo',
                       isActive: sanctuary.emotion == LevEmotion.sheltered,
                       onTap: () {
@@ -420,12 +501,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      emoji: '🌙',
+                      icon: Icons.lightbulb_outline_rounded,
+                      label: 'Curioso',
+                      isActive: sanctuary.emotion == LevEmotion.curious,
+                      onTap: () {
+                        if (sanctuary.emotion == LevEmotion.curious) {
+                          controller.setPeacefulState();
+                        } else {
+                          controller.setCuriousState();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPillAction(
+                      icon: Icons.bedtime_rounded,
                       label: 'Dormir',
                       isActive: sanctuary.emotion == LevEmotion.sleeping,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.sleeping) {
-                          controller.petLev(); // Despertar
+                          controller.petLev();
                         } else {
                           controller.putToSleep();
                         }
@@ -433,14 +527,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      emoji: '✨',
+                      icon: Icons.auto_awesome_rounded,
                       label: 'Alegrar',
                       isActive: sanctuary.emotion == LevEmotion.joyJump,
                       onTap: () => controller.triggerJoyJump(),
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      emoji: '🎲',
+                      icon: Icons.celebration_rounded,
+                      label: 'Celebrar',
+                      isActive: sanctuary.emotion == LevEmotion.celebrating,
+                      onTap: () => controller.setCelebratingState(),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPillAction(
+                      icon: Icons.bolt_rounded,
                       label: 'Pausa 60s',
                       isActive: false,
                       accentColor: LevTheme.levMatcha,
@@ -456,26 +557,224 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  String _getDialogueIcon(LevEmotion emotion, bool isPetting) {
-    if (isPetting) return '💛';
+  void _showGrowthInfo(BuildContext context, SanctuaryState sanctuary) {
+    final nextDrops = sanctuary.dropsToNextStage;
+    final controller = ref.read(sanctuaryProvider.notifier);
+
+    final stagesInfo = [
+      {'stage': LevGrowthStage.seed, 'name': 'Semilla', 'drops': 0, 'desc': 'Bulbo dorado que descansa.'},
+      {'stage': LevGrowthStage.sprout, 'name': 'Brote', 'drops': 5, 'desc': 'Primeras hojitas tiernas.'},
+      {'stage': LevGrowthStage.seedling, 'name': 'Plántula', 'drops': 10, 'desc': 'Hojas medianas con cáliz.'},
+      {'stage': LevGrowthStage.youngPlant, 'name': 'Planta Joven', 'drops': 20, 'desc': 'Alas canónicas completas.'},
+      {'stage': LevGrowthStage.vibrantPlant, 'name': 'Planta Vibrante', 'drops': 35, 'desc': 'Flores en floración.'},
+      {'stage': LevGrowthStage.youngTree, 'name': 'Árbol Juvenil', 'drops': 55, 'desc': '4 alas con nervaduras.'},
+      {'stage': LevGrowthStage.adultTree, 'name': 'Árbol Adulto', 'drops': 80, 'desc': 'Corona y halo místico.'},
+      {'stage': LevGrowthStage.forestSpirit, 'name': 'Espíritu del Bosque', 'drops': 120, 'desc': '6 alas y 3 orbes sagrados.'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final currentSanctuary = ref.watch(sanctuaryProvider);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Evolución Botánica de Lev',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levTextDark,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: LevTheme.levMatchaLight,
+                          borderRadius: LevTheme.pillRadius,
+                        ),
+                        child: Text(
+                          '${currentSanctuary.careDrops} gotas',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: LevTheme.levMatchaDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Toca cualquier etapa para previsualizar su sprite o progresa completando microhábitos.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: LevTheme.levTextMuted,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Lista scrolleable de las 8 etapas
+                  SizedBox(
+                    height: 130,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: stagesInfo.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 10),
+                      itemBuilder: (context, i) {
+                        final item = stagesInfo[i];
+                        final stage = item['stage'] as LevGrowthStage;
+                        final isSelected = currentSanctuary.growthStage == stage;
+                        final minDrops = item['drops'] as int;
+
+                        return InkWell(
+                          onTap: () {
+                            HapticsHelper.selection();
+                            controller.setCareDrops(minDrops);
+                            setModalState(() {});
+                          },
+                          borderRadius: LevTheme.cardRadius,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            width: 110,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? LevTheme.levMatchaLight
+                                  : const Color(0xFFFAF8F5),
+                              borderRadius: LevTheme.cardRadius,
+                              border: Border.all(
+                                color: isSelected
+                                    ? LevTheme.levMatchaDark
+                                    : LevTheme.levBorder,
+                                width: isSelected ? 2.0 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isSelected ? Icons.check_circle_rounded : Icons.eco_rounded,
+                                  size: 22,
+                                  color: isSelected
+                                      ? LevTheme.levMatchaDark
+                                      : LevTheme.levTextMuted,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  item['name'] as String,
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isSelected
+                                        ? LevTheme.levMatchaDark
+                                        : LevTheme.levTextDark,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${item['drops']}+ gotas',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10.5,
+                                    color: LevTheme.levTextMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+                  if (nextDrops != null)
+                    Text(
+                      'Faltan $nextDrops gotas para desbloquear la siguiente etapa de forma natural.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                    )
+                  else
+                    Text(
+                      'Lev ha alcanzado su forma final suprema. Sigue nutriendo tu bienestar.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  IconData _getDialogueIcon(LevEmotion emotion, bool isPetting) {
+    if (isPetting) return Icons.favorite_rounded;
     switch (emotion) {
       case LevEmotion.breathing:
-        return '🫁';
+      case LevEmotion.anxious:
+        return Icons.air_rounded;
       case LevEmotion.sheltered:
-        return '🌿';
+      case LevEmotion.sad:
+        return Icons.spa_rounded;
+      case LevEmotion.curious:
+        return Icons.lightbulb_outline_rounded;
       case LevEmotion.sleeping:
-        return '💤';
+      case LevEmotion.tired:
+        return Icons.bedtime_rounded;
       case LevEmotion.joyJump:
-        return '✨';
+      case LevEmotion.celebrating:
+        return Icons.auto_awesome_rounded;
       case LevEmotion.happy:
-        return '💛';
+        return Icons.favorite_rounded;
       default:
-        return '💬';
+        return Icons.chat_bubble_outline_rounded;
+    }
+  }
+
+  Color _getDialogueIconColor(LevEmotion emotion, bool isPetting) {
+    if (isPetting) return LevTheme.levPeach;
+    switch (emotion) {
+      case LevEmotion.sad:
+        return const Color(0xFF5C85A0);
+      case LevEmotion.anxious:
+        return const Color(0xFF8B5E8E);
+      case LevEmotion.curious:
+        return const Color(0xFFFFA000);
+      case LevEmotion.celebrating:
+      case LevEmotion.joyJump:
+        return const Color(0xFFB7A648);
+      default:
+        return LevTheme.levMatchaDark;
     }
   }
 
   Widget _buildPillAction({
-    required String emoji,
+    required IconData icon,
     required String label,
     required bool isActive,
     required VoidCallback onTap,
@@ -504,7 +803,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 15)),
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? Colors.white : LevTheme.levMatchaDark,
+            ),
             const SizedBox(width: 7),
             Text(
               label,
@@ -517,6 +820,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HeaderIconBtn extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _HeaderIconBtn({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: LevTheme.levBorder),
+          boxShadow: LevTheme.softShadow,
+        ),
+        child: Icon(icon, size: 16, color: LevTheme.levTextDark),
+      ),
+      onPressed: onTap,
     );
   }
 }

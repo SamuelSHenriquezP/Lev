@@ -568,7 +568,13 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
       case LevEmotion.joyJump:
       case LevEmotion.happy:
       case LevEmotion.celebrating:
-        return 'Sintiendo tu alivio 💛';
+        return 'Sintiendo tu alivio';
+      case LevEmotion.sad:
+        return 'Acompañándote en la tristeza';
+      case LevEmotion.anxious:
+        return 'Calmando juntos la tormenta';
+      case LevEmotion.tired:
+        return 'Descansando a tu lado';
       case LevEmotion.peaceful:
         return 'Aquí contigo • Sin juicios';
     }
@@ -577,29 +583,35 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
   String _getStatusBadgeText(LevEmotion emotion) {
     switch (emotion) {
       case LevEmotion.breathing:
-        return '🫁 Lev respira hondo contigo';
+      case LevEmotion.anxious:
+        return 'Lev respira contigo';
       case LevEmotion.sleeping:
-        return '🌙 Lev duerme tranquilo';
+      case LevEmotion.tired:
+        return 'Lev descansa en silencio';
       case LevEmotion.sheltered:
-        return '🌿 Lev te cobija con su hojita';
+      case LevEmotion.sad:
+        return 'Lev te cobija con su hojita';
       case LevEmotion.curious:
-        return '👀 Lev mira con curiosidad';
+        return 'Lev mira con curiosidad';
       case LevEmotion.joyJump:
       case LevEmotion.happy:
       case LevEmotion.celebrating:
-        return '✨ Lev celebra tu tranquilidad';
+        return 'Lev celebra tu tranquilidad';
       case LevEmotion.peaceful:
-        return '🌱 Lev está en calma a tu lado';
+        return 'Lev está en calma a tu lado';
     }
   }
 
   Color _getStatusColor(LevEmotion emotion) {
     switch (emotion) {
       case LevEmotion.breathing:
+      case LevEmotion.anxious:
         return const Color(0xFF6A994E);
       case LevEmotion.sleeping:
+      case LevEmotion.tired:
         return const Color(0xFF5C6B73);
       case LevEmotion.sheltered:
+      case LevEmotion.sad:
         return const Color(0xFF5B7065);
       case LevEmotion.curious:
         return const Color(0xFF3D7A80);

@@ -35,6 +35,10 @@ class LocalStorageService {
     await _prefs?.setInt(_keyCareDrops, current + amount);
   }
 
+  static Future<void> saveCareDropsRaw(int drops) async {
+    await _prefs?.setInt(_keyCareDrops, drops);
+  }
+
   // --- HÁBITOS COMPLETADOS ---
   static int getCompletedHabitsCount() {
     return _prefs?.getInt(_keyCompletedHabitsCount) ?? 0;

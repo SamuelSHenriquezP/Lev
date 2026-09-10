@@ -1,4 +1,4 @@
-/// Entidad que modela un microhábito consciente de 60 segundos.
+/// Entidad que modela un microhábito consciente con interacción dinámica.
 class MicroHabit {
   final String id;
   final String title;
@@ -10,6 +10,7 @@ class MicroHabit {
   final String iconEmoji;
   final List<String> tags;
   final bool isFavorite;
+  final HabitInteractionType interactionType;
 
   const MicroHabit({
     required this.id,
@@ -22,6 +23,7 @@ class MicroHabit {
     this.iconEmoji = '🌱',
     this.tags = const [],
     this.isFavorite = false,
+    this.interactionType = HabitInteractionType.timer,
   });
 
   MicroHabit copyWith({
@@ -35,6 +37,7 @@ class MicroHabit {
     String? iconEmoji,
     List<String>? tags,
     bool? isFavorite,
+    HabitInteractionType? interactionType,
   }) {
     return MicroHabit(
       id: id ?? this.id,
@@ -47,6 +50,7 @@ class MicroHabit {
       iconEmoji: iconEmoji ?? this.iconEmoji,
       tags: tags ?? this.tags,
       isFavorite: isFavorite ?? this.isFavorite,
+      interactionType: interactionType ?? this.interactionType,
     );
   }
 
@@ -98,6 +102,26 @@ class MicroHabit {
     if (category.contains('Bloqueo')) return LevTaskAction.tensionShake;
     return LevTaskAction.breathing;
   }
+}
+
+/// Tipo de interacción del microhábito — define qué widget se muestra al usuario.
+enum HabitInteractionType {
+  /// Temporizador circular con Lev animado (fallback)
+  timer,
+  /// Lev se expande/contrae guiando la respiración — usuario inhala/exhala
+  breathGuided,
+  /// Dos botones lado a lado para golpeteo bilateral (mariposa EMDR)
+  bilateralTap,
+  /// Usuario mantiene presionado la pantalla, Lev pulsa en sincronía
+  holdPressure,
+  /// Deslizador de tensión→relajación, Lev se sacude y luego se suaviza
+  slideRelease,
+  /// Lev se mueve en figura 8, usuario lo sigue con los ojos y el dedo
+  eyeTracker,
+  /// Dibujar libremente en la pantalla (grounding visual táctil)
+  gestureInput,
+  /// Contador de respiraciones con Lev contando junto
+  countingBreath,
 }
 
 enum LevTaskAction {
