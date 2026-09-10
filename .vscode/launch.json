@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Lev (Chrome - Recomendado)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Lev (Edge)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "edge"
+    }
+  ]
+}
+
