@@ -44,8 +44,32 @@ class LevTheme {
 
   // Geometría estándar
   static final BorderRadius cardRadius = BorderRadius.circular(24);
+  static final BorderRadius squareRadius = BorderRadius.circular(24);
   static final BorderRadius sheetRadius = BorderRadius.circular(32);
   static final BorderRadius pillRadius = BorderRadius.circular(999);
+
+  /// Paleta pastel suave y relajante para cada categoría emocional
+  static Color getEmotionBgColor(String category) {
+    if (category.contains('Doomscrolling')) return const Color(0xFFEDF5F1);
+    if (category.contains('Ansiedad')) return const Color(0xFFE8F2F8);
+    if (category.contains('Tristeza')) return const Color(0xFFFDF0EA);
+    if (category.contains('Frustración')) return const Color(0xFFFDF5E6);
+    if (category.contains('Insomnio')) return const Color(0xFFF0ECF8);
+    if (category.contains('Culpa')) return const Color(0xFFF6EBF4);
+    if (category.contains('Bloqueo')) return const Color(0xFFEFF5E9);
+    return const Color(0xFFF4F1EC);
+  }
+
+  static Color getEmotionAccentColor(String category) {
+    if (category.contains('Doomscrolling')) return const Color(0xFF3F7F68);
+    if (category.contains('Ansiedad')) return const Color(0xFF2C6D91);
+    if (category.contains('Tristeza')) return const Color(0xFFC8684A);
+    if (category.contains('Frustración')) return const Color(0xFFA57328);
+    if (category.contains('Insomnio')) return const Color(0xFF5A4579);
+    if (category.contains('Culpa')) return const Color(0xFF7E3E6C);
+    if (category.contains('Bloqueo')) return const Color(0xFF4C7533);
+    return levMatchaDark;
+  }
 
   // Tema global de la aplicación
   static ThemeData get lightTheme {

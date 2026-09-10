@@ -79,6 +79,42 @@ class MicroHabit {
       'is_favorite': isFavorite,
     };
   }
+
+  LevTaskAction get taskAction {
+    if (id == 'doom_01' || id == 'doom_03') return LevTaskAction.eyeRest;
+    if (id == 'doom_04' || id == 'ang_03') return LevTaskAction.chestStretch;
+    if (id == 'doom_02' || id == 'anx_02') return LevTaskAction.grounding;
+    if (id == 'anx_01' || id == 'slp_03' || id == 'ang_02') return LevTaskAction.breathing;
+    if (id == 'anx_04' || id == 'blk_02') return LevTaskAction.coldSplash;
+    if (id == 'sad_01' || id == 'sad_02' || id == 'crt_01') return LevTaskAction.soothingTouch;
+    if (id == 'sad_03' || id == 'crt_02') return LevTaskAction.warmTeaHold;
+    if (id == 'ang_01' || id == 'blk_01') return LevTaskAction.tensionShake;
+    if (id == 'slp_01' || id == 'slp_02') return LevTaskAction.sleepDrift;
+    if (category.contains('Doomscrolling')) return LevTaskAction.eyeRest;
+    if (category.contains('Ansiedad')) return LevTaskAction.breathing;
+    if (category.contains('Tristeza') || category.contains('Culpa')) return LevTaskAction.soothingTouch;
+    if (category.contains('Frustración')) return LevTaskAction.tensionShake;
+    if (category.contains('Insomnio')) return LevTaskAction.sleepDrift;
+    if (category.contains('Bloqueo')) return LevTaskAction.tensionShake;
+    return LevTaskAction.breathing;
+  }
+}
+
+enum LevTaskAction {
+  breathing(label: 'Respiración', badgeEmoji: '🫁'),
+  eyeRest(label: 'Descanso Ocular', badgeEmoji: '👁️'),
+  chestStretch(label: 'Estiramiento', badgeEmoji: '🌿'),
+  soothingTouch(label: 'Tacto Calmante', badgeEmoji: '🤲'),
+  coldSplash(label: 'Agua Fresca', badgeEmoji: '💧'),
+  tensionShake(label: 'Sacudida', badgeEmoji: '⚡'),
+  sleepDrift(label: 'Modo Siesta', badgeEmoji: '🌙'),
+  grounding(label: 'Anclaje', badgeEmoji: '🦶'),
+  warmTeaHold(label: 'Calor Suave', badgeEmoji: '🍵');
+
+  final String label;
+  final String badgeEmoji;
+
+  const LevTaskAction({required this.label, required this.badgeEmoji});
 }
 
 class HabitCategoryInfo {

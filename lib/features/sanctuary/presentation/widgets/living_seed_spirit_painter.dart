@@ -2,15 +2,18 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../domain/sanctuary_state.dart';
+import '../../../habits/domain/micro_habit.dart';
 
 /// Pintor vectorial de alta precisión para "Lev: La Planta de Luz".
 /// Reproducción 1:1 de la ilustración botánica con soporte para
-/// TRANSICIONES CONTINUAS SUAVES (sin cortes abruptos ni posturas estáticas).
+/// TRANSICIONES CONTINUAS SUAVES (sin cortes abruptos ni posturas estáticas)
+/// y ANIMACIONES SOMÁTICAS DINÁMICAS DIFERENCIADAS por tarea.
 class LivingSeedSpiritPainter extends CustomPainter {
   final double animationValue; // 0.0 a 1.0 (tiempo armónico continuo a 60 FPS)
   final LevEmotion emotion;
   final bool isPetting;
   final double sizeScale;
+  final LevTaskAction? taskAction;
 
   // Factores de transición suave (0.0 a 1.0 interpolados dinámicamente)
   final double leafWrapProgress;   // 0.0 (abiertas) a 1.0 (abrazo protector envuelto)
@@ -24,6 +27,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     required this.emotion,
     required this.isPetting,
     this.sizeScale = 1.0,
+    this.taskAction,
     this.leafWrapProgress = 0.0,
     this.sleepProgress = 0.0,
     this.happyProgress = 0.0,
@@ -89,13 +93,59 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
 
     // Composición final de transformaciones sinérgicas
-    final finalFloatY = baseFloatY + sleepFloat + happyFloat + jumpFloatY;
-    final finalSway = baseSway + sleepSway + happySway + jumpSway;
-    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY;
-    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX;
+    // Ajustes por acción somática específica
+    double taskFloatY = 0.0;
+    double taskSway = 0.0;
+    double taskScaleX = 0.0;
+    double taskScaleY = 0.0;
+    double taskShakeX = 0.0;
+    double taskShakeY = 0.0;
+
+    if (taskAction != null) {
+      switch (taskAction!) {
+        case LevTaskAction.breathing:
+          final breatheCycle = sin(cycle);
+          taskScaleY = breatheCycle * 0.14;
+          taskScaleX = -breatheCycle * 0.06;
+          break;
+        case LevTaskAction.eyeRest:
+          taskFloatY = sin(cycle * 0.8) * 3.0;
+          break;
+        case LevTaskAction.chestStretch:
+          taskSway = sin(cycle * 0.7) * 0.12;
+          taskScaleY = sin(cycle * 0.7) * 0.08;
+          break;
+        case LevTaskAction.soothingTouch:
+          final heartPulse = sin(cycle * 2.0);
+          taskScaleY = heartPulse * 0.04;
+          break;
+        case LevTaskAction.coldSplash:
+          taskShakeX = sin(cycle * 8.0) * 1.5;
+          break;
+        case LevTaskAction.tensionShake:
+          taskShakeX = sin(cycle * 15.0) * 3.2;
+          taskShakeY = cos(cycle * 18.0) * 1.8;
+          break;
+        case LevTaskAction.sleepDrift:
+          taskFloatY = 5.0;
+          taskSway = 0.05;
+          break;
+        case LevTaskAction.grounding:
+          taskFloatY = -baseFloatY * 0.65;
+          break;
+        case LevTaskAction.warmTeaHold:
+          taskFloatY = sin(cycle) * 4.0;
+          break;
+      }
+    }
+
+    final finalFloatY = baseFloatY + sleepFloat + happyFloat + jumpFloatY + taskFloatY + taskShakeY;
+    final finalSway = baseSway + sleepSway + happySway + jumpSway + taskSway;
+    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY;
+    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX;
 
     canvas.save();
-    canvas.translate(centerX, centerY + finalFloatY);
+    canvas.translate(centerX + taskShakeX, centerY + finalFloatY);
     canvas.rotate(finalSway);
     canvas.scale(sizeScale * finalScaleX, sizeScale * finalScaleY);
 
@@ -126,6 +176,38 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
     if (jumpProgress > 0.20 && jumpProgress < 0.85) {
       _drawJoySparks(canvas, jumpProgress);
+    }
+
+    // 8. Efectos somáticos específicos de la tarea
+    if (taskAction != null) {
+      switch (taskAction!) {
+        case LevTaskAction.eyeRest:
+          _drawEyeRestGlow(canvas, t);
+          break;
+        case LevTaskAction.soothingTouch:
+          _drawHeartCalmPulse(canvas, t);
+          break;
+        case LevTaskAction.coldSplash:
+          _drawColdSplashDrops(canvas, t);
+          break;
+        case LevTaskAction.tensionShake:
+          _drawTensionDischarge(canvas, t);
+          break;
+        case LevTaskAction.grounding:
+          _drawGroundingRoots(canvas, t);
+          break;
+        case LevTaskAction.warmTeaHold:
+          _drawWarmTeaSteam(canvas, t);
+          break;
+        case LevTaskAction.breathing:
+          _drawBreathMist(canvas, t);
+          break;
+        case LevTaskAction.sleepDrift:
+          _drawSleepingZzz(canvas, t, 1.0);
+          break;
+        case LevTaskAction.chestStretch:
+          break;
+      }
     }
 
     canvas.restore();
@@ -178,6 +260,29 @@ class LivingSeedSpiritPainter extends CustomPainter {
     if (leafWrapProgress < 0.5) {
       leftAngle = lerpDouble(leftAngle, -0.22, sleepProgress)!;
       rightAngle = lerpDouble(rightAngle, 0.22, sleepProgress)!;
+    }
+
+    if (taskAction != null) {
+      switch (taskAction!) {
+        case LevTaskAction.chestStretch:
+          leftAngle = -0.62 + sin(cycle * 0.7) * 0.08;
+          rightAngle = 0.62 - sin(cycle * 0.7) * 0.08;
+          break;
+        case LevTaskAction.soothingTouch:
+          leftAngle = -0.84 + sin(cycle * 2.0) * 0.03;
+          rightAngle = 0.84 - sin(cycle * 2.0) * 0.03;
+          break;
+        case LevTaskAction.eyeRest:
+          leftAngle = -0.76;
+          rightAngle = 0.76;
+          break;
+        case LevTaskAction.warmTeaHold:
+          leftAngle = -0.58;
+          rightAngle = 0.58;
+          break;
+        default:
+          break;
+      }
     }
 
     // Hoja Izquierda
@@ -494,12 +599,167 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
   }
 
+  /// 1. Resplandor cálido en los ojos (Palming / Descanso Visual)
+  void _drawEyeRestGlow(Canvas canvas, double t) {
+    final pulse = (sin(t * 2 * pi) + 1.0) * 0.5;
+    final glowPaint = Paint()
+      ..color = const Color(0xFFFFD54F).withValues(alpha: 0.35 + pulse * 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+
+    // Círculos cálidos sobre las cuencas oculares
+    canvas.drawCircle(const Offset(-13, -28), 10 + pulse * 4, glowPaint);
+    canvas.drawCircle(const Offset(13, -28), 10 + pulse * 4, glowPaint);
+
+    // Pequeñas estrellas de descanso flotando suavemente
+    final starAlpha = (sin(t * 4 * pi) + 1.0) * 0.5 * 0.7;
+    final starPaint = Paint()
+      ..color = const Color(0xFFFFF9C4).withValues(alpha: starAlpha)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(-22 + sin(t * 2 * pi) * 3, -40 + cos(t * 2 * pi) * 3), 2.0, starPaint);
+    canvas.drawCircle(Offset(22 - sin(t * 2 * pi) * 3, -42 + sin(t * 2 * pi) * 3), 2.5, starPaint);
+  }
+
+  /// 2. Pulso calmante del corazón (Abrazo de mariposa / Autocompasión)
+  void _drawHeartCalmPulse(Canvas canvas, double t) {
+    final pulse = (sin(t * 2 * pi) + 1.0) * 0.5;
+    final heartRadius = 18.0 + pulse * 14.0;
+    final heartAlpha = (1.0 - pulse) * 0.55;
+
+    final pulsePaint = Paint()
+      ..color = const Color(0xFFFF8A80).withValues(alpha: heartAlpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    canvas.drawCircle(const Offset(0, -10), heartRadius, pulsePaint);
+
+    // Brillo interior suave
+    final centerGlow = Paint()
+      ..color = const Color(0xFFFFAB91).withValues(alpha: 0.30 + pulse * 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(const Offset(0, -10), 12.0, centerGlow);
+  }
+
+  /// 3. Gotas refrescantes de agua (Reflejo de inmersión / Agua fría)
+  void _drawColdSplashDrops(Canvas canvas, double t) {
+    for (int i = 0; i < 6; i++) {
+      final phase = (t * 1.5 + (i / 6.0)) % 1.0;
+      final angle = (i * (pi / 3.0)) - (pi / 2.0) + (sin(i * 1.5) * 0.2);
+      final dist = 32.0 + phase * 40.0;
+      final x = cos(angle) * dist;
+      final y = sin(angle) * dist + 10;
+      final dropAlpha = sin(phase * pi) * 0.8;
+
+      final dropPaint = Paint()
+        ..color = (i.isEven ? const Color(0xFF80DEEA) : const Color(0xFF64B5F6))
+            .withValues(alpha: dropAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+      canvas.drawCircle(Offset(x, y), 2.2 + (1.0 - phase) * 2.0, dropPaint);
+    }
+  }
+
+  /// 4. Descarga de tensión somática (Sacudida / Relajación progresiva)
+  void _drawTensionDischarge(Canvas canvas, double t) {
+    final wave = (t * 3.0) % 1.0;
+    final ringPaint = Paint()
+      ..color = const Color(0xFF81C784).withValues(alpha: (1.0 - wave) * 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, -15), width: 70 + wave * 50, height: 85 + wave * 50),
+      ringPaint,
+    );
+
+    // Chispas de descompresión
+    for (int i = 0; i < 4; i++) {
+      final a = (i * (pi / 2)) + t * pi;
+      final r = 45.0 + sin(t * 6 * pi + i) * 12.0;
+      final sparkPaint = Paint()
+        ..color = const Color(0xFFFFD54F).withValues(alpha: 0.6)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawCircle(Offset(cos(a) * r, sin(a) * r - 15), 2.0, sparkPaint);
+    }
+  }
+
+  /// 5. Raíces profundas en la tierra (Anclaje 5-4-3-2-1 / Grounding)
+  void _drawGroundingRoots(Canvas canvas, double t) {
+    final sway = sin(t * 2 * pi) * 1.5;
+    final rootPaint = Paint()
+      ..color = const Color(0xFF4E7D56).withValues(alpha: 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.2;
+
+    // Raíz central
+    final centerRoot = Path()
+      ..moveTo(0, 48)
+      ..quadraticBezierTo(sway, 62, sway * 0.5, 78);
+    canvas.drawPath(centerRoot, rootPaint);
+
+    // Raíz izquierda
+    final leftRoot = Path()
+      ..moveTo(-8, 46)
+      ..quadraticBezierTo(-16 + sway, 60, -22 + sway, 72);
+    canvas.drawPath(leftRoot, rootPaint);
+
+    // Raíz derecha
+    final rightRoot = Path()
+      ..moveTo(8, 46)
+      ..quadraticBezierTo(16 - sway, 60, 22 - sway, 72);
+    canvas.drawPath(rightRoot, rootPaint);
+
+    // Brillo de conexión con la tierra en la base
+    final earthPaint = Paint()
+      ..color = const Color(0xFF81C784).withValues(alpha: 0.35 + sin(t * 2 * pi) * 0.15)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, 75), width: 55, height: 14),
+      earthPaint,
+    );
+  }
+
+  /// 6. Vapor de té caliente en espiral (Ritual sensorial / Calidez)
+  void _drawWarmTeaSteam(Canvas canvas, double t) {
+    for (int i = 0; i < 3; i++) {
+      final phase = (t + (i * 0.33)) % 1.0;
+      final y = 15.0 - phase * 65.0;
+      final x = sin((phase * 2 * pi) + (i * 1.5)) * 10.0 + (i - 1) * 9.0;
+      final steamAlpha = sin(phase * pi) * 0.45;
+
+      final steamPaint = Paint()
+        ..color = const Color(0xFFFFF9C4).withValues(alpha: steamAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+      canvas.drawCircle(Offset(x, y), 5.0 + phase * 8.0, steamPaint);
+    }
+  }
+
+  /// 7. Vaho y ondas de respiración diafragmática (Suspiro fisiológico / Pranayama)
+  void _drawBreathMist(Canvas canvas, double t) {
+    final lungCycle = (sin(t * 2 * pi) + 1.0) * 0.5;
+    final mistAlpha = (1.0 - lungCycle) * 0.45;
+    final mistRadius = 25.0 + (1.0 - lungCycle) * 35.0;
+
+    final mistPaint = Paint()
+      ..color = const Color(0xFFA5D6A7).withValues(alpha: mistAlpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+    canvas.drawCircle(const Offset(0, -15), mistRadius, mistPaint);
+  }
+
   @override
   bool shouldRepaint(covariant LivingSeedSpiritPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue ||
         oldDelegate.emotion != emotion ||
         oldDelegate.isPetting != isPetting ||
         oldDelegate.sizeScale != sizeScale ||
+        oldDelegate.taskAction != taskAction ||
         oldDelegate.leafWrapProgress != leafWrapProgress ||
         oldDelegate.sleepProgress != sleepProgress ||
         oldDelegate.happyProgress != happyProgress ||

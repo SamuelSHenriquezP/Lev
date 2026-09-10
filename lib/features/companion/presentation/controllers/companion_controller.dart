@@ -93,11 +93,13 @@ class CompanionController extends Notifier<CompanionState> {
     List<String> nextReplies = ['Hacer la pausa (60s)', 'Prefiero solo charlar', 'Gracias, Lev 💛'];
 
     if (lower.contains('dormir') || lower.contains('insomnio') || lower.contains('desvelo') || lower.contains('no puedo dormir')) {
+      ref.read(sanctuaryProvider.notifier).putToSleep();
       levReply =
           'La noche es el momento en que la mente intenta resolver lo que el cuerpo ya no puede sostener. Es normal que te sientas inquieto.\n\nEntrégale tus preocupaciones a las aguas de mi estanque. No tienes que forzarte a dormir de golpe; solo dejemos que tus párpados pesen un poco.';
       habit = HabitsDatabase.getById('slp_01');
       nextReplies = ['Pesadez de párpados (60s)', 'Soltar el día en el agua', 'Respiración 4-7-8'];
     } else if (lower.contains('bloqueo') || lower.contains('parálisis') || lower.contains('procrastin') || lower.contains('empezar')) {
+      ref.read(sanctuaryProvider.notifier).setPeacefulState();
       levReply =
           'La parálisis ante una tarea no es pereza ni falta de fuerza de voluntad; es tu sistema nervioso sintiendo que la tarea es una amenaza abrumadora.\n\nNo tenemos que escalar la montaña entera hoy. Vamos a dar un micro-paso de 10 segundos exactos juntos.';
       habit = HabitsDatabase.getById('blk_01');
@@ -109,12 +111,13 @@ class CompanionController extends Notifier<CompanionState> {
       habit = HabitsDatabase.getById('crt_01');
       nextReplies = ['Tacto calmante en la nuca', 'Agradecer a la mente (ACT)', 'Verdades de un amigo'];
     } else if (lower.contains('abrumado') || lower.contains('ansiedad') || lower.contains('pánico') || lower.contains('angustia')) {
-      ref.read(sanctuaryProvider.notifier).setShelteredState();
+      ref.read(sanctuaryProvider.notifier).startBreathing();
       levReply =
           'Es comprensible que te sientas así. Cuando todo parece demasiado, tu cuerpo intenta protegerte acelerando. No tienes que resolver tu vida en este instante.\n\n¿Me dejas guiarte con 3 respiraciones exactas para darle una señal de seguridad a tu corazón?';
       habit = HabitsDatabase.getById('anx_01');
       nextReplies = ['Comenzar el Suspiro (60s)', 'Quiero intentar anclarme (3-2-1)', 'Mano al pecho'];
     } else if (lower.contains('tiktok') || lower.contains('scroll') || lower.contains('pantalla') || lower.contains('reels')) {
+      ref.read(sanctuaryProvider.notifier).setPeacefulState();
       levReply =
           'Las pantallas están diseñadas para atrapar tu atención con dopamina artificial. No eres culpable ni débil por haber caído en el bucle.\n\nPero tus ojitos y tu cuello merecen un respiro real de 60 segundos. Miremos juntos hacia el infinito.';
       habit = HabitsDatabase.getById('doom_01');
@@ -126,6 +129,7 @@ class CompanionController extends Notifier<CompanionState> {
       habit = HabitsDatabase.getById('sad_01');
       nextReplies = ['Abrazo de presión suave', 'Abrazo de la mariposa', 'Taza caliente imaginaria'];
     } else if (lower.contains('enojo') || lower.contains('rabia') || lower.contains('frustra') || lower.contains('molest') || lower.contains('ira')) {
+      ref.read(sanctuaryProvider.notifier).startBreathing();
       levReply =
           'La frustración es energía que busca salir. No es mala; solo necesita un canal seguro para no quemarte por dentro.\n\nVamos a descargar esa tensión de tus puños y hombros con la técnica de Jacobson en 60 segundos.';
       habit = HabitsDatabase.getById('ang_01');
@@ -137,11 +141,12 @@ class CompanionController extends Notifier<CompanionState> {
       habit = HabitsDatabase.getById('doom_02');
       nextReplies = ['Hacer chequeo de realidad', '¿Cómo estás tú, Lev?', 'Solo quería saludarte'];
     } else if (lower.contains('gracias') || lower.contains('hecho') || lower.contains('mejor')) {
-      ref.read(sanctuaryProvider.notifier).setPeacefulState();
+      ref.read(sanctuaryProvider.notifier).triggerJoyJump();
       levReply =
           'Gracias a ti por concederte este minuto de compasión. Cada pequeña pausa es una semilla que florece en tu bienestar. Siempre estaré aquí cuando lo necesites.';
       nextReplies = ['Me siento abrumado', 'Mucho TikTok/procrastinando', 'No puedo dormir', 'Ir al estanque'];
     } else {
+      ref.read(sanctuaryProvider.notifier).setPeacefulState();
       levReply =
           'Te escucho con todo mi corazón. No tienes que guardar las cosas solo para ti. ¿Te gustaría regalarte una micro-pausa de 60 segundos para conectar con tu respiración?';
       habit = HabitsDatabase.getRandomHabit();

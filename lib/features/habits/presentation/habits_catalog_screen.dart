@@ -5,8 +5,14 @@ import 'package:lev/core/theme/lev_theme.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/domain/micro_habit.dart';
+import 'emotion_detail_screen.dart';
 import 'habit_timer_screen.dart';
+import 'widgets/somatic_focus_minigames.dart';
 
+/// Catálogo de Microhábitos en Cuadraditos Táctiles e Inmersivos.
+/// Se reemplazaron las listas largas y la sobrecarga visual por:
+/// 1. Minijuegos somáticos de concentración (Burbujas, Arena Zen, Foco EMDR).
+/// 2. Mosaico de cuadraditos emocionales donde el usuario entra en su estado.
 class HabitsCatalogScreen extends StatefulWidget {
   final String? initialCategoryFilter;
 
@@ -17,7 +23,6 @@ class HabitsCatalogScreen extends StatefulWidget {
 }
 
 class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
-  late String _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   Set<String> _favoriteIds = {};
@@ -25,7 +30,6 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = widget.initialCategoryFilter ?? 'Todos';
     _loadFavorites();
   }
 
@@ -35,32 +39,10 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
     });
   }
 
-  Future<void> _toggleFavorite(String habitId) async {
-    await HapticsHelper.selection();
-    await LocalStorageService.toggleFavoriteHabit(habitId);
-    _loadFavorites();
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  List<MicroHabit> get _filteredHabits {
-    List<MicroHabit> baseList;
-
-    if (_searchQuery.isNotEmpty) {
-      baseList = HabitsDatabase.searchHabits(_searchQuery);
-    } else if (_selectedCategory == '⭐ Favoritos') {
-      baseList = HabitsDatabase.allHabits.where((h) => _favoriteIds.contains(h.id)).toList();
-    } else if (_selectedCategory == 'Todos') {
-      baseList = HabitsDatabase.allHabits;
-    } else {
-      baseList = HabitsDatabase.getByCategory(_selectedCategory);
-    }
-
-    return baseList;
   }
 
   void _openHabitTimer(MicroHabit habit) {
@@ -78,13 +60,23 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
     _openHabitTimer(randomHabit);
   }
 
+  void _openEmotion(String category, String emoji) {
+    HapticsHelper.selection();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EmotionDetailScreen(
+          categoryName: category,
+          emoji: emoji,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      'Todos',
-      '⭐ Favoritos',
-      ...HabitsDatabase.categories.map((c) => c.name),
-    ];
+    final searchResults = _searchQuery.isNotEmpty
+        ? HabitsDatabase.searchHabits(_searchQuery)
+        : <MicroHabit>[];
 
     return Scaffold(
       backgroundColor: LevTheme.levCream,
@@ -97,311 +89,590 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
             color: LevTheme.levTextDark,
           ),
         ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Subtítulo cálido + Botón Sorpréndeme
+        actions: [
+          // Botón "Sorpréndeme"
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '24+ pausas conscientes de 1 minuto divididas por tu estado emocional.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: LevTheme.levTextMuted,
-                      height: 1.35,
-                    ),
-                  ),
+            padding: const EdgeInsets.only(right: 14),
+            child: InkWell(
+              onTap: _surpriseMe,
+              borderRadius: LevTheme.pillRadius,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: LevTheme.levMatcha,
+                  borderRadius: LevTheme.pillRadius,
+                  boxShadow: LevTheme.glowShadow,
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: _surpriseMe,
-                  icon: const Text('🎲', style: TextStyle(fontSize: 16)),
-                  label: const Text('Sorpréndeme'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: LevTheme.levPeach,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    textStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Buscador de Hábitos
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Buscar por síntoma (ojos, insomnio, vago, enojo)...',
-                prefixIcon: const Icon(Icons.search_rounded, color: LevTheme.levTextMuted, size: 20),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: LevTheme.levBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: LevTheme.levBorder),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Carrusel horizontal de chips de categorías emocionales
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: categories.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                final isSelected = cat == _selectedCategory;
-
-                String displayLabel = cat;
-                final catInfo = HabitsDatabase.categories.where((c) => c.name == cat).firstOrNull;
-                if (catInfo != null) {
-                  displayLabel = catInfo.shortName;
-                }
-
-                return ChoiceChip(
-                  label: Text(displayLabel),
-                  selected: isSelected,
-                  selectedColor: LevTheme.levMatcha,
-                  backgroundColor: Colors.white,
-                  labelStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : LevTheme.levTextDark,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: LevTheme.pillRadius,
-                    side: BorderSide(
-                      color: isSelected ? LevTheme.levMatcha : LevTheme.levBorder,
-                    ),
-                  ),
-                  onSelected: (val) {
-                    if (val) {
-                      HapticsHelper.selection();
-                      setState(() {
-                        _selectedCategory = cat;
-                      });
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Lista de microhábitos filtrados
-          Expanded(
-            child: _filteredHabits.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('🌱', style: TextStyle(fontSize: 36)),
-                          const SizedBox(height: 12),
-                          Text(
-                            _selectedCategory == '⭐ Favoritos'
-                                ? 'Aún no tienes hábitos favoritos guardados.\nToca la estrella en cualquier tarjeta para fijarlo aquí.'
-                                : 'No encontramos pausas para "$_searchQuery".\nPrueba con otra palabra como "ojos", "respirar" o "dormir".',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.5,
-                              color: LevTheme.levTextMuted,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                    itemCount: _filteredHabits.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final habit = _filteredHabits[index];
-                      final isFav = _favoriteIds.contains(habit.id);
-                      return _buildHabitCard(habit, isFav);
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHabitCard(MicroHabit habit, bool isFav) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: LevTheme.cardRadius,
-        border: Border.all(color: LevTheme.levBorder),
-        boxShadow: LevTheme.softShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: LevTheme.cardRadius,
-        child: InkWell(
-          borderRadius: LevTheme.cardRadius,
-          onTap: () => _openHabitTimer(habit),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: LevTheme.levMatchaLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Center(
-                        child: Text(
-                          habit.iconEmoji,
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: LevTheme.levSky.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              habit.category,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: LevTheme.levTextDark,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            habit.title,
-                            style: GoogleFonts.quicksand(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                              color: LevTheme.levTextDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Botón de favorito (estrella)
-                    IconButton(
-                      icon: Icon(
-                        isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: isFav ? const Color(0xFFFFB056) : LevTheme.levTextMuted,
-                        size: 22,
-                      ),
-                      onPressed: () => _toggleFavorite(habit.id),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: LevTheme.levPeach.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '60s',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: LevTheme.levPeachDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '"${habit.levIntro}"',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
-                    fontStyle: FontStyle.italic,
-                    color: LevTheme.levTextMuted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.psychology_outlined, size: 15, color: LevTheme.levMatchaDark),
+                    const Text('🎲', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        habit.psychologicalBasis,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          color: LevTheme.levMatchaDark,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: LevTheme.levMatcha,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 13,
+                    Text(
+                      'Sorpréndeme',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- 1. BUSCADOR MINIMALISTA ---
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: LevTheme.pillRadius,
+                  border: Border.all(color: LevTheme.levBorder),
+                  boxShadow: LevTheme.softShadow,
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: LevTheme.levTextDark,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por síntoma (ojos, pecho, dormir...)',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      color: LevTheme.levTextMuted,
+                    ),
+                    prefixIcon: const Icon(Icons.search_rounded, color: LevTheme.levMatchaDark, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // --- CASO A: RESULTADOS DE BÚSQUEDA DIRECTA ---
+              if (_searchQuery.isNotEmpty) ...[
+                Text(
+                  'Resultados (${searchResults.length})',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: LevTheme.levTextDark,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                if (searchResults.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Text(
+                        'No encontramos pausas para "$_searchQuery".\nPrueba con "ansiedad", "cuello" o "soltar".',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: LevTheme.levTextMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: searchResults.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 0.96,
+                    ),
+                    itemBuilder: (context, index) {
+                      final habit = searchResults[index];
+                      final bgColor = LevTheme.getEmotionBgColor(habit.category);
+                      final accentColor = LevTheme.getEmotionAccentColor(habit.category);
+                      return _buildSearchResultSquare(habit, bgColor, accentColor);
+                    },
+                  ),
+              ] else ...[
+                // --- CASO B: MODO EXPLORACIÓN COZY Y TÁCTIL ---
+
+                // 2. SECCIÓN: MINIJUEGOS SOMÁTICOS DE CONCENTRACIÓN
+                Text(
+                  'Minijuegos de Concentración',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: LevTheme.levTextDark,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 118,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      _buildMinigameQuickCard(
+                        emoji: '🫧',
+                        title: 'Burbujas Pop',
+                        subtitle: 'Descarga de tensión',
+                        color: const Color(0xFFD0E8F2),
+                        accent: const Color(0xFF2C6D91),
+                        onTap: () => SomaticMinigameModal.open(context, initialGameIndex: 0),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildMinigameQuickCard(
+                        emoji: '🪨',
+                        title: 'Arena Zen',
+                        subtitle: 'Rastreo y grounding',
+                        color: const Color(0xFFF2ECE1),
+                        accent: const Color(0xFF6B5841),
+                        onTap: () => SomaticMinigameModal.open(context, initialGameIndex: 1),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildMinigameQuickCard(
+                        emoji: '✨',
+                        title: 'Foco de Luz',
+                        subtitle: 'Calma visual EMDR',
+                        color: const Color(0xFF243B33),
+                        accent: const Color(0xFFFFD166),
+                        isDark: true,
+                        onTap: () => SomaticMinigameModal.open(context, initialGameIndex: 2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // 3. SECCIÓN: REJILLA DE CUADRADITOS EMOCIONALES
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '¿Qué estás sintiendo ahora?',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.quicksand(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levTextDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Entra a tu emoción',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: LevTheme.levTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 1.05,
+                  children: [
+                    _buildEmotionSquare(
+                      category: 'Doomscrolling / Sobrecarga Digital',
+                      title: 'Sobrecarga',
+                      subtitle: 'Pantallas & TikTok',
+                      emoji: '📱',
+                      count: HabitsDatabase.getByCategory('Doomscrolling / Sobrecarga Digital').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Ansiedad / Ataque de Pánico / Agobio',
+                      title: 'Ansiedad',
+                      subtitle: 'Pecho apretado',
+                      emoji: '🌊',
+                      count: HabitsDatabase.getByCategory('Ansiedad / Ataque de Pánico / Agobio').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Tristeza / Soledad / Desgano',
+                      title: 'Tristeza',
+                      subtitle: 'Soledad y desgano',
+                      emoji: '🕯️',
+                      count: HabitsDatabase.getByCategory('Tristeza / Soledad / Desgano').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Frustración / Enojo / Irritabilidad',
+                      title: 'Frustración',
+                      subtitle: 'Rabia y tensión',
+                      emoji: '⚡',
+                      count: HabitsDatabase.getByCategory('Frustración / Enojo / Irritabilidad').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Insomnio / Rumiación Nocturna',
+                      title: 'Insomnio',
+                      subtitle: 'Mente no para',
+                      emoji: '🌙',
+                      count: HabitsDatabase.getByCategory('Insomnio / Rumiación Nocturna').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Culpa / Autocrítica / Impostor',
+                      title: 'Culpa',
+                      subtitle: 'Autocrítica dura',
+                      emoji: '🪞',
+                      count: HabitsDatabase.getByCategory('Culpa / Autocrítica / Impostor').length,
+                    ),
+                    _buildEmotionSquare(
+                      category: 'Bloqueo / Procrastinación / Parálisis TDAH',
+                      title: 'Bloqueo',
+                      subtitle: 'Parálisis al iniciar',
+                      emoji: '🧱',
+                      count: HabitsDatabase.getByCategory('Bloqueo / Procrastinación / Parálisis TDAH').length,
+                    ),
+                    _buildFavoritesSquare(),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMinigameQuickCard({
+    required String emoji,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required Color accent,
+    required VoidCallback onTap,
+    bool isDark = false,
+  }) {
+    return InkWell(
+      onTap: () {
+        HapticsHelper.light();
+        onTap();
+      },
+      borderRadius: LevTheme.cardRadius,
+      child: Container(
+        width: 148,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: LevTheme.cardRadius,
+          border: Border.all(color: accent.withValues(alpha: 0.20)),
+          boxShadow: LevTheme.softShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 20)),
+                const Spacer(),
+                Icon(Icons.play_circle_fill_rounded, size: 18, color: accent),
               ],
             ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.quicksand(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : LevTheme.levTextDark,
+              ),
+            ),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: isDark ? Colors.white.withValues(alpha: 0.75) : LevTheme.levTextMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmotionSquare({
+    required String category,
+    required String title,
+    required String subtitle,
+    required String emoji,
+    required int count,
+  }) {
+    final bgColor = LevTheme.getEmotionBgColor(category);
+    final accentColor = LevTheme.getEmotionAccentColor(category);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openEmotion(category, emoji),
+        borderRadius: LevTheme.squareRadius,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: LevTheme.squareRadius,
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Icono en cápsula suave con color temático
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: LevTheme.levCream,
+                      borderRadius: LevTheme.pillRadius,
+                    ),
+                    child: Text(
+                      '$count',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.quicksand(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: LevTheme.levTextDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      color: LevTheme.levTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFavoritesSquare() {
+    final favCount = _favoriteIds.length;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticsHelper.selection();
+          // Abre favoritos
+          final favHabits = HabitsDatabase.allHabits.where((h) => _favoriteIds.contains(h.id)).toList();
+          if (favHabits.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Aún no tienes favoritos marcados con estrella ⭐'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else {
+            _openHabitTimer(favHabits.first);
+          }
+        },
+        borderRadius: LevTheme.squareRadius,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEA),
+            borderRadius: LevTheme.squareRadius,
+            border: Border.all(color: const Color(0xFFFFE082)),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFECB3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Text('⭐', style: TextStyle(fontSize: 22)),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: LevTheme.pillRadius,
+                    ),
+                    child: Text(
+                      '$favCount',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFB88235),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Favoritos',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: LevTheme.levTextDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tus pausas clave',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      color: LevTheme.levTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResultSquare(MicroHabit habit, Color bgColor, Color accentColor) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openHabitTimer(habit),
+        borderRadius: LevTheme.squareRadius,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: LevTheme.squareRadius,
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Center(child: Text('🌱', style: TextStyle(fontSize: 18))),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: LevTheme.levCream,
+                      borderRadius: LevTheme.pillRadius,
+                    ),
+                    child: Text(
+                      '60s',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                habit.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.quicksand(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: LevTheme.levTextDark,
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Iniciar',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 13, color: accentColor),
+                ],
+              ),
+            ],
           ),
         ),
       ),
