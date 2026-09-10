@@ -154,9 +154,10 @@ class _BreathingCircleState extends State<BreathingCircle>
                         boxShadow: LevTheme.glowShadow,
                       ),
                       child: const Center(
-                        child: Text(
-                          '🌱',
-                          style: TextStyle(fontSize: 36),
+                        child: Icon(
+                          Icons.air_rounded,
+                          size: 38,
+                          color: Colors.white,
                         ),
                       ),
                     ),

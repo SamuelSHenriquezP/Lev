@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,8 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/storage/local_storage_service.dart';
 import '../../../core/theme/lev_theme.dart';
+import '../../../core/utils/haptics_helper.dart';
 import '../../sanctuary/domain/sanctuary_state.dart';
 import '../../sanctuary/presentation/controllers/sanctuary_controller.dart';
+import '../domain/mood_entry.dart';
+import 'cbt_reframer_screen.dart';
 import 'controllers/journal_controller.dart';
 
 /// Pantalla de Progreso — solo estadísticas con sentido.
@@ -69,6 +73,14 @@ class JournalScreen extends ConsumerWidget {
               ),
             ),
 
+            // Check-in emocional rápido (2 toques)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _QuickMoodCheckInSection(),
+              ),
+            ),
+
             // Gráfica de onda emocional (últimos 7 días)
             SliverToBoxAdapter(
               child: Padding(
@@ -82,6 +94,14 @@ class JournalScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: _WeeklyHeatmap(journalState: journalState),
+              ),
+            ),
+
+            // Reestructuración Cognitiva TCC
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _CbtSection(journalState: journalState),
               ),
             ),
 
@@ -180,9 +200,20 @@ class _LevGrowthCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                sanctuary.stageIcon,
-                style: const TextStyle(fontSize: 28),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.3)),
+                  boxShadow: LevTheme.softShadow,
+                ),
+                child: Icon(
+                  sanctuary.stageMaterialIcon,
+                  size: 24,
+                  color: LevTheme.levMatchaDark,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -643,3 +674,396 @@ class _CatData {
   final int count;
   _CatData(this.name, this.icon, this.color, this.count);
 }
+
+// =============================================================================
+// CHECK-IN EMOCIONAL RÁPIDO (2 TOQUES)
+// =============================================================================
+class _QuickMoodCheckInSection extends ConsumerStatefulWidget {
+  const _QuickMoodCheckInSection();
+
+  @override
+  ConsumerState<_QuickMoodCheckInSection> createState() =>
+      _QuickMoodCheckInSectionState();
+}
+
+class _QuickMoodCheckInSectionState
+    extends ConsumerState<_QuickMoodCheckInSection> {
+  MoodLevel? _lastSelected;
+  bool _showSavedToast = false;
+  Timer? _toastTimer;
+
+  @override
+  void dispose() {
+    _toastTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSelectMood(MoodLevel mood) {
+    HapticsHelper.selection();
+    _toastTimer?.cancel();
+    setState(() {
+      _lastSelected = mood;
+      _showSavedToast = true;
+    });
+
+    ref.read(journalProvider.notifier).addMoodEntry(
+      mood: mood,
+      tags: ['Check-in'],
+      note: '',
+    );
+
+    _toastTimer = Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() {
+          _showSavedToast = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'Check-in emocional',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.quicksand(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: LevTheme.levTextDark,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (_showSavedToast)
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: _showSavedToast ? 1.0 : 0.0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: LevTheme.levMatchaLight,
+                    borderRadius: LevTheme.pillRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 13, color: LevTheme.levMatchaDark),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Registrado',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levMatchaDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '¿Cómo te encuentras en este momento?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: LevTheme.levTextMuted,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: MoodLevel.values.map((level) {
+              final isSelected = _lastSelected == level;
+              return Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _onSelectMood(level),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? level.color.withValues(alpha: 0.35)
+                                : level.color.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? LevTheme.levMatchaDark : Colors.transparent,
+                              width: 2.0,
+                            ),
+                            boxShadow: isSelected ? LevTheme.glowShadow : const [],
+                          ),
+                          child: Icon(
+                            level.icon,
+                            size: 20,
+                            color: isSelected ? LevTheme.levMatchaDark : LevTheme.levTextDark,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          level.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? LevTheme.levMatchaDark : LevTheme.levTextDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// REESTRUCTURACIÓN COGNITIVA TCC
+// =============================================================================
+class _CbtSection extends StatelessWidget {
+  final JournalState journalState;
+  const _CbtSection({required this.journalState});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pensamientos & Compasión',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: LevTheme.levTextDark,
+                    ),
+                  ),
+                  Text(
+                    'Reestructuración Cognitiva TCC',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: LevTheme.levTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Nueva reestructuración',
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: LevTheme.levMatchaLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.add_rounded, size: 20, color: LevTheme.levMatchaDark),
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CbtReframerScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Tarjeta de invitación principal
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: LevTheme.levBorder),
+            boxShadow: LevTheme.softShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: LevTheme.levLavanda.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.psychology_rounded, size: 24, color: LevTheme.levMatchaDark),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Desactiva trampas mentales',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cuestiona el catastrofismo y los juicios duros con un ejercicio de 3 pasos.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: LevTheme.levTextMuted,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CbtReframerScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: LevTheme.levMatcha,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: LevTheme.pillRadius),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                child: Text(
+                  'Iniciar',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Si existen tarjetas de afrontamiento, mostrarlas en carrusel
+        if (journalState.cbtCards.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: journalState.cbtCards.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final card = journalState.cbtCards[index];
+                return Container(
+                  width: 260,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: LevTheme.levBorder),
+                    boxShadow: LevTheme.softShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: LevTheme.levMatchaLight,
+                                borderRadius: LevTheme.pillRadius,
+                              ),
+                              child: Text(
+                                card.distortionName,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: LevTheme.levMatchaDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat('d MMM', 'es').format(card.createdAt),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              color: LevTheme.levTextMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '"${card.compassionateReframe}"',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: LevTheme.levTextDark,
+                          height: 1.35,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.spa_rounded, size: 13, color: LevTheme.levMatchaDark),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Realidad compasiva',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: LevTheme.levMatchaDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+

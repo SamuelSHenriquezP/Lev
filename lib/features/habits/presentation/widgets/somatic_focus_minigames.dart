@@ -69,11 +69,11 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildGameTab(0, '🫧 Burbujas'),
+                _buildGameTab(0, 'Burbujas', Icons.bubble_chart_rounded),
                 const SizedBox(width: 8),
-                _buildGameTab(1, '🪨 Arena Zen'),
+                _buildGameTab(1, 'Arena Zen', Icons.landscape_rounded),
                 const SizedBox(width: 8),
-                _buildGameTab(2, '✨ Foco de Luz'),
+                _buildGameTab(2, 'Foco de Luz', Icons.auto_awesome_rounded),
               ],
             ),
           ),
@@ -95,7 +95,7 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
     );
   }
 
-  Widget _buildGameTab(int index, String label) {
+  Widget _buildGameTab(int index, String label, IconData icon) {
     final isSelected = _currentIndex == index;
     return Expanded(
       child: InkWell(
@@ -108,7 +108,7 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
         borderRadius: LevTheme.pillRadius,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? LevTheme.levMatchaDark : Colors.white,
@@ -118,15 +118,29 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
             ),
             boxShadow: isSelected ? LevTheme.glowShadow : LevTheme.softShadow,
           ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.quicksand(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : LevTheme.levTextDark,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : LevTheme.levMatchaDark,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.quicksand(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : LevTheme.levTextDark,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -557,13 +571,20 @@ class _LightTrackerMinigameState extends State<LightTrackerMinigame>
                     color: LevTheme.levMatchaLight,
                     borderRadius: LevTheme.pillRadius,
                   ),
-                  child: Text(
-                    '✨ En sintonía',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levMatchaDark,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded, size: 13, color: LevTheme.levMatchaDark),
+                      const SizedBox(width: 4),
+                      Text(
+                        'En sintonía',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levMatchaDark,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

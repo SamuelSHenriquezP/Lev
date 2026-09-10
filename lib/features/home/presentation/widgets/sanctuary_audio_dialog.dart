@@ -52,7 +52,7 @@ class SanctuaryAudioDialog extends ConsumerWidget {
                   shape: BoxShape.circle,
                   color: LevTheme.levMatchaLight,
                 ),
-                child: const Text('🎧', style: TextStyle(fontSize: 22)),
+                child: const Icon(Icons.headphones_rounded, size: 22, color: LevTheme.levMatchaDark),
               ),
               const SizedBox(width: 12),
               Column(

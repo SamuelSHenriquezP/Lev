@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -72,13 +72,13 @@ void main() {
       expect(find.byType(BubblePopMinigame), findsOneWidget);
 
       // Switch tab to Arena Zen
-      await tester.tap(find.text('🪨 Arena Zen'));
+      await tester.tap(find.text('Arena Zen').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(ZenSandMinigame), findsOneWidget);
 
       // Switch tab to Foco de Luz
-      await tester.tap(find.text('✨ Foco de Luz'));
+      await tester.tap(find.text('Foco de Luz').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(LightTrackerMinigame), findsOneWidget);

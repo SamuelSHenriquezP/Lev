@@ -9,6 +9,7 @@ import 'package:lev/features/home/presentation/widgets/sanctuary_audio_dialog.da
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_pond_painter.dart';
+import 'package:lev/features/crisis/presentation/crisis_sos_modal.dart';
 
 /// Pantalla Principal del Santuario:
 /// Lev como protagonista absoluto en el centro con transiciones somáticas orgánicas
@@ -202,55 +203,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           children: [
             // --- CABECERA ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Etapa de crecimiento de Lev
-                  InkWell(
-                    onTap: () => _showGrowthInfo(context, sanctuary),
-                    borderRadius: LevTheme.pillRadius,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: LevTheme.pillRadius,
-                        border: Border.all(color: LevTheme.levBorder),
-                        boxShadow: LevTheme.softShadow,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.eco_rounded,
-                            size: 16,
-                            color: LevTheme.levMatchaDark,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            sanctuary.growthStageName,
-                            style: GoogleFonts.quicksand(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: LevTheme.levMatchaDark,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 16,
-                            color: LevTheme.levTextMuted,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Botones de acción derecha
-                  Row(
-                    children: [
-                      // Gotas de cuidado
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  Flexible(
+                    child: InkWell(
+                      onTap: () => _showGrowthInfo(context, sanctuary),
+                      borderRadius: LevTheme.pillRadius,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: LevTheme.pillRadius,
@@ -258,17 +221,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           boxShadow: LevTheme.softShadow,
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.eco_rounded,
+                              size: 15,
+                              color: LevTheme.levMatchaDark,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                sanctuary.growthStageName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: LevTheme.levMatchaDark,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 15,
+                              color: LevTheme.levTextMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Botones de acción derecha
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Gotas de cuidado
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: LevTheme.pillRadius,
+                          border: Border.all(color: LevTheme.levBorder),
+                          boxShadow: LevTheme.softShadow,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.water_drop_rounded,
-                              size: 15,
+                              size: 14,
                               color: Color(0xFF64B5F6),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4),
                             Text(
                               '${sanctuary.careDrops}',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: LevTheme.levTextDark,
                               ),
@@ -276,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       // Audio ambiental
                       _HeaderIconBtn(
@@ -286,6 +297,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           context: context,
                           builder: (context) => const SanctuaryAudioDialog(),
                         ),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // Botón Privacidad y Datos Offline
+                      _HeaderIconBtn(
+                        icon: Icons.shield_outlined,
+                        iconColor: LevTheme.levMatchaDark,
+                        tooltip: 'Privacidad y datos',
+                        onTap: () => _showPrivacyDialog(context),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // Botón SOS / Crisis
+                      _HeaderIconBtn(
+                        icon: Icons.health_and_safety_rounded,
+                        iconColor: const Color(0xFFE57373),
+                        tooltip: 'Líneas de ayuda y SOS',
+                        onTap: () => CrisisSosModal.show(context),
                       ),
                     ],
                   ),
@@ -732,6 +761,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  void _showPrivacyDialog(BuildContext context) {
+    HapticsHelper.light();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+          actionsPadding: const EdgeInsets.all(20),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: LevTheme.levMatchaLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.shield_outlined, size: 22, color: LevTheme.levMatchaDark),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Tu Espacio Seguro',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: LevTheme.levTextDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPrivacyPoint(
+                icon: Icons.wifi_off_rounded,
+                title: '100% Sin Conexión Obligatoria',
+                desc: 'Tus reflexiones, registros de ánimo y hábitos se guardan únicamente en la memoria de este teléfono.',
+              ),
+              const SizedBox(height: 12),
+              _buildPrivacyPoint(
+                icon: Icons.no_accounts_rounded,
+                title: 'Sin Cuentas ni Rastreadores',
+                desc: 'No recopilamos analíticas invasivas ni vendemos tu información. Lev existe para acompañarte en calma.',
+              ),
+              const SizedBox(height: 12),
+              _buildPrivacyPoint(
+                icon: Icons.lock_outline_rounded,
+                title: 'Control Total',
+                desc: 'Tus datos son tuyos. Puedes reiniciar o borrar la aplicación cuando desees sin dejar rastro en la nube.',
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: LevTheme.levMatcha,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: LevTheme.pillRadius),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(
+                  'Entendido',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPrivacyPoint({
+    required IconData icon,
+    required String title,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: LevTheme.levMatchaDark),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.quicksand(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: LevTheme.levTextDark,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: LevTheme.levTextMuted,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   IconData _getDialogueIcon(LevEmotion emotion, bool isPetting) {
     if (isPetting) return Icons.favorite_rounded;
     switch (emotion) {
@@ -826,11 +976,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
 class _HeaderIconBtn extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String tooltip;
   final VoidCallback onTap;
 
   const _HeaderIconBtn({
     required this.icon,
+    this.iconColor,
     required this.tooltip,
     required this.onTap,
   });
@@ -839,15 +991,18 @@ class _HeaderIconBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: tooltip,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+      splashRadius: 18,
       icon: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(color: LevTheme.levBorder),
           boxShadow: LevTheme.softShadow,
         ),
-        child: Icon(icon, size: 16, color: LevTheme.levTextDark),
+        child: Icon(icon, size: 15, color: iconColor ?? LevTheme.levTextDark),
       ),
       onPressed: onTap,
     );

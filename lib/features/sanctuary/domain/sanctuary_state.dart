@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum LevEmotion {
   peaceful,
   happy,
@@ -126,6 +128,19 @@ class SanctuaryState {
       case LevGrowthStage.youngTree: return '🌳';
       case LevGrowthStage.adultTree: return '🌲';
       case LevGrowthStage.forestSpirit: return '✨';
+    }
+  }
+
+  IconData get stageMaterialIcon {
+    switch (growthStage) {
+      case LevGrowthStage.seed: return Icons.radio_button_unchecked_rounded;
+      case LevGrowthStage.sprout: return Icons.spa_rounded;
+      case LevGrowthStage.seedling: return Icons.eco_rounded;
+      case LevGrowthStage.youngPlant: return Icons.park_outlined;
+      case LevGrowthStage.vibrantPlant: return Icons.local_florist_rounded;
+      case LevGrowthStage.youngTree: return Icons.forest_outlined;
+      case LevGrowthStage.adultTree: return Icons.forest_rounded;
+      case LevGrowthStage.forestSpirit: return Icons.auto_awesome_rounded;
     }
   }
 

@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum MoodLevel {
   disconnected(1, 'Desconectado', '🌫️'),
   overwhelmed(2, 'Agobiado', '🌧️'),
@@ -9,6 +11,36 @@ enum MoodLevel {
   final int score;
   final String label;
   final String emoji;
+
+  IconData get icon {
+    switch (this) {
+      case MoodLevel.disconnected:
+        return Icons.cloud_outlined;
+      case MoodLevel.overwhelmed:
+        return Icons.waves_rounded;
+      case MoodLevel.calm:
+        return Icons.spa_rounded;
+      case MoodLevel.grateful:
+        return Icons.favorite_rounded;
+      case MoodLevel.radiant:
+        return Icons.wb_sunny_rounded;
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case MoodLevel.disconnected:
+        return const Color(0xFF94A3B8);
+      case MoodLevel.overwhelmed:
+        return const Color(0xFF5C85A0);
+      case MoodLevel.calm:
+        return const Color(0xFF6A994E);
+      case MoodLevel.grateful:
+        return const Color(0xFFE57373);
+      case MoodLevel.radiant:
+        return const Color(0xFFE5A93C);
+    }
+  }
 
   static MoodLevel fromScore(int score) {
     return MoodLevel.values.firstWhere(

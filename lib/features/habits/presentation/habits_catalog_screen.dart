@@ -60,7 +60,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
     _openHabitTimer(randomHabit);
   }
 
-  void _openEmotion(String category, String emoji) {
+  void _openEmotion(String category, [String emoji = '']) {
     HapticsHelper.selection();
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -106,7 +106,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🎲', style: TextStyle(fontSize: 14)),
+                    const Icon(Icons.shuffle_rounded, size: 15, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
                       'Sorpréndeme',
@@ -231,7 +231,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                     physics: const BouncingScrollPhysics(),
                     children: [
                       _buildMinigameQuickCard(
-                        emoji: '🫧',
+                        icon: Icons.bubble_chart_rounded,
                         title: 'Burbujas Pop',
                         subtitle: 'Descarga de tensión',
                         color: const Color(0xFFD0E8F2),
@@ -240,7 +240,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       ),
                       const SizedBox(width: 12),
                       _buildMinigameQuickCard(
-                        emoji: '🪨',
+                        icon: Icons.landscape_rounded,
                         title: 'Arena Zen',
                         subtitle: 'Rastreo y grounding',
                         color: const Color(0xFFF2ECE1),
@@ -249,7 +249,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       ),
                       const SizedBox(width: 12),
                       _buildMinigameQuickCard(
-                        emoji: '✨',
+                        icon: Icons.auto_awesome_rounded,
                         title: 'Foco de Luz',
                         subtitle: 'Calma visual EMDR',
                         color: const Color(0xFF243B33),
@@ -301,49 +301,49 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       category: 'Doomscrolling / Sobrecarga Digital',
                       title: 'Sobrecarga',
                       subtitle: 'Pantallas & TikTok',
-                      emoji: '📱',
+                      icon: Icons.smartphone_rounded,
                       count: HabitsDatabase.getByCategory('Doomscrolling / Sobrecarga Digital').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Ansiedad / Ataque de Pánico / Agobio',
                       title: 'Ansiedad',
                       subtitle: 'Pecho apretado',
-                      emoji: '🌊',
+                      icon: Icons.waves_rounded,
                       count: HabitsDatabase.getByCategory('Ansiedad / Ataque de Pánico / Agobio').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Tristeza / Soledad / Desgano',
                       title: 'Tristeza',
                       subtitle: 'Soledad y desgano',
-                      emoji: '🕯️',
+                      icon: Icons.spa_rounded,
                       count: HabitsDatabase.getByCategory('Tristeza / Soledad / Desgano').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Frustración / Enojo / Irritabilidad',
                       title: 'Frustración',
                       subtitle: 'Rabia y tensión',
-                      emoji: '⚡',
+                      icon: Icons.bolt_rounded,
                       count: HabitsDatabase.getByCategory('Frustración / Enojo / Irritabilidad').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Insomnio / Rumiación Nocturna',
                       title: 'Insomnio',
                       subtitle: 'Mente no para',
-                      emoji: '🌙',
+                      icon: Icons.bedtime_rounded,
                       count: HabitsDatabase.getByCategory('Insomnio / Rumiación Nocturna').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Culpa / Autocrítica / Impostor',
                       title: 'Culpa',
                       subtitle: 'Autocrítica dura',
-                      emoji: '🪞',
+                      icon: Icons.favorite_border_rounded,
                       count: HabitsDatabase.getByCategory('Culpa / Autocrítica / Impostor').length,
                     ),
                     _buildEmotionSquare(
                       category: 'Bloqueo / Procrastinación / Parálisis TDAH',
                       title: 'Bloqueo',
                       subtitle: 'Parálisis al iniciar',
-                      emoji: '🧱',
+                      icon: Icons.lock_open_rounded,
                       count: HabitsDatabase.getByCategory('Bloqueo / Procrastinación / Parálisis TDAH').length,
                     ),
                     _buildFavoritesSquare(),
@@ -358,7 +358,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
   }
 
   Widget _buildMinigameQuickCard({
-    required String emoji,
+    required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
@@ -387,12 +387,19 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
           children: [
             Row(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 20)),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark ? Colors.white12 : accent.withValues(alpha: 0.12),
+                  ),
+                  child: Icon(icon, size: 18, color: accent),
+                ),
                 const Spacer(),
                 Icon(Icons.play_circle_fill_rounded, size: 18, color: accent),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               title,
               maxLines: 1,
@@ -422,7 +429,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
     required String category,
     required String title,
     required String subtitle,
-    required String emoji,
+    required IconData icon,
     required int count,
   }) {
     final bgColor = LevTheme.getEmotionBgColor(category);
@@ -431,7 +438,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _openEmotion(category, emoji),
+        onTap: () => _openEmotion(category),
         borderRadius: LevTheme.squareRadius,
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -457,7 +464,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Center(
-                      child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                      child: Icon(icon, size: 22, color: accentColor),
                     ),
                   ),
                   Container(
@@ -553,7 +560,7 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Center(
-                      child: Text('⭐', style: TextStyle(fontSize: 22)),
+                      child: Icon(Icons.star_rounded, size: 24, color: Color(0xFFB88235)),
                     ),
                   ),
                   Container(
@@ -629,7 +636,9 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                       color: bgColor,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(child: Text('🌱', style: TextStyle(fontSize: 18))),
+                    child: Center(
+                      child: Icon(habit.icon, size: 20, color: LevTheme.levMatchaDark),
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

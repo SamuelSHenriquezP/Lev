@@ -182,12 +182,14 @@ class _CrisisSosModalState extends State<CrisisSosModal>
                   const Icon(Icons.phone_rounded,
                       size: 18, color: LevTheme.levTextDark),
                   const SizedBox(width: 8),
-                  Text(
-                    'Otras líneas de apoyo (24/7):',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levTextDark,
+                  Expanded(
+                    child: Text(
+                      'Otras líneas de apoyo (24/7):',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
                     ),
                   ),
                 ],

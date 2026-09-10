@@ -77,9 +77,17 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '🌱 Tarjeta de afrontamiento guardada en tu santuario.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          content: Row(
+            children: [
+              const Icon(Icons.bookmark_added_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tarjeta de afrontamiento guardada en tu santuario.',
+                  style: GoogleFonts.plusJakartaSans(color: Colors.white),
+                ),
+              ),
+            ],
           ),
           backgroundColor: LevTheme.levMatchaDark,
           behavior: SnackBarBehavior.floating,
@@ -154,7 +162,7 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
-                    _currentStep == 2 ? 'Guardar Tarjeta Compasiva 🪷' : 'Continuar',
+                    _currentStep == 2 ? 'Guardar Tarjeta Compasiva' : 'Continuar',
                   ),
                 ),
               ),
@@ -211,7 +219,15 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
             ),
             child: Row(
               children: [
-                const Text('💭', style: TextStyle(fontSize: 24)),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.psychology_rounded, size: 22, color: LevTheme.levMatchaDark),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -310,7 +326,15 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
                   ),
                   child: Row(
                     children: [
-                      Text(item.emoji, style: const TextStyle(fontSize: 22)),
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(item.icon, size: 22, color: LevTheme.levTextDark),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -360,7 +384,15 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('🌱', style: TextStyle(fontSize: 24)),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: LevTheme.levMatcha,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.spa_rounded, color: Colors.white, size: 20),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

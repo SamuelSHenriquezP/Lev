@@ -90,7 +90,7 @@ class CompanionController extends Notifier<CompanionState> {
     final lower = text.toLowerCase();
     String levReply;
     MicroHabit? habit;
-    List<String> nextReplies = ['Hacer la pausa (60s)', 'Prefiero solo charlar', 'Gracias, Lev 💛'];
+    List<String> nextReplies = ['Hacer la pausa (60s)', 'Prefiero solo charlar', 'Gracias, Lev'];
 
     if (lower.contains('dormir') || lower.contains('insomnio') || lower.contains('desvelo') || lower.contains('no puedo dormir')) {
       ref.read(sanctuaryProvider.notifier).putToSleep();

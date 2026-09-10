@@ -204,7 +204,7 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                         color: bgColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const Text('💬', style: TextStyle(fontSize: 16)),
+                      child: Icon(Icons.lightbulb_outline_rounded, size: 18, color: accentColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -304,10 +304,7 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
-                      child: Text(
-                        _getHabitEmoji(habit.id),
-                        style: const TextStyle(fontSize: 20),
-                      ),
+                      child: Icon(habit.icon, size: 20, color: accentColor),
                     ),
                   ),
                   Container(
@@ -367,15 +364,5 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
     );
   }
 
-  String _getHabitEmoji(String id) {
-    if (id.startsWith('doom')) return '📱';
-    if (id.startsWith('anx')) return '🌊';
-    if (id.startsWith('sad')) return '🕯️';
-    if (id.startsWith('ang')) return '⚡';
-    if (id.startsWith('slp')) return '🌙';
-    if (id.startsWith('crt')) return '🪞';
-    if (id.startsWith('blk')) return '🧱';
-    return '🌱';
-  }
 }
 

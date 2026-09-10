@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Entidad que modela un microhábito consciente con interacción dinámica.
 class MicroHabit {
   final String id;
@@ -102,6 +104,8 @@ class MicroHabit {
     if (category.contains('Bloqueo')) return LevTaskAction.tensionShake;
     return LevTaskAction.breathing;
   }
+
+  IconData get icon => taskAction.icon;
 }
 
 /// Tipo de interacción del microhábito — define qué widget se muestra al usuario.
@@ -139,6 +143,20 @@ enum LevTaskAction {
   final String badgeEmoji;
 
   const LevTaskAction({required this.label, required this.badgeEmoji});
+
+  IconData get icon {
+    switch (this) {
+      case LevTaskAction.breathing: return Icons.air_rounded;
+      case LevTaskAction.eyeRest: return Icons.visibility_rounded;
+      case LevTaskAction.chestStretch: return Icons.self_improvement_rounded;
+      case LevTaskAction.soothingTouch: return Icons.spa_rounded;
+      case LevTaskAction.coldSplash: return Icons.water_drop_rounded;
+      case LevTaskAction.tensionShake: return Icons.bolt_rounded;
+      case LevTaskAction.sleepDrift: return Icons.bedtime_rounded;
+      case LevTaskAction.grounding: return Icons.park_rounded;
+      case LevTaskAction.warmTeaHold: return Icons.local_cafe_rounded;
+    }
+  }
 }
 
 class HabitCategoryInfo {
@@ -153,4 +171,15 @@ class HabitCategoryInfo {
     required this.description,
     required this.shortName,
   });
+
+  IconData get icon {
+    if (name.contains('Doomscrolling') || name.contains('Pantallas')) return Icons.smartphone_rounded;
+    if (name.contains('Ansiedad')) return Icons.waves_rounded;
+    if (name.contains('Tristeza')) return Icons.spa_rounded;
+    if (name.contains('Frustración') || name.contains('Enojo')) return Icons.bolt_rounded;
+    if (name.contains('Insomnio')) return Icons.bedtime_rounded;
+    if (name.contains('Culpa') || name.contains('Autocrítica')) return Icons.favorite_border_rounded;
+    if (name.contains('Bloqueo')) return Icons.lock_open_rounded;
+    return Icons.eco_rounded;
+  }
 }

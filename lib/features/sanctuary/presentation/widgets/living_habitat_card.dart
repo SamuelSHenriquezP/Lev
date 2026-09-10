@@ -32,16 +32,16 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
     super.dispose();
   }
 
-  String _getTimeOfDayBadge(SanctuaryTimeOfDay time) {
+  ({String label, IconData icon}) _getTimeOfDayBadge(SanctuaryTimeOfDay time) {
     switch (time) {
       case SanctuaryTimeOfDay.morning:
-        return '☀️ Mañana';
+        return (label: 'Mañana', icon: Icons.wb_sunny_rounded);
       case SanctuaryTimeOfDay.afternoon:
-        return '🌤️ Tarde';
+        return (label: 'Tarde', icon: Icons.wb_cloudy_rounded);
       case SanctuaryTimeOfDay.dusk:
-        return '🌅 Atardecer';
+        return (label: 'Atardecer', icon: Icons.nights_stay_outlined);
       case SanctuaryTimeOfDay.night:
-        return '🌙 Noche';
+        return (label: 'Noche', icon: Icons.nights_stay_rounded);
     }
   }
 
@@ -101,27 +101,36 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _getTimeOfDayBadge(sanctuary.timeOfDay),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: LevTheme.levTextDark,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '• ${sanctuary.sanctuaryLevelEmoji} ${sanctuary.sanctuaryLevelName}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: LevTheme.levMatchaDark,
-                      ),
-                    ),
-                  ],
+                child: Builder(
+                  builder: (context) {
+                    final timeInfo = _getTimeOfDayBadge(sanctuary.timeOfDay);
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(timeInfo.icon, size: 14, color: LevTheme.levMatchaDark),
+                        const SizedBox(width: 5),
+                        Text(
+                          timeInfo.label,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: LevTheme.levTextDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(sanctuary.stageMaterialIcon, size: 13, color: LevTheme.levMatchaDark),
+                        const SizedBox(width: 4),
+                        Text(
+                          sanctuary.sanctuaryLevelName,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: LevTheme.levMatchaDark,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -140,7 +149,8 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🌱 ', style: TextStyle(fontSize: 13)),
+                    const Icon(Icons.spa_rounded, size: 14, color: LevTheme.levMatchaDark),
+                    const SizedBox(width: 5),
                     Text(
                       'En calma',
                       style: GoogleFonts.plusJakartaSans(
@@ -196,9 +206,10 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                     ),
                     child: Row(
                       children: [
-                        Text(
-                          sanctuary.isPetting ? '💛' : '💬',
-                          style: const TextStyle(fontSize: 16),
+                        Icon(
+                          sanctuary.isPetting ? Icons.favorite_rounded : Icons.chat_bubble_outline_rounded,
+                          size: 16,
+                          color: sanctuary.isPetting ? LevTheme.levPeach : LevTheme.levMatchaDark,
                         ),
                         const SizedBox(width: 10),
                         Expanded(

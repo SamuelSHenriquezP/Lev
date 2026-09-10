@@ -8,6 +8,7 @@ import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
+import 'package:lev/features/companion/presentation/companion_chat_screen.dart';
 
 /// Botón flotante de Lev + overlay emergente de chat.
 /// Se superpone sobre cualquier pantalla sin navegar.
@@ -331,6 +332,28 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Pantalla completa',
+                  icon: const Icon(Icons.open_in_full_rounded, size: 18, color: LevTheme.levMatchaDark),
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 18,
+                  onPressed: () {
+                    _close();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CompanionChatScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Cerrar chat',
+                  icon: const Icon(Icons.close_rounded, size: 18, color: LevTheme.levTextMuted),
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 18,
+                  onPressed: _close,
+                ),
               ],
             ),
           ),
@@ -391,17 +414,22 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
   }
 
   Widget _buildQuickSuggestions() {
-    final suggestions = ['Me siento ansioso', 'Estoy triste', 'No puedo empezar', 'Quiero hacer una pausa'];
+    final suggestions = [
+      (label: 'Me siento ansioso', icon: Icons.air_rounded),
+      (label: 'Estoy triste', icon: Icons.cloud_outlined),
+      (label: 'No puedo empezar', icon: Icons.hourglass_top_rounded),
+      (label: 'Quiero hacer una pausa', icon: Icons.spa_rounded),
+    ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
       child: Row(
-        children: suggestions.map((s) {
+        children: suggestions.map((item) {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
               onTap: () {
-                _textController.text = s;
+                _textController.text = item.label;
                 _sendMessage();
               },
               borderRadius: LevTheme.pillRadius,
@@ -412,13 +440,20 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
                   borderRadius: LevTheme.pillRadius,
                   border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.3)),
                 ),
-                child: Text(
-                  s,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: LevTheme.levMatchaDark,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(item.icon, size: 14, color: LevTheme.levMatchaDark),
+                    const SizedBox(width: 6),
+                    Text(
+                      item.label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

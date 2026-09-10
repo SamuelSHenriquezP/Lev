@@ -495,8 +495,18 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
         children: [
           Row(
             children: [
-              Text(habit.iconEmoji, style: const TextStyle(fontSize: 22)),
-              const SizedBox(width: 8),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(habit.icon, size: 20, color: LevTheme.levMatchaDark),
+                ),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   habit.title,
