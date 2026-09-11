@@ -319,7 +319,7 @@ class SanctuaryState {
 
   SanctuaryState({
     required this.careDrops,
-    int? experiencePoints,
+    this.experiencePoints = 0,
     this.bloomingFlowers = 3,
     this.emotion = LevEmotion.peaceful,
     this.dialogue = 'Respira hondo...',
@@ -332,8 +332,7 @@ class SanctuaryState {
     this.activeAccessory = LevAccessory.none,
     Set<LevAccessory>? unlockedAccessories,
     this.circadianOverride,
-  })  : experiencePoints = experiencePoints ?? (careDrops * 10),
-        unlockedDecors = unlockedDecors ?? const {},
+  })  : unlockedDecors = unlockedDecors ?? const {},
         activeDecors = activeDecors ?? const {},
         unlockedAccessories = unlockedAccessories ?? const {LevAccessory.none};
 

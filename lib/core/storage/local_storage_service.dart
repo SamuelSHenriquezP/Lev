@@ -19,11 +19,23 @@ class LocalStorageService {
 
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
-    // Si es un inicio nuevo (0 hábitos y 15 gotas del template anterior), ajustar a 0
-    if ((getCompletedHabitsCount() == 0) && (_prefs?.getInt(_keyCareDrops) == 15)) {
+    // Si la app tenía 15 gotas por defecto de versiones anteriores, normalizar a cero absoluto
+    if (_prefs?.getInt(_keyCareDrops) == 15 && (_prefs?.getInt(_keyExperiencePoints) == 150 || _prefs?.getInt(_keyExperiencePoints) == null)) {
       await _prefs?.setInt(_keyCareDrops, 0);
       await _prefs?.setInt(_keyExperiencePoints, 0);
     }
+  }
+
+  /// Limpieza total para reiniciar desde cero (Semilla)
+  static Future<void> resetAllProgress() async {
+    await _prefs?.setInt(_keyCareDrops, 0);
+    await _prefs?.setInt(_keyExperiencePoints, 0);
+    await _prefs?.setStringList(_keyUnlockedDecors, []);
+    await _prefs?.setStringList(_keyActiveDecors, []);
+    await _prefs?.remove(_keyCompletedHabitIds);
+    await _prefs?.setInt(_keyCompletedHabitsCount, 0);
+    await _prefs?.setString('lev_active_accessory', 'none');
+    await _prefs?.setStringList('lev_unlocked_accessories', ['none']);
   }
 
   static SharedPreferences get prefs {

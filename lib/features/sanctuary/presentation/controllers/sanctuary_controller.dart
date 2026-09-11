@@ -604,18 +604,56 @@ class SanctuaryController extends Notifier<SanctuaryState> {
 
   Future<void> setCareDrops(int drops) async {
     await LocalStorageService.saveCareDropsRaw(drops);
-    final xp = drops * 10;
+    state = state.copyWith(careDrops: drops);
+  }
+
+  Future<void> setExperiencePoints(int xp) async {
     await LocalStorageService.saveExperiencePointsRaw(xp);
     final prevStage = state.growthStage;
-    final tempState = state.copyWith(careDrops: drops, experiencePoints: xp);
+    final tempState = state.copyWith(experiencePoints: xp);
     final newStage = tempState.growthStage;
     final justLeveledUp = newStage.index != prevStage.index;
 
     state = state.copyWith(
-      careDrops: drops,
       experiencePoints: xp,
       justLeveledUp: justLeveledUp,
       dialogue: justLeveledUp ? _getLevelUpDialogue(newStage) : state.dialogue,
+    );
+  }
+
+  Future<void> setStage(LevGrowthStage stage) async {
+    final minXp = switch (stage) {
+      LevGrowthStage.seed => 0,
+      LevGrowthStage.sprout => 50,
+      LevGrowthStage.seedling => 100,
+      LevGrowthStage.youngPlant => 200,
+      LevGrowthStage.vibrantPlant => 350,
+      LevGrowthStage.youngTree => 550,
+      LevGrowthStage.adultTree => 800,
+      LevGrowthStage.forestSpirit => 1200,
+    };
+    await setExperiencePoints(minXp);
+  }
+
+  /// Restablecer todo a cero absoluto (Semilla)
+  Future<void> resetAllToZero() async {
+    await LocalStorageService.saveCareDropsRaw(0);
+    await LocalStorageService.saveExperiencePointsRaw(0);
+    await LocalStorageService.saveUnlockedDecorIds([]);
+    await LocalStorageService.saveActiveDecorIds([]);
+    await LocalStorageService.saveActiveAccessoryId(LevAccessory.none.id);
+    await LocalStorageService.saveUnlockedAccessoryIds([LevAccessory.none.id]);
+    await HapticsHelper.medium();
+
+    state = state.copyWith(
+      careDrops: 0,
+      experiencePoints: 0,
+      unlockedDecors: {},
+      activeDecors: {},
+      activeAccessory: LevAccessory.none,
+      unlockedAccessories: {LevAccessory.none},
+      emotion: LevEmotion.peaceful,
+      dialogue: 'Comenzamos desde cero. Como una pequeña semilla llena de vida y serenidad.',
     );
   }
 }

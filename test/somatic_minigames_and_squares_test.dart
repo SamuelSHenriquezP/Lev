@@ -144,7 +144,7 @@ void main() {
       expect(find.text('Pausas de 60 segundos'), findsOneWidget);
     });
 
-    testWidgets('CompanionChatScreen renders reactive Lev header and message cards', (tester) async {
+    testWidgets('CompanionChatScreen renders clean conversation interface without distracting Lev avatar', (tester) async {
       await tester.binding.setSurfaceSize(const Size(430, 932));
       await tester.pumpWidget(
         const ProviderScope(
@@ -155,8 +155,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Lev'), findsAtLeastNWidgets(1));
-      expect(find.text('Toca a Lev para acariciarlo 🌿'), findsOneWidget);
+      expect(find.text('Espacio de Diálogo'), findsOneWidget);
+      expect(find.text('Toca a Lev para acariciarlo 🌿'), findsNothing);
       expect(find.byType(TextField), findsOneWidget);
     });
 

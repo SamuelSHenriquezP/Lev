@@ -9,7 +9,6 @@ import 'package:lev/features/habits/domain/micro_habit.dart';
 import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
-import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
 import '../../../core/widgets/pin_protection_gate.dart';
 
 class CompanionChatScreen extends ConsumerStatefulWidget {
@@ -19,25 +18,12 @@ class CompanionChatScreen extends ConsumerStatefulWidget {
   ConsumerState<CompanionChatScreen> createState() => _CompanionChatScreenState();
 }
 
-class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
-    with SingleTickerProviderStateMixin {
+class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late AnimationController _levAnimController;
-  bool _isHeaderExpanded = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _levAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3200),
-    )..repeat();
-  }
 
   @override
   void dispose() {
-    _levAnimController.dispose();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -97,73 +83,53 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
           scrolledUnderElevation: 0,
           titleSpacing: 16,
           title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: LevTheme.levMatchaLight,
-                border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.35), width: 1.5),
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: LevTheme.levMatchaLight,
+                  border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.35), width: 1.5),
+                ),
+                child: const Center(
+                  child: Icon(Icons.forum_outlined, color: LevTheme.levMatchaDark, size: 18),
+                ),
               ),
-              child: const Center(
-                child: Icon(Icons.spa_rounded, color: LevTheme.levMatchaDark, size: 20),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Lev',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: LevTheme.levTextDark,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Espacio de Diálogo',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: LevTheme.levTextDark,
+                      ),
                     ),
-                  ),
-                  Text(
-                    _getStatusSubtitle(sanctuaryState.emotion),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      color: LevTheme.levMatchaDark,
-                      fontWeight: FontWeight.w600,
+                    Text(
+                      _getStatusSubtitle(sanctuaryState.emotion),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: LevTheme.levMatchaDark,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isHeaderExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-              color: LevTheme.levTextMuted,
-            ),
-            tooltip: _isHeaderExpanded ? 'Minimizar a Lev' : 'Mostrar a Lev',
-            onPressed: () {
-              HapticsHelper.selection();
-              setState(() {
-                _isHeaderExpanded = !_isHeaderExpanded;
-              });
-            },
+            ],
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- TARJETA COMPAÑERO REACTIVA (LEV VIVO EN 60 FPS) ---
-            if (_isHeaderExpanded)
-              _buildReactiveLevHeader(sanctuaryState),
-
-            // --- LISTA DE MENSAJES ESTILO TARJETAS ---
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // --- LISTA DE MENSAJES ESTILO TARJETAS ---
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -293,99 +259,6 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
         ),
       ),
     ));
-  }
-
-  /// Tarjeta compañera interactiva en la parte superior donde Lev vive y reacciona
-  Widget _buildReactiveLevHeader(SanctuaryState sanctuary) {
-    final statusColor = _getStatusColor(sanctuary.emotion);
-    final statusText = _getStatusBadgeText(sanctuary.emotion);
-
-    return GestureDetector(
-      onTap: () => ref.read(sanctuaryProvider.notifier).petLev(),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.88),
-          borderRadius: LevTheme.squareRadius,
-          border: Border.all(color: statusColor.withValues(alpha: 0.22)),
-          boxShadow: LevTheme.softShadow,
-        ),
-        child: Row(
-          children: [
-            // Lev animado en vector a 60 FPS
-            SizedBox(
-              width: 86,
-              height: 86,
-              child: AnimatedBuilder(
-                animation: _levAnimController,
-                builder: (context, child) {
-                  return CustomPaint(
-                    size: const Size(86, 86),
-                    painter: LivingSeedSpiritPainter(
-                      animationValue: _levAnimController.value,
-                      emotion: sanctuary.emotion,
-                      isPetting: sanctuary.isPetting,
-                      sizeScale: 0.82,
-                      leafWrapProgress: sanctuary.emotion == LevEmotion.sheltered ? 1.0 : 0.0,
-                      sleepProgress: sanctuary.emotion == LevEmotion.sleeping ? 1.0 : 0.0,
-                      breathingProgress: sanctuary.emotion == LevEmotion.breathing ? 1.0 : 0.0,
-                      happyProgress: sanctuary.emotion == LevEmotion.happy ? 1.0 : 0.0,
-                      jumpProgress: sanctuary.emotion == LevEmotion.joyJump ? 1.0 : 0.0,
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Estado y mensaje sutil
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: LevTheme.pillRadius,
-                    ),
-                    child: Text(
-                      statusText,
-                      style: GoogleFonts.quicksand(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    sanctuary.dialogue,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
-                      height: 1.35,
-                      color: LevTheme.levTextDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Toca a Lev para acariciarlo 🌿',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.5,
-                      color: LevTheme.levTextMuted,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildMessageItem(ChatMessage msg) {
@@ -589,50 +462,6 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
         return 'Descansando a tu lado';
       case LevEmotion.peaceful:
         return 'Aquí contigo • Sin juicios';
-    }
-  }
-
-  String _getStatusBadgeText(LevEmotion emotion) {
-    switch (emotion) {
-      case LevEmotion.breathing:
-      case LevEmotion.anxious:
-        return 'Lev respira contigo';
-      case LevEmotion.sleeping:
-      case LevEmotion.tired:
-        return 'Lev descansa en silencio';
-      case LevEmotion.sheltered:
-      case LevEmotion.sad:
-        return 'Lev te cobija con su hojita';
-      case LevEmotion.curious:
-        return 'Lev mira con curiosidad';
-      case LevEmotion.joyJump:
-      case LevEmotion.happy:
-      case LevEmotion.celebrating:
-        return 'Lev celebra tu tranquilidad';
-      case LevEmotion.peaceful:
-        return 'Lev está en calma a tu lado';
-    }
-  }
-
-  Color _getStatusColor(LevEmotion emotion) {
-    switch (emotion) {
-      case LevEmotion.breathing:
-      case LevEmotion.anxious:
-        return const Color(0xFF6A994E);
-      case LevEmotion.sleeping:
-      case LevEmotion.tired:
-        return const Color(0xFF5C6B73);
-      case LevEmotion.sheltered:
-      case LevEmotion.sad:
-        return const Color(0xFF5B7065);
-      case LevEmotion.curious:
-        return const Color(0xFF3D7A80);
-      case LevEmotion.joyJump:
-      case LevEmotion.happy:
-      case LevEmotion.celebrating:
-        return const Color(0xFFC67D28);
-      case LevEmotion.peaceful:
-        return LevTheme.levMatchaDark;
     }
   }
 }

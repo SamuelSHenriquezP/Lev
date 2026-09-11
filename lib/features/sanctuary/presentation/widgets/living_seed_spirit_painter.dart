@@ -232,8 +232,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
 
     final tiredFloat = (4.0 + sin(cycle * 0.8) * 3.5) * effTired;
 
-    final celebrateSway = sin(cycle * 2.8) * 0.10 * effCelebrate;
-    final celebrateFloat = -sin(cycle * 2.8).abs() * 8.0 * effCelebrate;
+    // Celebración: curvatura armónica suave C∞ que elimina cualquier salto o movimiento entrecortado
+    final celebrateSway = sin(cycle * 1.6) * 0.08 * effCelebrate;
+    final celebrateCycle = sin(cycle * 3.0);
+    final celebrateFloat = -(celebrateCycle * celebrateCycle) * 14.0 * effCelebrate;
+    final celebrateScaleY = (celebrateCycle * celebrateCycle) * 0.07 * effCelebrate;
+    final celebrateScaleX = -(celebrateScaleY * 0.45);
 
     // --- 4. CAPA DE SALTO ELÁSTICO DE ALEGRÍA INDIVIDUALIZADO POR ETAPA (SIN CORTES) ---
     double jumpFloatY = 0.0;
@@ -323,8 +327,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
         sadFloat + tiredFloat + celebrateFloat + jumpFloatY + taskFloatY + taskShakeY + touchFloatY;
     final finalSway = baseSway + sleepSway + happySway + curiousSway + sadSway +
         celebrateSway + jumpSway + taskSway + touchSway;
-    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY + touchStretchY + pettingSquash;
-    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX + touchStretchX - pettingSquash;
+    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY + touchStretchY + pettingSquash + celebrateScaleY;
+    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX + touchStretchX - pettingSquash + celebrateScaleX;
 
     canvas.save();
     canvas.translate(centerX + anxiousShakeX + taskShakeX, centerY + finalFloatY + anxiousShakeY);
@@ -373,7 +377,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effCurious,
       effTired,
       effAnxious,
-      touchGazeOffset: Offset(touchX * 3.8 * touchInfluence, touchY * 2.8 * touchInfluence),
+      touchGazeOffset: Offset(touchX * 5.5 * touchInfluence, touchY * 4.0 * touchInfluence),
       isTouchingLev: isTouchingLev,
     );
 

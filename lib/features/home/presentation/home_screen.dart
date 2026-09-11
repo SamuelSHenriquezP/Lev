@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,6 +26,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
+  Offset? _touchPosition;
+  bool _isFingerActive = false;
+  DateTime _lastPetTime = DateTime.fromMillisecondsSinceEpoch(0);
+
   late final AnimationController _ambientController;
   late final AnimationController _wrapController;
   late final AnimationController _sleepController;
@@ -329,57 +334,107 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             // --- ESPACIO CENTRAL: LEV COMO PROTAGONISTA ---
             Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticsHelper.selection();
-                  controller.petLev();
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Canvas continuo a 60 FPS con todas las animaciones y sprites
-                    AnimatedBuilder(
-                      animation: Listenable.merge([
-                        _ambientController,
-                        _wrapController,
-                        _sleepController,
-                        _happyController,
-                        _breathingController,
-                        _jumpController,
-                        _curiousController,
-                        _sadController,
-                        _anxiousController,
-                        _tiredController,
-                        _celebrateController,
-                      ]),
-                      builder: (context, child) {
-                        return CustomPaint(
-                          size: Size.infinite,
-                          painter: SanctuaryPondPainter(
-                            animationValue: _ambientController.value,
-                            timeOfDay: sanctuary.effectiveTimeOfDay,
-                            emotion: sanctuary.emotion,
-                            bloomingFlowers: sanctuary.bloomingFlowers,
-                            careDrops: sanctuary.careDrops,
-                            isPetting: sanctuary.isPetting,
-                            growthStage: sanctuary.growthStage,
-                            growthFactor: sanctuary.growthFactor,
-                            activeDecors: sanctuary.activeDecors,
-                            activeAccessory: sanctuary.activeAccessory,
-                            leafWrapProgress: _wrapController.value,
-                            sleepProgress: _sleepController.value,
-                            happyProgress: _happyController.value,
-                            breathingProgress: _breathingController.value,
-                            jumpProgress: _jumpController.value,
-                            curiousProgress: _curiousController.value,
-                            sadProgress: _sadController.value,
-                            anxiousProgress: _anxiousController.value,
-                            tiredProgress: _tiredController.value,
-                            celebrateProgress: _celebrateController.value,
-                          ),
-                        );
-                      },
-                    ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final areaWidth = constraints.maxWidth;
+                  final areaHeight = constraints.maxHeight;
+                  final centerX = areaWidth * 0.5;
+                  final centerY = areaHeight * 0.48;
+
+                  Offset? normOffset;
+                  double touchDist = 999.0;
+                  if (_touchPosition != null && _isFingerActive) {
+                    final dx = _touchPosition!.dx - centerX;
+                    final dy = _touchPosition!.dy - centerY;
+                    touchDist = sqrt(dx * dx + dy * dy);
+                    normOffset = Offset(
+                      (dx / (areaWidth * 0.5)).clamp(-1.0, 1.0),
+                      (dy / (areaHeight * 0.48)).clamp(-1.0, 1.0),
+                    );
+                  }
+
+                  void handleTouch(Offset localPos) {
+                    setState(() {
+                      _touchPosition = localPos;
+                      _isFingerActive = true;
+                    });
+                    final dx = localPos.dx - centerX;
+                    final dy = localPos.dy - centerY;
+                    final dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 92.0) {
+                      final now = DateTime.now();
+                      if (now.difference(_lastPetTime).inMilliseconds > 400) {
+                        _lastPetTime = now;
+                        controller.petLev();
+                      }
+                    }
+                  }
+
+                  void handleTouchEnd() {
+                    setState(() {
+                      _isFingerActive = false;
+                      _touchPosition = null;
+                    });
+                  }
+
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onPanDown: (details) => handleTouch(details.localPosition),
+                    onPanUpdate: (details) => handleTouch(details.localPosition),
+                    onPanEnd: (_) => handleTouchEnd(),
+                    onPanCancel: () => handleTouchEnd(),
+                    onTapDown: (details) => handleTouch(details.localPosition),
+                    onTapUp: (_) => handleTouchEnd(),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Canvas continuo a 60 FPS con todas las animaciones y sprites
+                        AnimatedBuilder(
+                          animation: Listenable.merge([
+                            _ambientController,
+                            _wrapController,
+                            _sleepController,
+                            _happyController,
+                            _breathingController,
+                            _jumpController,
+                            _curiousController,
+                            _sadController,
+                            _anxiousController,
+                            _tiredController,
+                            _celebrateController,
+                          ]),
+                          builder: (context, child) {
+                            return CustomPaint(
+                              size: Size.infinite,
+                              painter: SanctuaryPondPainter(
+                                animationValue: _ambientController.value,
+                                timeOfDay: sanctuary.effectiveTimeOfDay,
+                                emotion: sanctuary.emotion,
+                                bloomingFlowers: sanctuary.bloomingFlowers,
+                                careDrops: sanctuary.careDrops,
+                                isPetting: sanctuary.isPetting,
+                                growthStage: sanctuary.growthStage,
+                                growthFactor: sanctuary.growthFactor,
+                                activeDecors: sanctuary.activeDecors,
+                                activeAccessory: sanctuary.activeAccessory,
+                                touchNormalizedOffset: normOffset,
+                                touchLocalPosition: _touchPosition,
+                                isFingerActive: _isFingerActive,
+                                touchDistance: touchDist,
+                                leafWrapProgress: _wrapController.value,
+                                sleepProgress: _sleepController.value,
+                                happyProgress: _happyController.value,
+                                breathingProgress: _breathingController.value,
+                                jumpProgress: _jumpController.value,
+                                curiousProgress: _curiousController.value,
+                                sadProgress: _sadController.value,
+                                anxiousProgress: _anxiousController.value,
+                                tiredProgress: _tiredController.value,
+                                celebrateProgress: _celebrateController.value,
+                              ),
+                            );
+                          },
+                        ),
 
                     // Indicador de modo respiración / calma
                     if (sanctuary.emotion == LevEmotion.breathing ||
@@ -490,8 +545,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
                     ),
-                  ],
-                ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
 
@@ -749,8 +806,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           return InkWell(
                             onTap: () {
                               HapticsHelper.selection();
-                              final dropsForXp = (minXp / 10).round();
-                              controller.setCareDrops(dropsForXp);
+                              controller.setExperiencePoints(minXp);
                               setModalState(() {});
                             },
                             borderRadius: LevTheme.cardRadius,
@@ -828,6 +884,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           color: LevTheme.levMatchaDark,
                         ),
                       ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: LevTheme.cardRadius),
+                              title: Text('¿Comenzar de cero?', style: GoogleFonts.quicksand(fontWeight: FontWeight.w700)),
+                              content: Text(
+                                'Lev volverá a ser una pequeña semilla (0 Gotas, 0 XP) para iniciar tu camino desde cero.',
+                                style: GoogleFonts.plusJakartaSans(fontSize: 13.5),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE57373)),
+                                  child: const Text('Sí, reiniciar', style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await controller.resetAllToZero();
+                            setModalState(() {});
+                          }
+                        },
+                        icon: const Icon(Icons.restart_alt_rounded, size: 16, color: LevTheme.levTextMuted),
+                        label: Text(
+                          'Comenzar desde cero (Semilla, 0 Gotas)',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5,
+                            color: LevTheme.levTextMuted,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
                   ] else if (activeTab == 1) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

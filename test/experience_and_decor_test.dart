@@ -364,20 +364,19 @@ void main() {
   group('Stage-Specific Independent Animations & Individual Reactions Suite', () {
     test('Every one of the 8 growth stages has unique pet dialogues and custom joy jump reactions', () async {
       final xpStages = [
-        (0, LevGrowthStage.seed, 'tierra'),
-        (50, LevGrowthStage.sprout, 'cotiledones'),
-        (100, LevGrowthStage.seedling, 'antena'),
-        (200, LevGrowthStage.youngPlant, 'orejitas'),
-        (350, LevGrowthStage.vibrantPlant, 'flores'),
-        (550, LevGrowthStage.youngTree, 'tronco'),
-        (800, LevGrowthStage.adultTree, 'corona'),
-        (1200, LevGrowthStage.forestSpirit, 'alas'),
+        (0, LevGrowthStage.seed),
+        (50, LevGrowthStage.sprout),
+        (100, LevGrowthStage.seedling),
+        (200, LevGrowthStage.youngPlant),
+        (350, LevGrowthStage.vibrantPlant),
+        (550, LevGrowthStage.youngTree),
+        (800, LevGrowthStage.adultTree),
+        (1200, LevGrowthStage.forestSpirit),
       ];
 
       for (final item in xpStages) {
         final xp = item.$1;
         final expectedStage = item.$2;
-        final expectedKeyword = item.$3;
 
         final container = ProviderContainer();
         final notifier = container.read(sanctuaryProvider.notifier);
@@ -424,6 +423,53 @@ void main() {
         // Rendering should execute without throwing any exception
         expect(() => painter.paint(canvas, size), returnsNormally);
       }
+    });
+
+    test('Decoupled Care Drops and XP: setCareDrops does not overwrite XP and setStage does not overwrite Care Drops', () async {
+      final container = ProviderContainer();
+      final notifier = container.read(sanctuaryProvider.notifier);
+
+      // Start with 5 drops and 250 XP (youngPlant)
+      await notifier.setCareDrops(5);
+      await notifier.setExperiencePoints(250);
+      expect(container.read(sanctuaryProvider).careDrops, equals(5));
+      expect(container.read(sanctuaryProvider).experiencePoints, equals(250));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.youngPlant));
+
+      // Alter care drops: XP must NOT change
+      await notifier.setCareDrops(18);
+      expect(container.read(sanctuaryProvider).careDrops, equals(18));
+      expect(container.read(sanctuaryProvider).experiencePoints, equals(250));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.youngPlant));
+
+      // Switch stage to Árbol Sabio (adultTree): Drops must NOT change
+      await notifier.setStage(LevGrowthStage.adultTree);
+      expect(container.read(sanctuaryProvider).careDrops, equals(18));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.adultTree));
+
+      // Reset all to zero: Drops = 0, XP = 0, Stage = Semilla
+      await notifier.resetAllToZero();
+      expect(container.read(sanctuaryProvider).careDrops, equals(0));
+      expect(container.read(sanctuaryProvider).experiencePoints, equals(0));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.seed));
+    });
+
+    test('LivingSeedSpiritPainter renders smooth celebration and finger tracking reactions', () {
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      const size = Size(380, 380);
+
+      // Render celebrating state with active finger tracking
+      final celebratingPainter = LivingSeedSpiritPainter(
+        animationValue: 0.5,
+        emotion: LevEmotion.celebrating,
+        growthStage: LevGrowthStage.forestSpirit,
+        isPetting: false,
+        celebrateProgress: 1.0,
+        isFingerActive: true,
+        touchNormalizedOffset: const Offset(-0.6, -0.4),
+      );
+      expect(() => celebratingPainter.paint(canvas, size), returnsNormally);
     });
   });
 }
