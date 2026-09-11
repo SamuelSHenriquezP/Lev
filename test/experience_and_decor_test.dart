@@ -9,6 +9,7 @@ import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
+import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_pond_painter.dart';
 
 void main() {
@@ -357,6 +358,72 @@ void main() {
       final updated = LocalStorageService.getGentleReminders();
       expect(updated['enabled'], isTrue);
       expect(updated['afternoon'], isFalse);
+    });
+  });
+
+  group('Stage-Specific Independent Animations & Individual Reactions Suite', () {
+    test('Every one of the 8 growth stages has unique pet dialogues and custom joy jump reactions', () async {
+      final xpStages = [
+        (0, LevGrowthStage.seed, 'tierra'),
+        (50, LevGrowthStage.sprout, 'cotiledones'),
+        (100, LevGrowthStage.seedling, 'antena'),
+        (200, LevGrowthStage.youngPlant, 'orejitas'),
+        (350, LevGrowthStage.vibrantPlant, 'flores'),
+        (550, LevGrowthStage.youngTree, 'tronco'),
+        (800, LevGrowthStage.adultTree, 'corona'),
+        (1200, LevGrowthStage.forestSpirit, 'alas'),
+      ];
+
+      for (final item in xpStages) {
+        final xp = item.$1;
+        final expectedStage = item.$2;
+        final expectedKeyword = item.$3;
+
+        final container = ProviderContainer();
+        final notifier = container.read(sanctuaryProvider.notifier);
+        await LocalStorageService.saveExperiencePointsRaw(xp);
+        container.read(sanctuaryProvider.notifier).state = container.read(sanctuaryProvider).copyWith(
+          experiencePoints: xp,
+          emotion: LevEmotion.peaceful,
+        );
+
+        expect(container.read(sanctuaryProvider).growthStage, equals(expectedStage));
+
+        // Test Petting dialogue belongs to stage dialogue bank
+        await notifier.petLev();
+        final petDiag = container.read(sanctuaryProvider).dialogue;
+        final expectedStageDialogues = SanctuaryController.getStagePetDialogues(expectedStage);
+        expect(expectedStageDialogues.contains(petDiag), isTrue,
+            reason: 'Stage $expectedStage should produce dialogue from its dedicated bank, got: $petDiag');
+
+        // Test Joy Jump dialogue matches stage-specific cry
+        await notifier.triggerJoyJump();
+        final jumpDiag = container.read(sanctuaryProvider).dialogue;
+        expect(jumpDiag, equals(SanctuaryController.getStageJoyDialogue(expectedStage)));
+
+        container.dispose();
+      }
+    });
+
+    test('LivingSeedSpiritPainter renders cleanly across all 8 stages with touch and petting interactions', () {
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      const size = Size(380, 380);
+
+      for (final stage in LevGrowthStage.values) {
+        final painter = LivingSeedSpiritPainter(
+          animationValue: 0.35,
+          emotion: LevEmotion.happy,
+          growthStage: stage,
+          isPetting: true,
+          isFingerActive: true,
+          touchDistance: 40.0,
+          touchNormalizedOffset: const Offset(0.4, -0.3),
+        );
+
+        // Rendering should execute without throwing any exception
+        expect(() => painter.paint(canvas, size), returnsNormally);
+      }
     });
   });
 }

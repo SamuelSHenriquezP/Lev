@@ -83,21 +83,140 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final effTired = tiredProgress ?? (emotion == LevEmotion.tired ? 1.0 : 0.0);
     final effCelebrate = celebrateProgress ?? ((emotion == LevEmotion.celebrating || isJoyJumping) ? 1.0 : 0.0);
 
-    // --- 1. FÍSICA BASE CONTINUA A 60 FPS (LEV NUNCA ESTÁ ESTÁTICO) ---
+    // --- 1. CINEMÁTICA Y BIOMECÁNICA INDEPENDIENTE POR ETAPA ---
+    final double stageBaseFloatY;
+    final double stageBaseSway;
+    final double stageBreatheFrequency;
+    final double stageBreatheAmplitude;
+    final double stageJumpHeight;
+    final double stageJumpSquash;
+    final double stageTouchSwayMultiplier;
+    final double stageTouchStretchMultiplier;
+    final double stagePetSquashMultiplier;
+
+    switch (growthStage) {
+      case LevGrowthStage.seed:
+        // Semilla: Reposa en el suelo/lecho (+20px), pesada y terrenal, no vuela.
+        // Balanceo suave de tentetieso, respiración uterina lenta.
+        stageBaseFloatY = 20.0 + sin(cycle * 0.7) * 2.2;
+        stageBaseSway = sin(cycle * 0.7) * 0.025;
+        stageBreatheFrequency = 0.65;
+        stageBreatheAmplitude = 0.020;
+        stageJumpHeight = 22.0; // Saltito bajo tipo "pop" de semilla
+        stageJumpSquash = 0.20; // Rebote elástico rechoncho
+        // Al arrastrar/tocar: se tambalea como un tentetieso roly-poly sobre su base
+        stageTouchSwayMultiplier = 0.38 * (1.0 + sin(cycle * 6.0) * 0.35);
+        stageTouchStretchMultiplier = 0.04;
+        stagePetSquashMultiplier = 0.08;
+        break;
+
+      case LevGrowthStage.sprout:
+        // Brote: Muy ligero y frágil. Flotación ágil a media altura, temblorcito tierno de cotiledón.
+        stageBaseFloatY = sin(cycle * 1.3) * 5.5;
+        stageBaseSway = sin(cycle * 1.4) * 0.045;
+        stageBreatheFrequency = 1.25;
+        stageBreatheAmplitude = 0.032;
+        stageJumpHeight = 46.0; // Salto alto con estiramiento vertical de fideo
+        stageJumpSquash = 0.22;
+        stageTouchSwayMultiplier = 0.24;
+        stageTouchStretchMultiplier = 0.14; // Gran estiramiento buscando la luz
+        stagePetSquashMultiplier = 0.06;
+        break;
+
+      case LevGrowthStage.seedling:
+        // Plántula: Vivaz, ágil, antena elástica curiosa con giros rápidos.
+        stageBaseFloatY = sin(cycle * 1.5) * 6.5;
+        stageBaseSway = sin(cycle * 1.2) * 0.035;
+        stageBreatheFrequency = 1.1;
+        stageBreatheAmplitude = 0.028;
+        stageJumpHeight = 48.0;
+        stageJumpSquash = 0.16;
+        stageTouchSwayMultiplier = 0.28;
+        stageTouchStretchMultiplier = 0.11;
+        stagePetSquashMultiplier = 0.055;
+        break;
+
+      case LevGrowthStage.youngPlant:
+        // Planta Joven: Clásico armónico balanceado.
+        stageBaseFloatY = sin(cycle) * 7.0;
+        stageBaseSway = sin(cycle * 0.5) * 0.022;
+        stageBreatheFrequency = 1.0;
+        stageBreatheAmplitude = 0.024;
+        stageJumpHeight = 48.0;
+        stageJumpSquash = 0.16;
+        stageTouchSwayMultiplier = 0.18;
+        stageTouchStretchMultiplier = 0.09;
+        stagePetSquashMultiplier = 0.04;
+        break;
+
+      case LevGrowthStage.vibrantPlant:
+        // Planta Vibrante: Fluida, aromática, hojas con pétalos en suspensión ingrávida.
+        stageBaseFloatY = sin(cycle * 0.9) * 8.0;
+        stageBaseSway = sin(cycle * 0.6) * 0.030;
+        stageBreatheFrequency = 0.95;
+        stageBreatheAmplitude = 0.030;
+        stageJumpHeight = 52.0; // Salto en cámara lenta con suspensión
+        stageJumpSquash = 0.14;
+        stageTouchSwayMultiplier = 0.20;
+        stageTouchStretchMultiplier = 0.10;
+        stagePetSquashMultiplier = 0.05;
+        break;
+
+      case LevGrowthStage.youngTree:
+        // Árbol Joven: Sólido, denso, mayor masa física e inercia.
+        stageBaseFloatY = sin(cycle * 0.75) * 5.0;
+        stageBaseSway = sin(cycle * 0.4) * 0.018;
+        stageBreatheFrequency = 0.85;
+        stageBreatheAmplitude = 0.022;
+        stageJumpHeight = 40.0; // Salto solemne con fuerte impacto elástico
+        stageJumpSquash = 0.20;
+        stageTouchSwayMultiplier = 0.12;
+        stageTouchStretchMultiplier = 0.06;
+        stagePetSquashMultiplier = 0.035;
+        break;
+
+      case LevGrowthStage.adultTree:
+        // Árbol Sabio: Flotación zen majestuosa, corona astral en rotación continua.
+        stageBaseFloatY = sin(cycle * 0.5) * 5.5;
+        stageBaseSway = sin(cycle * 0.3) * 0.015;
+        stageBreatheFrequency = 0.75;
+        stageBreatheAmplitude = 0.020;
+        stageJumpHeight = 42.0;
+        stageJumpSquash = 0.14;
+        stageTouchSwayMultiplier = 0.14;
+        stageTouchStretchMultiplier = 0.07;
+        stagePetSquashMultiplier = 0.03;
+        break;
+
+      case LevGrowthStage.forestSpirit:
+        // Espíritu del Bosque: Levitación cósmica multicapa, 3 pares de alas activas.
+        stageBaseFloatY = sin(cycle * 0.7) * 9.0 + cos(cycle * 0.45) * 3.5;
+        stageBaseSway = sin(cycle * 0.5) * 0.025;
+        stageBreatheFrequency = 0.70;
+        stageBreatheAmplitude = 0.035;
+        stageJumpHeight = 58.0; // Ascenso celestial divino
+        stageJumpSquash = 0.12;
+        stageTouchSwayMultiplier = 0.22;
+        stageTouchStretchMultiplier = 0.12;
+        stagePetSquashMultiplier = 0.045;
+        break;
+    }
+
+    // --- 2. RESPIRACIÓN Y OSCILACIÓN BASE MODULADA ---
     final breatheSpeedMultiplier = (effSleep > 0.5) ? 0.6 : (effAnxious > 0.5 ? 2.2 : 1.0);
-    final breathCycle = t * 2 * pi * breatheSpeedMultiplier;
+    final breathCycle = t * 2 * pi * breatheSpeedMultiplier * stageBreatheFrequency;
 
-    final baseFloatY = sin(cycle) * 7.0;
-    final baseBreatheY = sin(breathCycle) * 0.024;
+    final baseFloatY = stageBaseFloatY;
+    final baseBreatheY = sin(breathCycle) * stageBreatheAmplitude;
     final baseBreatheX = -baseBreatheY * 0.55;
-    final baseSway = sin(cycle) * 0.020;
+    final baseSway = stageBaseSway;
 
-    // --- 2. CAPAS DE INTERACCIÓN SOMÁTICA ---
+    // --- 3. CAPAS DE INTERACCIÓN SOMÁTICA ---
     final deepBreatheY = sin(breathCycle) * 0.12 * effBreath;
     final deepBreatheX = -deepBreatheY * 0.55;
 
     final sleepSway = 0.055 * effSleep;
-    final sleepFloat = 6.0 * effSleep;
+    final sleepFloat = (growthStage == LevGrowthStage.seed ? 2.0 : 6.0) * effSleep;
 
     final happySway = sin(cycle * 3.2) * 0.08 * effHappy;
     final happyFloat = sin(cycle * 2.0) * 4.0 * effHappy;
@@ -105,7 +224,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final curiousSway = (0.12 + sin(cycle * 1.5) * 0.04) * effCurious;
     final curiousFloat = -3.0 * effCurious;
 
-    final sadFloat = 8.0 * effSad;
+    final sadFloat = (growthStage == LevGrowthStage.seed ? 3.0 : 8.0) * effSad;
     final sadSway = -0.04 * effSad;
 
     final anxiousShakeX = sin(cycle * 24.0) * 1.6 * effAnxious;
@@ -116,7 +235,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final celebrateSway = sin(cycle * 2.8) * 0.10 * effCelebrate;
     final celebrateFloat = -sin(cycle * 2.8).abs() * 8.0 * effCelebrate;
 
-    // --- 3. CAPA DE SALTO ELÁSTICO DE ALEGRÍA CONTINUO Y FLUIDO (SIN CORTES) ---
+    // --- 4. CAPA DE SALTO ELÁSTICO DE ALEGRÍA INDIVIDUALIZADO POR ETAPA (SIN CORTES) ---
     double jumpFloatY = 0.0;
     double jumpScaleY = 0.0;
     double jumpScaleX = 0.0;
@@ -128,31 +247,29 @@ class LivingSeedSpiritPainter extends CustomPainter {
       final jumpSin = sin(phi);
 
       if (jumpSin > 0) {
-        // Fase de impulso y suspensión elástica en el aire
-        jumpFloatY = -48.0 * jumpSin;
-        jumpScaleY = 0.16 * jumpSin;
-        jumpScaleX = -0.10 * jumpSin;
+        // Fase de impulso y elevación elástica según la masa de la etapa
+        jumpFloatY = -stageJumpHeight * jumpSin;
+        jumpScaleY = stageJumpSquash * jumpSin;
+        jumpScaleX = -(stageJumpSquash * 0.55) * jumpSin;
       } else {
-        // Fase de amortiguación elástica de aterrizaje (squash orgánico)
-        jumpFloatY = -8.0 * jumpSin;
-        jumpScaleY = 0.12 * jumpSin;
-        jumpScaleX = -0.07 * jumpSin;
+        // Fase de amortiguación elástica de aterrizaje
+        jumpFloatY = -(stageJumpHeight * 0.16) * jumpSin;
+        jumpScaleY = (stageJumpSquash * 0.75) * jumpSin;
+        jumpScaleX = -(stageJumpSquash * 0.45) * jumpSin;
       }
       jumpSway = sin(phi * 2.0) * 0.05;
     }
 
-    // --- 4. REACTIVIDAD TÁCTIL AL DEDO EN PANTALLA ---
+    // --- 5. REACTIVIDAD TÁCTIL Y CARICIAS ADAPTADAS A CADA ETAPA ---
     final touchX = touchNormalizedOffset?.dx.clamp(-1.0, 1.0) ?? 0.0;
     final touchY = touchNormalizedOffset?.dy.clamp(-1.0, 1.0) ?? 0.0;
     final touchInfluence = isFingerActive ? 1.0 : 0.0;
 
-    // Inclinación hacia donde se mueve el dedo
-    final touchSway = (touchX * 0.18) * touchInfluence;
-    // Estiramiento y curiosidad al mover hacia arriba / compresión al mover abajo
-    final touchStretchY = (touchY < 0 ? -touchY * 0.09 : touchY * 0.04) * touchInfluence;
+    final touchSway = (touchX * stageTouchSwayMultiplier) * touchInfluence;
+    final touchStretchY = (touchY < 0 ? -touchY * stageTouchStretchMultiplier : touchY * (stageTouchStretchMultiplier * 0.5)) * touchInfluence;
     final touchStretchX = -touchStretchY * 0.5;
-    final touchFloatY = (touchY * 11.0) * touchInfluence;
-    final pettingSquash = isTouchingLev ? (sin(cycle * 8.0) * 0.04) : 0.0;
+    final touchFloatY = (touchY * (stageBaseFloatY.abs() > 10 ? 8.0 : 12.0)) * touchInfluence;
+    final pettingSquash = effectiveIsPetting ? (sin(cycle * 8.0) * stagePetSquashMultiplier) : 0.0;
 
     // --- 4. ACCIONES SOMÁTICAS DE TAREAS ESPECÍFICAS ---
     double taskFloatY = 0.0;
@@ -222,8 +339,20 @@ class LivingSeedSpiritPainter extends CustomPainter {
     // 1. Resplandor áurico ambiental adaptativo
     _drawAmbientAura(canvas, t, effSleep, effBreath, effAnxious, effCelebrate);
 
-    // 2. Alas suculentas / Follaje según la etapa de crecimiento
-    _drawGrowthFoliage(canvas, t, effWrap, effSleep, effHappy, effSad, effCurious);
+    // 2. Alas suculentas / Follaje según la etapa de crecimiento reactivo
+    _drawGrowthFoliage(
+      canvas,
+      t,
+      effWrap,
+      effSleep,
+      effHappy,
+      effSad,
+      effCurious,
+      effectiveIsPetting: effectiveIsPetting,
+      touchX: touchX,
+      touchY: touchY,
+      isFingerActive: isFingerActive,
+    );
 
     // 3. Tallo / Base Inferior
     _drawStemBase(canvas);
@@ -248,8 +377,16 @@ class LivingSeedSpiritPainter extends CustomPainter {
       isTouchingLev: isTouchingLev,
     );
 
-    // 7. Detalles botánicos ornamentales según etapa (Flores, Corona, Tercer Ojo)
-    _drawStageOrnaments(canvas, t, effCelebrate);
+    // 7. Detalles botánicos ornamentales según etapa reactiva al dedo y caricias
+    _drawStageOrnaments(
+      canvas,
+      t,
+      effCelebrate,
+      effectiveIsPetting: effectiveIsPetting,
+      touchX: touchX,
+      touchY: touchY,
+      isFingerActive: isFingerActive,
+    );
 
     // 8. Efectos y partículas emocionales
     if (effSleep > 0.05) {
@@ -385,8 +522,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effSleep,
     double effHappy,
     double effSad,
-    double effCurious,
-  ) {
+    double effCurious, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
     final cycle = t * 2 * pi;
     final baseFlutter = sin(cycle + 0.5) * 0.022;
     final happyFlutter = sin(cycle * 3.2) * 0.08 * effHappy;
@@ -433,71 +574,102 @@ class LivingSeedSpiritPainter extends CustomPainter {
 
     switch (growthStage) {
       case LevGrowthStage.seed:
-        _drawSeedCotyledons(canvas, cycle, effHappy, t);
+        _drawSeedCotyledons(
+          canvas,
+          cycle,
+          effHappy,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+        );
         break;
 
       case LevGrowthStage.sprout:
-        _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(54, 28), 0.0);
+        // Los cotiledones se mueven con curiosidad hacia el dedo y aletean al acariciar
+        final sproutLeft = leftAngle + (isFingerActive ? touchX * 0.12 : 0.0) + (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
+        final sproutRight = rightAngle + (isFingerActive ? touchX * 0.12 : 0.0) - (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
+        _drawSucculentPair(canvas, sproutLeft, sproutRight, const Size(54, 28), 0.0);
         break;
 
       case LevGrowthStage.seedling:
-        _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(78, 36), 0.0);
+        final seedlingLeft = leftAngle + (isFingerActive ? touchX * 0.10 : 0.0) + (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
+        final seedlingRight = rightAngle + (isFingerActive ? touchX * 0.10 : 0.0) - (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
+        _drawSucculentPair(canvas, seedlingLeft, seedlingRight, const Size(78, 36), 0.0);
         break;
 
       case LevGrowthStage.youngPlant:
-        _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(100, 44), 0.0);
+        final youngLeft = leftAngle + (effectiveIsPetting ? sin(cycle * 6.0) * 0.08 : 0.0);
+        final youngRight = rightAngle - (effectiveIsPetting ? sin(cycle * 6.0) * 0.08 : 0.0);
+        _drawSucculentPair(canvas, youngLeft, youngRight, const Size(100, 44), 0.0);
         break;
 
       case LevGrowthStage.vibrantPlant:
-        _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(104, 45), 0.0);
-        _drawWingtipBlossoms(canvas, leftAngle, rightAngle, 104.0);
+        final vibLeft = leftAngle + (effectiveIsPetting ? sin(cycle * 5.0) * 0.10 : 0.0);
+        final vibRight = rightAngle - (effectiveIsPetting ? sin(cycle * 5.0) * 0.10 : 0.0);
+        _drawSucculentPair(canvas, vibLeft, vibRight, const Size(104, 45), 0.0);
+        _drawWingtipBlossoms(canvas, vibLeft, vibRight, 104.0, isBloomed: effectiveIsPetting);
         break;
 
       case LevGrowthStage.youngTree:
-        final upperLeft = leftAngle * 0.72 - 0.20 + sin(cycle * 1.4) * 0.04;
-        final upperRight = rightAngle * 0.72 + 0.20 - sin(cycle * 1.4) * 0.04;
+        final upperLeft = leftAngle * 0.72 - 0.20 + sin(cycle * 1.4) * 0.04 + (isFingerActive ? touchX * 0.06 : 0.0);
+        final upperRight = rightAngle * 0.72 + 0.20 - sin(cycle * 1.4) * 0.04 + (isFingerActive ? touchX * 0.06 : 0.0);
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(70, 32), -26.0, hasVeins: true);
         _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(110, 46), 0.0, hasVeins: true);
         break;
 
       case LevGrowthStage.adultTree:
-        final upperLeft = leftAngle * 0.75 - 0.24 + sin(cycle * 1.5) * 0.05;
-        final upperRight = rightAngle * 0.75 + 0.24 - sin(cycle * 1.5) * 0.05;
+        final upperLeft = leftAngle * 0.75 - 0.24 + sin(cycle * 1.5) * 0.05 + (isFingerActive ? touchX * 0.07 : 0.0);
+        final upperRight = rightAngle * 0.75 + 0.24 - sin(cycle * 1.5) * 0.05 + (isFingerActive ? touchX * 0.07 : 0.0);
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(82, 36), -30.0, hasVeins: true);
         _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(116, 48), 0.0, hasVeins: true);
         break;
 
       case LevGrowthStage.forestSpirit:
-        final upperLeft = -0.68 + sin(cycle * 1.6) * 0.05;
-        final upperRight = 0.68 - sin(cycle * 1.6) * 0.05;
-        final lowerLeft = -0.22 + sin(cycle * 1.2) * 0.03;
-        final lowerRight = 0.22 - sin(cycle * 1.2) * 0.03;
+        // Alas triples celestiales: dinámica polifónica independiente en 3 frecuencias
+        final fanOut = effectiveIsPetting ? 0.28 : 0.0;
+        final upperLeft = -0.68 - fanOut + sin(cycle * 2.2) * 0.08 + (isFingerActive ? touchY * 0.12 : 0.0);
+        final upperRight = 0.68 + fanOut - sin(cycle * 2.2) * 0.08 - (isFingerActive ? touchY * 0.12 : 0.0);
+
+        final midLeft = leftAngle - (fanOut * 0.4) + sin(cycle * 1.6 + 1.2) * 0.06;
+        final midRight = rightAngle + (fanOut * 0.4) - sin(cycle * 1.6 + 1.2) * 0.06;
+
+        final lowerLeft = -0.22 + (fanOut * 0.6) + sin(cycle * 1.1 + 2.4) * 0.05 - (isFingerActive ? touchY * 0.08 : 0.0);
+        final lowerRight = 0.22 - (fanOut * 0.6) - sin(cycle * 1.1 + 2.4) * 0.05 + (isFingerActive ? touchY * 0.08 : 0.0);
 
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(90, 38), -44.0, hasVeins: true, celestialGlow: true);
-        _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(122, 50), 0.0, hasVeins: true, celestialGlow: true);
+        _drawSucculentPair(canvas, midLeft, midRight, const Size(122, 50), 0.0, hasVeins: true, celestialGlow: true);
         _drawSucculentPair(canvas, lowerLeft, lowerRight, const Size(68, 30), 38.0, hasVeins: true, celestialGlow: true);
         break;
     }
   }
 
-  void _drawSeedCotyledons(Canvas canvas, double cycle, double effHappy, double t) {
-    // 1. Raíces subterráneas biomórficas que pulsan y absorben savia y luz
-    final rootPulse = (sin(cycle * 2.5) + 1.0) * 0.5;
+  void _drawSeedCotyledons(
+    Canvas canvas,
+    double cycle,
+    double effHappy,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+  }) {
+    // 1. Raíces subterráneas biomórficas que pulsan savia y absorben calor
+    final speed = effectiveIsPetting ? 6.0 : 2.5;
+    final rootPulse = (sin(cycle * speed) + 1.0) * 0.5;
     final rootPaint = Paint()
-      ..color = const Color(0xFF80E2BF).withValues(alpha: 0.45 + rootPulse * 0.35)
+      ..color = const Color(0xFF80E2BF).withValues(alpha: effectiveIsPetting ? 0.80 : (0.45 + rootPulse * 0.35))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
+      ..strokeWidth = effectiveIsPetting ? 3.0 : 2.4
       ..strokeCap = StrokeCap.round;
 
-    final r1 = Path()..moveTo(-10, 52)..cubicTo(-18, 68, -26, 80, -34, 95);
-    final r2 = Path()..moveTo(0, 54)..cubicTo(3, 72, -4, 90, 0, 108);
-    final r3 = Path()..moveTo(10, 52)..cubicTo(18, 70, 26, 82, 36, 96);
+    final rootSpread = effectiveIsPetting ? 8.0 : 0.0;
+    final r1 = Path()..moveTo(-10, 52)..cubicTo(-18 - rootSpread, 68, -26 - rootSpread, 80, -34 - rootSpread, 95);
+    final r2 = Path()..moveTo(0, 54)..cubicTo(3, 72, -4, 90 + rootSpread, 0, 108 + rootSpread);
+    final r3 = Path()..moveTo(10, 52)..cubicTo(18 + rootSpread, 70, 26 + rootSpread, 82, 36 + rootSpread, 96);
     canvas.drawPath(r1, rootPaint);
     canvas.drawPath(r2, rootPaint);
     canvas.drawPath(r3, rootPaint);
 
     // 2. Cotiledones tiernos que respiran a los costados
-    final wiggle = sin(cycle * 2.5) * 0.08 + (effHappy * sin(cycle * 5.0) * 0.14);
+    final wiggle = sin(cycle * 2.5) * 0.08 + (effHappy * sin(cycle * 5.0) * 0.14) + (effectiveIsPetting ? sin(cycle * 10.0) * 0.18 : 0.0);
     final budPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Color(0xFF388E6E), Color(0xFF80E2BF)],
@@ -515,16 +687,18 @@ class LivingSeedSpiritPainter extends CustomPainter {
     canvas.drawOval(const Rect.fromLTWH(-2, -9, 20, 14), budPaint);
     canvas.restore();
 
-    // 3. Esporas doradas de luz que flotan suavemente alrededor de la semilla
-    for (int i = 0; i < 6; i++) {
-      final phase = (t + i / 6.0) % 1.0;
-      final sx = sin(phase * 2 * pi + i * 1.3) * 36;
-      final sy = -40 + phase * 85;
-      final sporeAlpha = sin(phase * pi) * 0.7;
+    // 3. Esporas doradas de luz: si se acaricia, brota un enjambre de 12 esporas radiantes
+    final sporeCount = effectiveIsPetting ? 12 : 6;
+    for (int i = 0; i < sporeCount; i++) {
+      final phase = (t + i / sporeCount.toDouble()) % 1.0;
+      final driftX = touchX * 18.0;
+      final sx = sin(phase * 2 * pi + i * 1.3) * (effectiveIsPetting ? 52 : 36) + driftX;
+      final sy = -40 + phase * (effectiveIsPetting ? 110 : 85);
+      final sporeAlpha = sin(phase * pi) * (effectiveIsPetting ? 0.95 : 0.7);
       final sporePaint = Paint()
-        ..color = const Color(0xFFFFF59D).withValues(alpha: sporeAlpha)
+        ..color = (effectiveIsPetting ? const Color(0xFFFFD54F) : const Color(0xFFFFF59D)).withValues(alpha: sporeAlpha)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      canvas.drawCircle(Offset(sx, sy), 2.4, sporePaint);
+      canvas.drawCircle(Offset(sx, sy), effectiveIsPetting ? 3.4 : 2.4, sporePaint);
     }
   }
 
@@ -644,33 +818,41 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
   }
 
-  void _drawWingtipBlossoms(Canvas canvas, double leftAngle, double rightAngle, double wingLength) {
+  void _drawWingtipBlossoms(Canvas canvas, double leftAngle, double rightAngle, double wingLength, {bool isBloomed = false}) {
     canvas.save();
     canvas.translate(-8, 54);
     canvas.rotate(leftAngle);
     canvas.translate(-wingLength, 0);
-    _drawMiniBlossom(canvas);
+    _drawMiniBlossom(canvas, isBloomed: isBloomed);
     canvas.restore();
 
     canvas.save();
     canvas.translate(8, 54);
     canvas.rotate(rightAngle);
     canvas.translate(wingLength, 0);
-    _drawMiniBlossom(canvas);
+    _drawMiniBlossom(canvas, isBloomed: isBloomed);
     canvas.restore();
   }
 
-  void _drawMiniBlossom(Canvas canvas) {
+  void _drawMiniBlossom(Canvas canvas, {bool isBloomed = false}) {
+    final scale = isBloomed ? 1.35 : 1.0;
     final petalPaint = Paint()..color = const Color(0xFFFFB4C8).withValues(alpha: 0.90);
     final centerPaint = Paint()..color = const Color(0xFFFFE082);
 
     for (int i = 0; i < 5; i++) {
       final angle = i * (2 * pi / 5);
-      final px = cos(angle) * 7.0;
-      final py = sin(angle) * 7.0;
-      canvas.drawCircle(Offset(px, py), 4.2, petalPaint);
+      final px = cos(angle) * (7.0 * scale);
+      final py = sin(angle) * (7.0 * scale);
+      canvas.drawCircle(Offset(px, py), 4.2 * scale, petalPaint);
     }
-    canvas.drawCircle(Offset.zero, 3.5, centerPaint);
+    canvas.drawCircle(Offset.zero, 3.5 * scale, centerPaint);
+
+    if (isBloomed) {
+      final bloomAura = Paint()
+        ..color = const Color(0xFFFFEB3B).withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawCircle(Offset.zero, 12.0, bloomAura);
+    }
   }
 
   void _drawStemBase(Canvas canvas) {
@@ -953,98 +1135,258 @@ class LivingSeedSpiritPainter extends CustomPainter {
     canvas.drawCircle(Offset(center.dx - 1.8, center.dy - 1.8), 1.8, highlightPaint);
   }
 
-  void _drawStageOrnaments(Canvas canvas, double t, double effCelebrate) {
+  void _drawStageOrnaments(
+    Canvas canvas,
+    double t,
+    double effCelebrate, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
     final cycle = t * 2 * pi;
 
     switch (growthStage) {
       case LevGrowthStage.seed:
-        final nubPulse = sin(cycle * 3.0) * 1.5;
-        final nubPaint = Paint()..color = const Color(0xFF80E2BF).withValues(alpha: 0.85);
-        canvas.drawCircle(Offset(0, -66 - nubPulse), 5.5, nubPaint);
+        final nubPulse = sin(cycle * (effectiveIsPetting ? 6.0 : 3.0)) * 2.0;
+        final nubPaint = Paint()
+          ..color = (effectiveIsPetting ? const Color(0xFFFFD54F) : const Color(0xFF80E2BF))
+              .withValues(alpha: effectiveIsPetting ? 0.95 : 0.85);
+        canvas.drawCircle(Offset(0, -66 - nubPulse), effectiveIsPetting ? 7.0 : 5.5, nubPaint);
         break;
 
       case LevGrowthStage.sprout:
-        _drawSproutDewdrops(canvas, cycle);
+        _drawSproutDewdrops(
+          canvas,
+          cycle,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.seedling:
-        _drawSeedlingAntenna(canvas, cycle);
+        _drawSeedlingAntenna(
+          canvas,
+          cycle,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.youngPlant:
-        _drawYoungPlantEars(canvas, cycle);
+        _drawYoungPlantEars(
+          canvas,
+          cycle,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.vibrantPlant:
-        _drawSwirlingPetals(canvas, t);
+        _drawSwirlingPetals(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.youngTree:
-        _drawResonantForeheadGem(canvas, t);
+        _drawResonantForeheadGem(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.adultTree:
-        _drawFloralCirclet(canvas, t);
-        _drawCanopyLightMotes(canvas, t);
+        _drawFloralCirclet(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
+        _drawCanopyLightMotes(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
         break;
 
       case LevGrowthStage.forestSpirit:
-        _drawDivineCrown(canvas, t);
+        _drawDivineCrown(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+        );
         _drawSacredForeheadSpiral(canvas);
-        _drawCelestialAuraRings(canvas, t);
+        _drawCelestialAuraRings(
+          canvas,
+          t,
+          effectiveIsPetting: effectiveIsPetting,
+          touchX: touchX,
+          touchY: touchY,
+          isFingerActive: isFingerActive,
+        );
         break;
     }
   }
 
-  void _drawSproutDewdrops(Canvas canvas, double cycle) {
-    final glint = (sin(cycle * 3.0) + 1.0) * 0.5;
+  void _drawSproutDewdrops(
+    Canvas canvas,
+    double cycle, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required bool isFingerActive,
+  }) {
+    final speed = effectiveIsPetting ? 12.0 : 3.0;
+    final glint = (sin(cycle * speed) + 1.0) * 0.5;
     final dewdropPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.55 + glint * 0.40)
+      ..color = Colors.white.withValues(alpha: effectiveIsPetting ? 0.95 : (0.55 + glint * 0.40))
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
-    canvas.drawCircle(const Offset(-42, 38), 3.5, dewdropPaint);
-    canvas.drawCircle(const Offset(42, 38), 3.5, dewdropPaint);
+
+    final shiftX = isFingerActive ? touchX * 4.0 : 0.0;
+    final tremble = effectiveIsPetting ? sin(cycle * 16.0) * 1.8 : 0.0;
+
+    canvas.drawCircle(Offset(-42 + shiftX, 38 + tremble), effectiveIsPetting ? 4.5 : 3.5, dewdropPaint);
+    canvas.drawCircle(Offset(42 + shiftX, 38 - tremble), effectiveIsPetting ? 4.5 : 3.5, dewdropPaint);
+
+    // Salpicaduras de micro-rocío si se acaricia
+    if (effectiveIsPetting) {
+      final sprayPaint = Paint()
+        ..color = const Color(0xFFE0F7FA).withValues(alpha: 0.70)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+      for (int i = 0; i < 4; i++) {
+        final a = (cycle * 2.0 + i * (pi / 2));
+        canvas.drawCircle(Offset(-42 + cos(a) * 7.0, 38 + sin(a) * 7.0), 1.5, sprayPaint);
+        canvas.drawCircle(Offset(42 + cos(a) * 7.0, 38 + sin(a) * 7.0), 1.5, sprayPaint);
+      }
+    }
   }
 
-  void _drawSeedlingAntenna(Canvas canvas, double cycle) {
-    final bob = sin(cycle * 2.0) * 3.5;
+  void _drawSeedlingAntenna(
+    Canvas canvas,
+    double cycle, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
+    final bob = sin(cycle * (effectiveIsPetting ? 5.0 : 2.0)) * 3.5;
+    // La antena apunta dinámicamente en dirección al dedo
+    final targetBendX = isFingerActive ? (touchX * 18.0).clamp(-22.0, 22.0) : 0.0;
+    final targetBendY = isFingerActive ? (touchY * 8.0).clamp(-12.0, 12.0) : 0.0;
+
+    // Pirueta en bucle cuando está siendo acariciado
+    final petAcrobatics = effectiveIsPetting ? sin(cycle * 8.0) * 12.0 : 0.0;
+
+    final tipX = 2.0 + targetBendX + petAcrobatics;
+    final tipY = -125.0 + bob + targetBendY;
+
     final antennaPath = Path()
       ..moveTo(0, -96)
-      ..cubicTo(-4, -108, 6, -118 + bob, 2, -125 + bob);
+      ..cubicTo(
+        -4 + targetBendX * 0.4,
+        -108,
+        6 + targetBendX * 0.7,
+        -118 + bob + targetBendY * 0.5,
+        tipX,
+        tipY,
+      );
+
     final antennaPaint = Paint()
-      ..color = const Color(0xFF80E2BF)
+      ..color = effectiveIsPetting ? const Color(0xFF69F0AE) : const Color(0xFF80E2BF)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
+      ..strokeWidth = effectiveIsPetting ? 2.8 : 2.4
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(antennaPath, antennaPaint);
-    canvas.drawCircle(Offset(2, -125 + bob), 3.5, Paint()..color = const Color(0xFFFFF59D));
+
+    final pearlPaint = Paint()
+      ..color = effectiveIsPetting ? const Color(0xFFFFEB3B) : const Color(0xFFFFF59D);
+    canvas.drawCircle(Offset(tipX, tipY), effectiveIsPetting ? 5.0 : 3.5, pearlPaint);
+
+    // Chispas de alegría estelar al acariciar
+    if (effectiveIsPetting) {
+      final sparkPaint = Paint()
+        ..color = const Color(0xFFFFF59D).withValues(alpha: 0.85)
+        ..strokeWidth = 1.4
+        ..style = PaintingStyle.stroke;
+      for (int i = 0; i < 4; i++) {
+        final a = (cycle * 3.0 + i * (pi / 2));
+        final px = tipX + cos(a) * 9.0;
+        final py = tipY + sin(a) * 9.0;
+        canvas.drawLine(Offset(tipX, tipY), Offset(px, py), sparkPaint);
+      }
+    }
   }
 
-  void _drawYoungPlantEars(Canvas canvas, double cycle) {
+  void _drawYoungPlantEars(
+    Canvas canvas,
+    double cycle, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required bool isFingerActive,
+  }) {
+    // Si el dedo está activo, la oreja más cercana se asoma curiosa hacia el dedo
+    final earBias = isFingerActive ? (touchX * 0.25).clamp(-0.35, 0.35) : 0.0;
+    // Si se acaricia, ambas orejitas aletean en un ronroneo cadencioso
+    final purrFlutter = effectiveIsPetting ? sin(cycle * 10.0) * 0.16 : 0.0;
     final twitch = sin(cycle * 4.0).abs() * 0.08;
+
     final earPaint = Paint()
-      ..color = const Color(0xFF45A586).withValues(alpha: 0.85);
+      ..color = effectiveIsPetting
+          ? const Color(0xFF4DB6AC).withValues(alpha: 0.95)
+          : const Color(0xFF45A586).withValues(alpha: 0.85);
 
     canvas.save();
     canvas.translate(-14, -86);
-    canvas.rotate(-0.45 - twitch);
+    canvas.rotate(-0.45 - twitch + earBias + purrFlutter);
     canvas.drawOval(const Rect.fromLTWH(-10, -6, 12, 8), earPaint);
     canvas.restore();
 
     canvas.save();
     canvas.translate(14, -86);
-    canvas.rotate(0.45 + twitch);
+    canvas.rotate(0.45 + twitch + earBias - purrFlutter);
     canvas.drawOval(const Rect.fromLTWH(-2, -6, 12, 8), earPaint);
     canvas.restore();
   }
 
-  void _drawSwirlingPetals(Canvas canvas, double t) {
-    final petalPaint = Paint()..color = const Color(0xFFFFC1D1).withValues(alpha: 0.80);
+  void _drawSwirlingPetals(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
+    final petalPaint = Paint()
+      ..color = (effectiveIsPetting ? const Color(0xFFFF80AB) : const Color(0xFFFFC1D1))
+          .withValues(alpha: effectiveIsPetting ? 0.95 : 0.80);
+
+    final speedMult = effectiveIsPetting ? 1.8 : 1.0;
+    final attractX = isFingerActive ? touchX * 42.0 : 0.0;
+    final attractY = isFingerActive ? touchY * 28.0 : 0.0;
+
     for (int i = 0; i < 6; i++) {
-      final p = (t + (i / 6.0)) % 1.0;
+      final p = ((t * speedMult) + (i / 6.0)) % 1.0;
       final angle = p * 2 * pi;
-      final radius = 55.0 + sin(p * 4 * pi) * 16.0;
-      final px = cos(angle) * radius;
-      final py = -20.0 + sin(angle) * (radius * 0.5) + (p * 20.0 - 10.0);
+      final radius = (effectiveIsPetting ? 68.0 : 55.0) + sin(p * 4 * pi) * 16.0;
+      final px = cos(angle) * radius + attractX * 0.45;
+      final py = -20.0 + sin(angle) * (radius * 0.5) + (p * 20.0 - 10.0) + attractY * 0.45;
 
       canvas.save();
       canvas.translate(px, py);
@@ -1054,65 +1396,121 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
   }
 
-  void _drawResonantForeheadGem(Canvas canvas, double t) {
+  void _drawResonantForeheadGem(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
     final cycle = t * 2 * pi;
-    final pulse = (sin(cycle * 2.5) + 1.0) * 0.5;
+    final pulseSpeed = effectiveIsPetting ? 5.0 : 2.5;
+    final pulse = (sin(cycle * pulseSpeed) + 1.0) * 0.5;
 
     final ringPaint = Paint()
-      ..color = const Color(0xFFFFD54F).withValues(alpha: 0.35 * (1.0 - pulse))
+      ..color = (effectiveIsPetting ? const Color(0xFFFFC107) : const Color(0xFFFFD54F))
+          .withValues(alpha: (effectiveIsPetting ? 0.55 : 0.35) * (1.0 - pulse))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(const Offset(0, -52), 8.0 + pulse * 12.0, ringPaint);
+      ..strokeWidth = effectiveIsPetting ? 2.2 : 1.5;
+
+    final targetShift = isFingerActive ? Offset(touchX * 10.0, touchY * 6.0) : Offset.zero;
+    canvas.drawCircle(const Offset(0, -52) + targetShift * 0.4, 8.0 + pulse * 14.0, ringPaint);
 
     final gemPaint = Paint()
-      ..color = const Color(0xFFFFCA28)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-    canvas.drawCircle(const Offset(0, -52), 4.5, gemPaint);
-    canvas.drawCircle(const Offset(-1, -53), 1.6, Paint()..color = Colors.white);
+      ..color = effectiveIsPetting ? const Color(0xFFFFB300) : const Color(0xFFFFCA28)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, effectiveIsPetting ? 4 : 2);
+    canvas.drawCircle(const Offset(0, -52), effectiveIsPetting ? 5.8 : 4.5, gemPaint);
+    canvas.drawCircle(const Offset(-1, -53), 1.8, Paint()..color = Colors.white);
   }
 
-  void _drawCanopyLightMotes(Canvas canvas, double t) {
-    for (int i = 0; i < 7; i++) {
-      final phase = (t + (i * 0.14)) % 1.0;
-      final angle = (i * (2 * pi / 7)) + (phase * pi);
-      final mx = cos(angle) * (50.0 + sin(phase * 2 * pi) * 20.0);
-      final my = -60.0 + sin(angle) * 35.0;
-      final alpha = sin(phase * pi) * 0.75;
+  void _drawCanopyLightMotes(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
+    final count = effectiveIsPetting ? 9 : 7;
+    final attractX = isFingerActive ? touchX * 42.0 : 0.0;
+    final attractY = isFingerActive ? touchY * 30.0 : 0.0;
+
+    for (int i = 0; i < count; i++) {
+      final phase = (t + (i * (1.0 / count))) % 1.0;
+      final angle = (i * (2 * pi / count)) + (phase * pi);
+      final mx = cos(angle) * (50.0 + sin(phase * 2 * pi) * 20.0) + attractX * 0.35;
+      final my = -60.0 + sin(angle) * 35.0 + attractY * 0.35;
+      final alpha = sin(phase * pi) * (effectiveIsPetting ? 0.95 : 0.75);
       final motePaint = Paint()
-        ..color = const Color(0xFFC8E6C9).withValues(alpha: alpha)
+        ..color = (effectiveIsPetting ? const Color(0xFFB9F6CA) : const Color(0xFFC8E6C9)).withValues(alpha: alpha)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-      canvas.drawCircle(Offset(mx, my), 3.0, motePaint);
+      canvas.drawCircle(Offset(mx, my), effectiveIsPetting ? 4.0 : 3.0, motePaint);
     }
   }
 
-  void _drawCelestialAuraRings(Canvas canvas, double t) {
+  void _drawCelestialAuraRings(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
     final cycle = t * 2 * pi;
     final ringPaint = Paint()
-      ..color = const Color(0xFFFFE082).withValues(alpha: 0.28 + sin(cycle) * 0.12)
+      ..color = const Color(0xFFFFE082).withValues(alpha: (effectiveIsPetting ? 0.45 : 0.28) + sin(cycle) * 0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = effectiveIsPetting ? 1.8 : 1.2
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
+    final shift = isFingerActive ? Offset(touchX * 14.0, touchY * 10.0) : Offset.zero;
+
     canvas.drawOval(
-      Rect.fromCenter(center: const Offset(0, -35), width: 140, height: 42),
+      Rect.fromCenter(center: const Offset(0, -35) + shift, width: 140, height: 42),
       ringPaint,
     );
-  }
 
-  void _drawFloralCirclet(Canvas canvas, double t) {
-    final circletPaint = Paint()
-      ..color = const Color(0xFF80E2BF).withValues(alpha: 0.75);
-    for (int i = 0; i < 7; i++) {
-      final angle = (i * (2 * pi / 7)) + (t * 0.5);
-      final px = cos(angle) * 32.0;
-      final py = -70.0 + sin(angle) * 8.0;
-      canvas.drawCircle(Offset(px, py), 3.2, circletPaint);
+    // Segundo anillo orbital celestial ortogonal en modo caricia
+    if (effectiveIsPetting) {
+      canvas.drawOval(
+        Rect.fromCenter(center: const Offset(0, -35) + shift, width: 110, height: 65),
+        ringPaint,
+      );
     }
   }
 
-  void _drawDivineCrown(Canvas canvas, double t) {
+  void _drawFloralCirclet(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+    required double touchX,
+    required double touchY,
+    required bool isFingerActive,
+  }) {
+    final circletPaint = Paint()
+      ..color = (effectiveIsPetting ? const Color(0xFF69F0AE) : const Color(0xFF80E2BF))
+          .withValues(alpha: effectiveIsPetting ? 0.95 : 0.75);
+
+    final speed = effectiveIsPetting ? 2.2 : 0.5;
+    final tiltX = isFingerActive ? touchX * 8.0 : 0.0;
+    final tiltY = isFingerActive ? touchY * 5.0 : 0.0;
+
+    for (int i = 0; i < 7; i++) {
+      final angle = (i * (2 * pi / 7)) + (t * speed);
+      final px = cos(angle) * 32.0 + tiltX;
+      final py = -70.0 + sin(angle) * 8.0 + tiltY;
+      canvas.drawCircle(Offset(px, py), effectiveIsPetting ? 4.2 : 3.2, circletPaint);
+    }
+  }
+
+  void _drawDivineCrown(
+    Canvas canvas,
+    double t, {
+    required bool effectiveIsPetting,
+  }) {
     final crestPath = Path();
-    final crestPulse = sin(t * 2 * pi) * 3.0;
+    final crestPulse = sin(t * 2 * pi * (effectiveIsPetting ? 3.0 : 1.0)) * (effectiveIsPetting ? 6.0 : 3.0);
 
     crestPath.moveTo(0, -96);
     crestPath.quadraticBezierTo(-12, -120 - crestPulse, -18, -135 - crestPulse);

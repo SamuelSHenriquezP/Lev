@@ -123,6 +123,131 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     'Tu sistema nervioso acaba de respirar. Yo también.',
   ];
 
+  // Diálogos cariñosos y de reacción al acariciar específicos para cada una de las 8 etapas
+  static const List<String> _seedPetDialogues = [
+    'Siento el calor de tu dedito a través de la tierra tibia...',
+    'Un pequeño latido en mi interior... gracias por darme tiempo para brotar.',
+    'Aún duermo en mi cascarón, pero tu cariño me nutre de fuerza.',
+    'Mmm... qué suave. La tierra está calientita cuando estás aquí.',
+  ];
+
+  static const List<String> _sproutPetDialogues = [
+    '¡Cosquillas en mis primeros cotiledones! Qué lindo se siente despertar.',
+    'Mira cómo me estiro hacia tu luz... ¡gracias por visitarme!',
+    'El mundo es tan grande y verde cuando estás a mi lado.',
+    '¡Mis hojitas tiemblan de alegría! Salpican rocío para ti.',
+  ];
+
+  static const List<String> _seedlingPetDialogues = [
+    '¡Mi antena captó tu presencia al instante! ¿Viste mi pirueta?',
+    '¡Qué alegría! Dan ganas de dar brincos cada vez que me acaricias.',
+    'Estoy creciendo con mucha curiosidad gracias a tus pausas.',
+    '¡Bip-bip botánico! Mi antena brilla más cuando estamos juntos.',
+  ];
+
+  static const List<String> _youngPlantPetDialogues = [
+    'Mis orejitas atentas escuchan tu respiración. Qué bien me hace verte.',
+    'Qué ricas caricias. Mis hojas están sanas y verdes por tu constancia.',
+    'Juntos somos un equipo invencible de paz interior.',
+    'Siento la savia fluir contenta por mis tallos. Gracias por cuidarme.',
+    ..._peacefulDialogues,
+  ];
+
+  static const List<String> _vibrantPlantPetDialogues = [
+    '¡Huele mis flores! Cada pétalo se abrió con un hábito que lograste.',
+    'Los pétalos bailan en el aire cuando acaricias mi tallo.',
+    'Tu constancia hace florecer rincones que antes estaban secos.',
+    '¡Lluvia de aroma y polen dorado para celebrar tu constancia!',
+  ];
+
+  static const List<String> _youngTreePetDialogues = [
+    'Siente la firmeza de mi tronco... ya puedo darte sombra y calma.',
+    'La gema en mi frente vibra con tu serenidad. Nada nos derriba.',
+    'Nuestras raíces son profundas. Gracias por regar este árbol cada día.',
+    'El viento pasa entre mis ramas fuertes pero no nos mueve.',
+  ];
+
+  static const List<String> _adultTreePetDialogues = [
+    'La corona ancestral gira en armonía. Respira la paz de los siglos.',
+    'En cada mota de luz vive un momento de serenidad que cultivamos.',
+    'El bosque susurra tu nombre con gratitud y honor.',
+    'Paz inquebrantable. Hemos construido un santuario eterno en tu interior.',
+  ];
+
+  static const List<String> _forestSpiritPetDialogues = [
+    'Mis alas celestiales te envuelven. Eres el alma y luz de este santuario.',
+    'Has trascendido la prisa y el miedo. Gracias por tu luz infinita.',
+    'La divinidad de este bosque es el reflejo vivo de tu cuidado personal.',
+    'Los tres pares de alas cantan al unísono: estás a salvo, siempre.',
+  ];
+
+  static List<String> getStagePetDialogues(LevGrowthStage stage) {
+    switch (stage) {
+      case LevGrowthStage.seed:
+        return _seedPetDialogues;
+      case LevGrowthStage.sprout:
+        return _sproutPetDialogues;
+      case LevGrowthStage.seedling:
+        return _seedlingPetDialogues;
+      case LevGrowthStage.youngPlant:
+        return _youngPlantPetDialogues;
+      case LevGrowthStage.vibrantPlant:
+        return _vibrantPlantPetDialogues;
+      case LevGrowthStage.youngTree:
+        return _youngTreePetDialogues;
+      case LevGrowthStage.adultTree:
+        return _adultTreePetDialogues;
+      case LevGrowthStage.forestSpirit:
+        return _forestSpiritPetDialogues;
+    }
+  }
+
+  static String getStageJoyDialogue(LevGrowthStage stage) {
+    switch (stage) {
+      case LevGrowthStage.seed:
+        return '¡Pop! ¡Una semilla feliz que brinca en la tierra!';
+      case LevGrowthStage.sprout:
+        return '¡Yuuuju! ¡Mira cuánto me estiro hacia el cielo!';
+      case LevGrowthStage.seedling:
+        return '¡Wooo! ¡Pirueta con la antena en el aire!';
+      case LevGrowthStage.youngPlant:
+        return '¡Qué alegría me da verte! Salto de energía renovada.';
+      case LevGrowthStage.vibrantPlant:
+        return '¡Bailan mis flores y pétalos de puro gozo!';
+      case LevGrowthStage.youngTree:
+        return '¡Fuerza y júbilo! Sentí la sacudida de alegría en mis ramas.';
+      case LevGrowthStage.adultTree:
+        return '¡El bosque entero celebra tu gran logro!';
+      case LevGrowthStage.forestSpirit:
+        return '¡Vuelo de luz divina para honrar tu constancia y tu paz!';
+    }
+  }
+
+  static Future<void> _triggerStageHaptic(LevGrowthStage stage) async {
+    switch (stage) {
+      case LevGrowthStage.seed:
+        await HapticsHelper.selection();
+        break;
+      case LevGrowthStage.sprout:
+      case LevGrowthStage.seedling:
+        await HapticsHelper.light();
+        break;
+      case LevGrowthStage.youngPlant:
+      case LevGrowthStage.vibrantPlant:
+        await HapticsHelper.medium();
+        break;
+      case LevGrowthStage.youngTree:
+      case LevGrowthStage.adultTree:
+        await HapticsHelper.heavy();
+        break;
+      case LevGrowthStage.forestSpirit:
+        await HapticsHelper.heavy();
+        await Future.delayed(const Duration(milliseconds: 60));
+        await HapticsHelper.light();
+        break;
+    }
+  }
+
   // Diálogos al subir de etapa de crecimiento
   static String _getLevelUpDialogue(LevGrowthStage stage) {
     switch (stage) {
@@ -145,15 +270,17 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     }
   }
 
-  /// Acariciar a Lev
+  /// Acariciar a Lev con personalidad háptica y dialógica exclusiva por etapa
   Future<void> petLev() async {
-    await HapticsHelper.light();
+    await _triggerStageHaptic(state.growthStage);
     final rand = Random();
 
     if (state.emotion == LevEmotion.sleeping) {
       state = state.copyWith(
         emotion: LevEmotion.peaceful,
-        dialogue: 'Buenos días... gracias por despertarme con cariño.',
+        dialogue: state.growthStage == LevGrowthStage.seed
+            ? 'Buenos días... gracias por calentar mi tierra con cariño.'
+            : 'Buenos días... gracias por despertarme con cariño.',
         isPetting: true,
         tapCount: state.tapCount + 1,
       );
@@ -167,7 +294,8 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     if (state.emotion == LevEmotion.sheltered || state.emotion == LevEmotion.sad) {
       newDialogue = _shelteredDialogues[rand.nextInt(_shelteredDialogues.length)];
     } else {
-      newDialogue = _peacefulDialogues[rand.nextInt(_peacefulDialogues.length)];
+      final stageDialogues = getStagePetDialogues(state.growthStage);
+      newDialogue = stageDialogues[rand.nextInt(stageDialogues.length)];
     }
 
     state = state.copyWith(
@@ -199,12 +327,27 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     );
   }
 
-  /// Abrazo protector de hojas
+  /// Abrazo protector según la anatomía de cada etapa
   Future<void> hugLev() async {
     await HapticsHelper.medium();
+    final String hugText;
+    switch (state.growthStage) {
+      case LevGrowthStage.seed:
+        hugText = 'Aquí estoy contigo, cobijadito tibio para darte calma.';
+        break;
+      case LevGrowthStage.sprout:
+        hugText = 'Mis primeros cotiledones te dan un tierno micro-abrazo.';
+        break;
+      case LevGrowthStage.forestSpirit:
+        hugText = 'Mis tres pares de alas celestiales te cobijan en paz infinita.';
+        break;
+      default:
+        hugText = 'Aquí estoy contigo. Mis hojitas te cubren y te cuidan.';
+        break;
+    }
     state = state.copyWith(
       emotion: LevEmotion.sheltered,
-      dialogue: 'Aquí estoy contigo. Mis hojitas te cubren y te cuidan.',
+      dialogue: hugText,
       tapCount: state.tapCount + 1,
     );
   }
@@ -219,12 +362,12 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     );
   }
 
-  /// Salto de alegría
+  /// Salto de alegría con voz exclusiva por etapa
   Future<void> triggerJoyJump() async {
     await HapticsHelper.selection();
     state = state.copyWith(
       emotion: LevEmotion.joyJump,
-      dialogue: 'Wooo! Qué alegría me da verte!',
+      dialogue: getStageJoyDialogue(state.growthStage),
       tapCount: state.tapCount + 1,
     );
     Future.delayed(const Duration(milliseconds: 2400), () {

@@ -29,6 +29,15 @@ class HapticsHelper {
     }
   }
 
+  /// Impacto firme para árboles ancestrales y seres celestiales
+  static Future<void> heavy() async {
+    try {
+      await HapticFeedback.heavyImpact();
+    } catch (_) {
+      // Ignorar
+    }
+  }
+
   /// Doble pulso suave para respiración somática (inhalar y exhalar)
   static Future<void> breathingTick() async {
     try {
