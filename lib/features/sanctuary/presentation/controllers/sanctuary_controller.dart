@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lev/core/audio/sanctuary_audio_service.dart';
 import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
@@ -31,6 +33,15 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         .whereType<SanctuaryDecorItem>()
         .toSet();
 
+    final rawPositions = LocalStorageService.getDecorPositionsRaw();
+    final customPositions = <SanctuaryDecorItem, Offset>{};
+    rawPositions.forEach((id, coords) {
+      final item = SanctuaryDecorItem.fromId(id);
+      if (item != null && coords.length >= 2) {
+        customPositions[item] = Offset(coords[0], coords[1]);
+      }
+    });
+
     final activeAccId = LocalStorageService.getActiveAccessoryId();
     final unlockedAccIds = LocalStorageService.getUnlockedAccessoryIds();
     final activeAcc = LevAccessory.fromId(activeAccId) ?? LevAccessory.none;
@@ -53,6 +64,9 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       }
     }
 
+    final weatherStr = LocalStorageService.getSanctuaryWeather();
+    final weather = SanctuaryWeather.fromId(weatherStr);
+
     return SanctuaryState(
       careDrops: drops,
       experiencePoints: xp,
@@ -62,9 +76,11 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       timeOfDay: _calculateTimeOfDay(),
       unlockedDecors: unlocked,
       activeDecors: active,
+      customDecorPositions: customPositions,
       activeAccessory: activeAcc,
       unlockedAccessories: unlockedAcc,
       circadianOverride: circadianOverride,
+      weather: weather,
     );
   }
 
@@ -415,6 +431,10 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         ? _getLevelUpDialogue(newStage)
         : _celebratingDialogues[rand.nextInt(_celebratingDialogues.length)];
 
+    if (justLeveledUp) {
+      ref.read(sanctuaryAudioProvider.notifier).playChimeSfx();
+    }
+
     state = state.copyWith(
       careDrops: drops,
       experiencePoints: xp,
@@ -423,6 +443,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       dialogue: celebrationQuote,
       tapCount: state.tapCount + 1,
       justLeveledUp: justLeveledUp,
+      pendingEvolutionStage: justLeveledUp ? newStage : null,
     );
 
     Future.delayed(const Duration(seconds: 5), () {
@@ -433,6 +454,129 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         );
       } catch (_) {}
     });
+  }
+
+  /// Regar a Lev con una gota de rocío — Cuidado directo y vínculo botánico
+  Future<bool> waterLev() async {
+    if (state.careDrops < 1) {
+      await HapticsHelper.light();
+      state = state.copyWith(
+        dialogue: 'Necesitas al menos 1 gota de rocío para regarme. ¡Completa una pausa consciente!',
+        emotion: LevEmotion.curious,
+      );
+      return false;
+    }
+
+    final prevStage = state.growthStage;
+    await LocalStorageService.addCareDrops(-1);
+    await LocalStorageService.addExperiencePoints(15); // +15 XP por riego amoroso
+    final drops = LocalStorageService.getCareDrops();
+    final xp = LocalStorageService.getExperiencePoints();
+
+    await HapticsHelper.medium();
+    ref.read(sanctuaryAudioProvider.notifier).playWaterDropSfx();
+
+    final tempState = state.copyWith(careDrops: drops, experiencePoints: xp);
+    final newStage = tempState.growthStage;
+    final justLeveledUp = newStage.index > prevStage.index;
+
+    if (justLeveledUp) {
+      ref.read(sanctuaryAudioProvider.notifier).playChimeSfx();
+    }
+
+    final waterDialogues = [
+      '¡Qué fresca se siente el agua! Siento mis hojas llenas de luz.',
+      '¡Glup! Una gota de amor puro. Gracias por cuidar de mí.',
+      'Siento la savia corriendo... florecemos juntos a cada paso.',
+      'El rocío me llena de energía. ¡Mira cómo brillo!',
+    ];
+    final quote = waterDialogues[Random().nextInt(waterDialogues.length)];
+
+    state = state.copyWith(
+      careDrops: drops,
+      experiencePoints: xp,
+      emotion: LevEmotion.celebrating,
+      isWatering: true,
+      dialogue: quote,
+      justLeveledUp: justLeveledUp,
+      pendingEvolutionStage: justLeveledUp ? newStage : null,
+    );
+
+    Future.delayed(const Duration(milliseconds: 2400), () {
+      try {
+        state = state.copyWith(
+          isWatering: false,
+          emotion: LevEmotion.happy,
+        );
+      } catch (_) {}
+    });
+
+    return true;
+  }
+
+  /// Chequeo diario matutino / primera apertura del día
+  Future<Map<String, dynamic>?> checkDailyGreeting() async {
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final lastDate = LocalStorageService.getLastDailyGreetingDate();
+
+    if (lastDate == todayStr) {
+      return null; // Ya saludó hoy
+    }
+
+    await LocalStorageService.setLastDailyGreetingDate(todayStr);
+    await LocalStorageService.addCareDrops(1); // Regalo de 1 gota de cortesía diaria
+    final drops = LocalStorageService.getCareDrops();
+
+    await HapticsHelper.light();
+    ref.read(sanctuaryAudioProvider.notifier).playWaterDropSfx();
+
+    String greetingTitle;
+    String greetingBody;
+    final time = _calculateTimeOfDay();
+
+    switch (time) {
+      case SanctuaryTimeOfDay.morning:
+        greetingTitle = '¡Buenos días en el Santuario!';
+        greetingBody = 'El sol despierta entre los nenúfares. Te obsequio esta gota de rocío matutina para comenzar con calma.';
+        break;
+      case SanctuaryTimeOfDay.afternoon:
+        greetingTitle = '¡Buenas tardes!';
+        greetingBody = 'Qué lindo verte por aquí. Tómate un segundo para soltar la prisa y recibe tu gota de rocío de hoy.';
+        break;
+      case SanctuaryTimeOfDay.dusk:
+        greetingTitle = '¡Hermoso atardecer!';
+        greetingBody = 'El día va cayendo suavemente. Lev te espera con una gota de rocío para acompañar tu descanso.';
+        break;
+      case SanctuaryTimeOfDay.night:
+        greetingTitle = 'Noche estrellada en el estanque';
+        greetingBody = 'Gracias por estar aquí antes de dormir. Que esta gota de rocío y el silencio te traigan paz.';
+        break;
+    }
+
+    state = state.copyWith(
+      careDrops: drops,
+      emotion: LevEmotion.happy,
+      dialogue: greetingBody,
+    );
+
+    return {
+      'title': greetingTitle,
+      'body': greetingBody,
+      'rewardDrops': 1,
+    };
+  }
+
+  /// Cambiar clima del santuario
+  Future<void> setWeather(SanctuaryWeather weather) async {
+    await LocalStorageService.setSanctuaryWeather(weather.id);
+    await HapticsHelper.selection();
+    state = state.copyWith(weather: weather);
+  }
+
+  /// Limpiar estado de evolución pendiente tras mostrar la ceremonia
+  void clearPendingEvolution() {
+    state = state.copyWith(clearPendingEvolution: true);
   }
 
   /// Desbloquear un elemento del entorno usando Gotas de Cuidado
@@ -492,6 +636,32 @@ class SanctuaryController extends Notifier<SanctuaryState> {
           ? 'Colocamos "${item.name}" en nuestro rinconcito.'
           : 'Guardamos "${item.name}" por ahora.',
     );
+  }
+
+  /// Establecer la posición normalizada (0.0-1.0) de un objeto decorativo libremente
+  Future<void> setDecorPosition(SanctuaryDecorItem item, Offset normalizedOffset) async {
+    final clampedPos = Offset(
+      normalizedOffset.dx.clamp(0.06, 0.94),
+      normalizedOffset.dy.clamp(0.08, 0.93),
+    );
+
+    final updated = Map<SanctuaryDecorItem, Offset>.from(state.customDecorPositions);
+    updated[item] = clampedPos;
+
+    state = state.copyWith(customDecorPositions: updated);
+
+    final raw = <String, List<double>>{};
+    updated.forEach((k, v) {
+      raw[k.id] = [v.dx, v.dy];
+    });
+    await LocalStorageService.saveDecorPositionsRaw(raw);
+  }
+
+  /// Restablecer la ubicación de todos los objetos decorativos a sus coordenadas estéticas por defecto
+  Future<void> resetDecorPositions() async {
+    await LocalStorageService.resetDecorPositions();
+    await HapticsHelper.light();
+    state = state.copyWith(customDecorPositions: {});
   }
 
   /// Desbloquear un accesorio botánico para vestir a Lev con Gotas de Cuidado
@@ -641,6 +811,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     await LocalStorageService.saveExperiencePointsRaw(0);
     await LocalStorageService.saveUnlockedDecorIds([]);
     await LocalStorageService.saveActiveDecorIds([]);
+    await LocalStorageService.resetDecorPositions();
     await LocalStorageService.saveActiveAccessoryId(LevAccessory.none.id);
     await LocalStorageService.saveUnlockedAccessoryIds([LevAccessory.none.id]);
     await HapticsHelper.medium();
@@ -650,6 +821,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       experiencePoints: 0,
       unlockedDecors: {},
       activeDecors: {},
+      customDecorPositions: {},
       activeAccessory: LevAccessory.none,
       unlockedAccessories: {LevAccessory.none},
       emotion: LevEmotion.peaceful,

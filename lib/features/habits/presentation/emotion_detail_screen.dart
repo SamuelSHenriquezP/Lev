@@ -106,16 +106,20 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
   Widget build(BuildContext context) {
     final habits = HabitsDatabase.getByCategory(widget.categoryName);
     final emotion = _getEmotionForCategory(widget.categoryName);
-    final bgColor = LevTheme.getEmotionBgColor(widget.categoryName);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark
+        ? LevTheme.levDarkSurface
+        : LevTheme.getEmotionBgColor(widget.categoryName);
     final accentColor = LevTheme.getEmotionAccentColor(widget.categoryName);
 
     return Scaffold(
-      backgroundColor: LevTheme.levCream,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: LevTheme.levTextDark),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -123,7 +127,7 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
           style: GoogleFonts.quicksand(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: LevTheme.levTextDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -139,10 +143,11 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                 child: Container(
                   width: double.infinity,
                   height: 190,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: bgColor,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: accentColor.withValues(alpha: 0.20)),
+                    border: Border.all(color: accentColor.withValues(alpha: isDark ? 0.35 : 0.20)),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -302,6 +307,9 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
   }
 
   Widget _buildHabitSquare(MicroHabit habit, Color bgColor, Color accentColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -310,10 +318,10 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? LevTheme.levDarkSurface : Colors.white,
             borderRadius: LevTheme.squareRadius,
-            border: Border.all(color: LevTheme.levBorder),
-            boxShadow: LevTheme.softShadow,
+            border: Border.all(color: isDark ? LevTheme.levDarkBorder : LevTheme.levBorder),
+            boxShadow: isDark ? LevTheme.darkSoftShadow : LevTheme.softShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,9 +340,9 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: LevTheme.levCream,
+                      color: isDark ? LevTheme.levDarkSurfaceVariant : LevTheme.levCream,
                       borderRadius: LevTheme.pillRadius,
-                      border: Border.all(color: LevTheme.levBorder),
+                      border: Border.all(color: isDark ? LevTheme.levDarkBorder : LevTheme.levBorder),
                     ),
                     child: Text(
                       '60s',
@@ -356,7 +364,7 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                 style: GoogleFonts.quicksand(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
-                  color: LevTheme.levTextDark,
+                  color: theme.colorScheme.onSurface,
                   height: 1.25,
                 ),
               ),

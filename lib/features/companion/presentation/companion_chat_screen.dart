@@ -74,11 +74,13 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen> {
       }
     });
 
+    final theme = Theme.of(context);
+
     return PinProtectionGate(
       child: Scaffold(
-        backgroundColor: LevTheme.levCream,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: LevTheme.levCream,
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           scrolledUnderElevation: 0,
           titleSpacing: 16,
@@ -222,7 +224,9 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen> {
                           fontSize: 14,
                           color: LevTheme.levTextMuted,
                         ),
-                        fillColor: LevTheme.levCream,
+                        fillColor: theme.brightness == Brightness.dark
+                            ? LevTheme.levDarkSurfaceVariant
+                            : LevTheme.levCream,
                         filled: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                         border: OutlineInputBorder(

@@ -111,6 +111,7 @@ enum SanctuaryDecorItem {
     icon: Icons.water_rounded,
     category: DecorCategory.nature,
     dropCost: 8,
+    defaultNormalizedPosition: Offset(0.50, 0.85),
   ),
   zenStones(
     id: 'zen_stones',
@@ -119,6 +120,7 @@ enum SanctuaryDecorItem {
     icon: Icons.filter_hdr_rounded,
     category: DecorCategory.nature,
     dropCost: 12,
+    defaultNormalizedPosition: Offset(0.24, 0.84),
   ),
   bioMoss(
     id: 'bio_moss',
@@ -127,6 +129,7 @@ enum SanctuaryDecorItem {
     icon: Icons.flare_rounded,
     category: DecorCategory.nature,
     dropCost: 18,
+    defaultNormalizedPosition: Offset(0.50, 0.86),
   ),
   windChimes(
     id: 'wind_chimes',
@@ -135,6 +138,7 @@ enum SanctuaryDecorItem {
     icon: Icons.yard_rounded,
     category: DecorCategory.nature,
     dropCost: 20,
+    defaultNormalizedPosition: Offset(0.85, 0.12),
   ),
   sakuraVase(
     id: 'sakura_vase',
@@ -143,6 +147,7 @@ enum SanctuaryDecorItem {
     icon: Icons.local_florist_rounded,
     category: DecorCategory.nature,
     dropCost: 13,
+    defaultNormalizedPosition: Offset(0.82, 0.74),
   ),
   bambooPartition(
     id: 'bamboo_partition',
@@ -151,6 +156,7 @@ enum SanctuaryDecorItem {
     icon: Icons.density_small_rounded,
     category: DecorCategory.nature,
     dropCost: 9,
+    defaultNormalizedPosition: Offset(0.10, 0.70),
   ),
   magicMushrooms(
     id: 'magic_mushrooms',
@@ -159,6 +165,7 @@ enum SanctuaryDecorItem {
     icon: Icons.bubble_chart_rounded,
     category: DecorCategory.nature,
     dropCost: 14,
+    defaultNormalizedPosition: Offset(0.28, 0.88),
   ),
   waterFountain(
     id: 'water_fountain',
@@ -167,6 +174,7 @@ enum SanctuaryDecorItem {
     icon: Icons.opacity_rounded,
     category: DecorCategory.nature,
     dropCost: 22,
+    defaultNormalizedPosition: Offset(0.78, 0.80),
   ),
 
   // --- Mobiliario & Confort Zen ---
@@ -177,6 +185,7 @@ enum SanctuaryDecorItem {
     icon: Icons.circle_outlined,
     category: DecorCategory.furniture,
     dropCost: 6,
+    defaultNormalizedPosition: Offset(0.33, 0.86),
   ),
   matchaTable(
     id: 'matcha_table',
@@ -185,6 +194,7 @@ enum SanctuaryDecorItem {
     icon: Icons.coffee_rounded,
     category: DecorCategory.furniture,
     dropCost: 10,
+    defaultNormalizedPosition: Offset(0.67, 0.86),
   ),
   bonsaiTree(
     id: 'bonsai_tree',
@@ -193,6 +203,7 @@ enum SanctuaryDecorItem {
     icon: Icons.nature_rounded,
     category: DecorCategory.furniture,
     dropCost: 14,
+    defaultNormalizedPosition: Offset(0.18, 0.75),
   ),
   readingBooks(
     id: 'reading_books',
@@ -201,6 +212,7 @@ enum SanctuaryDecorItem {
     icon: Icons.menu_book_rounded,
     category: DecorCategory.furniture,
     dropCost: 8,
+    defaultNormalizedPosition: Offset(0.22, 0.84),
   ),
 
   // --- Iluminación & Fuego Vivo ---
@@ -211,6 +223,7 @@ enum SanctuaryDecorItem {
     icon: Icons.light_mode_rounded,
     category: DecorCategory.lighting,
     dropCost: 12,
+    defaultNormalizedPosition: Offset(0.15, 0.12),
   ),
   aromaCandle(
     id: 'aroma_candle',
@@ -219,6 +232,7 @@ enum SanctuaryDecorItem {
     icon: Icons.wb_incandescent_rounded,
     category: DecorCategory.lighting,
     dropCost: 7,
+    defaultNormalizedPosition: Offset(0.38, 0.90),
   ),
   saltLamp(
     id: 'salt_lamp',
@@ -227,6 +241,7 @@ enum SanctuaryDecorItem {
     icon: Icons.wb_twilight_rounded,
     category: DecorCategory.lighting,
     dropCost: 15,
+    defaultNormalizedPosition: Offset(0.62, 0.90),
   ),
 
   // --- Compañeros & Fauna ---
@@ -237,6 +252,7 @@ enum SanctuaryDecorItem {
     icon: Icons.auto_awesome_rounded,
     category: DecorCategory.companions,
     dropCost: 16,
+    defaultNormalizedPosition: Offset(0.50, 0.48),
   ),
   spiritButterfly(
     id: 'spirit_butterfly',
@@ -245,6 +261,7 @@ enum SanctuaryDecorItem {
     icon: Icons.flutter_dash_rounded,
     category: DecorCategory.companions,
     dropCost: 11,
+    defaultNormalizedPosition: Offset(0.76, 0.65),
   ),
   zenBird(
     id: 'zen_bird',
@@ -253,6 +270,7 @@ enum SanctuaryDecorItem {
     icon: Icons.cruelty_free_rounded,
     category: DecorCategory.companions,
     dropCost: 15,
+    defaultNormalizedPosition: Offset(0.86, 0.18),
   ),
   cozyCat(
     id: 'cozy_cat',
@@ -261,6 +279,7 @@ enum SanctuaryDecorItem {
     icon: Icons.pets_rounded,
     category: DecorCategory.companions,
     dropCost: 20,
+    defaultNormalizedPosition: Offset(0.74, 0.88),
   );
 
   final String id;
@@ -269,6 +288,7 @@ enum SanctuaryDecorItem {
   final IconData icon;
   final DecorCategory category;
   final int dropCost;
+  final Offset defaultNormalizedPosition;
 
   const SanctuaryDecorItem({
     required this.id,
@@ -277,6 +297,7 @@ enum SanctuaryDecorItem {
     required this.icon,
     required this.category,
     required this.dropCost,
+    required this.defaultNormalizedPosition,
   });
 
   static SanctuaryDecorItem? fromId(String id) {
@@ -284,6 +305,33 @@ enum SanctuaryDecorItem {
       if (item.id == id) return item;
     }
     return null;
+  }
+}
+
+/// Climas y atmósferas vivas para el Santuario de Lev.
+enum SanctuaryWeather {
+  calm(id: 'calm', label: 'Sereno', emoji: '🌿', icon: Icons.wb_sunny_outlined),
+  rain(id: 'rain', label: 'Lluvia Zen', emoji: '🌧️', icon: Icons.water_drop_outlined),
+  breeze(id: 'breeze', label: 'Brisa de Pétalos', emoji: '🍃', icon: Icons.air_rounded),
+  starry(id: 'starry', label: 'Noche Estrellada', emoji: '✨', icon: Icons.auto_awesome_rounded);
+
+  const SanctuaryWeather({
+    required this.id,
+    required this.label,
+    required this.emoji,
+    required this.icon,
+  });
+
+  final String id;
+  final String label;
+  final String emoji;
+  final IconData icon;
+
+  static SanctuaryWeather fromId(String id) {
+    return SanctuaryWeather.values.firstWhere(
+      (w) => w.id == id,
+      orElse: () => SanctuaryWeather.calm,
+    );
   }
 }
 
@@ -313,9 +361,13 @@ class SanctuaryState {
   final bool justLeveledUp; // true por un ciclo cuando sube de etapa
   final Set<SanctuaryDecorItem> unlockedDecors;
   final Set<SanctuaryDecorItem> activeDecors;
+  final Map<SanctuaryDecorItem, Offset> customDecorPositions;
   final LevAccessory activeAccessory;
   final Set<LevAccessory> unlockedAccessories;
   final SanctuaryTimeOfDay? circadianOverride;
+  final SanctuaryWeather weather;
+  final bool isWatering;
+  final LevGrowthStage? pendingEvolutionStage;
 
   SanctuaryState({
     required this.careDrops,
@@ -329,12 +381,22 @@ class SanctuaryState {
     this.justLeveledUp = false,
     Set<SanctuaryDecorItem>? unlockedDecors,
     Set<SanctuaryDecorItem>? activeDecors,
+    Map<SanctuaryDecorItem, Offset>? customDecorPositions,
     this.activeAccessory = LevAccessory.none,
     Set<LevAccessory>? unlockedAccessories,
     this.circadianOverride,
+    this.weather = SanctuaryWeather.calm,
+    this.isWatering = false,
+    this.pendingEvolutionStage,
   })  : unlockedDecors = unlockedDecors ?? const {},
         activeDecors = activeDecors ?? const {},
+        customDecorPositions = customDecorPositions ?? const {},
         unlockedAccessories = unlockedAccessories ?? const {LevAccessory.none};
+
+  /// Obtiene la posición normalizada (0.0-1.0) de un objeto decorativo (personalizada o por defecto).
+  Offset getDecorPosition(SanctuaryDecorItem item) {
+    return customDecorPositions[item] ?? item.defaultNormalizedPosition;
+  }
 
   /// Momento del día efectivo (con soporte para anulación/previsualización manual).
   SanctuaryTimeOfDay get effectiveTimeOfDay => circadianOverride ?? timeOfDay;
@@ -470,10 +532,15 @@ class SanctuaryState {
     bool? justLeveledUp,
     Set<SanctuaryDecorItem>? unlockedDecors,
     Set<SanctuaryDecorItem>? activeDecors,
+    Map<SanctuaryDecorItem, Offset>? customDecorPositions,
     LevAccessory? activeAccessory,
     Set<LevAccessory>? unlockedAccessories,
     SanctuaryTimeOfDay? circadianOverride,
     bool clearCircadianOverride = false,
+    SanctuaryWeather? weather,
+    bool? isWatering,
+    LevGrowthStage? pendingEvolutionStage,
+    bool clearPendingEvolution = false,
   }) {
     return SanctuaryState(
       careDrops: careDrops ?? this.careDrops,
@@ -487,9 +554,13 @@ class SanctuaryState {
       justLeveledUp: justLeveledUp ?? false,
       unlockedDecors: unlockedDecors ?? this.unlockedDecors,
       activeDecors: activeDecors ?? this.activeDecors,
+      customDecorPositions: customDecorPositions ?? this.customDecorPositions,
       activeAccessory: activeAccessory ?? this.activeAccessory,
       unlockedAccessories: unlockedAccessories ?? this.unlockedAccessories,
       circadianOverride: clearCircadianOverride ? null : (circadianOverride ?? this.circadianOverride),
+      weather: weather ?? this.weather,
+      isWatering: isWatering ?? this.isWatering,
+      pendingEvolutionStage: clearPendingEvolution ? null : (pendingEvolutionStage ?? this.pendingEvolutionStage),
     );
   }
 }

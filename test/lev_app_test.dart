@@ -17,6 +17,7 @@ void main() {
       'lev_experience_points': 200,
       'lev_completed_habits_count': 5,
       'lev_favorite_habit_ids': ['doom_01', 'anx_01'],
+      'lev_seen_onboarding': true,
     });
     await LocalStorageService.init();
     await initializeDateFormatting('es', null);
@@ -166,6 +167,7 @@ void main() {
 
       expect(find.text('Santuario'), findsOneWidget);
       expect(find.text('Hábitos'), findsOneWidget);
+      expect(find.text('Tienda'), findsOneWidget);
       expect(find.text('Progreso'), findsOneWidget);
 
       // Open Hábitos tab

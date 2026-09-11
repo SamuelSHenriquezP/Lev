@@ -108,7 +108,7 @@ class _CbtReframerScreenState extends ConsumerState<CbtReframerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: LevTheme.levCream,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),

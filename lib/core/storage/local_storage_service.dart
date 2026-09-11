@@ -273,4 +273,151 @@ class LocalStorageService {
   static Future<void> saveGentleReminders(Map<String, dynamic> config) async {
     await _prefs?.setString(_keyGentleReminders, jsonEncode(config));
   }
+
+  // --- POSICIONAMIENTO PERSONALIZADO DE DECORACIONES (DRAG & DROP) ---
+  static const String _keyDecorPositions = 'lev_decor_positions_json';
+
+  static Map<String, List<double>> getDecorPositionsRaw() {
+    final jsonStr = _prefs?.getString(_keyDecorPositions);
+    if (jsonStr == null || jsonStr.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final result = <String, List<double>>{};
+      decoded.forEach((key, val) {
+        if (val is List && val.length >= 2) {
+          result[key] = [
+            (val[0] as num).toDouble(),
+            (val[1] as num).toDouble(),
+          ];
+        }
+      });
+      return result;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  static Future<void> saveDecorPositionsRaw(Map<String, List<double>> positions) async {
+    final jsonStr = jsonEncode(positions);
+    await _prefs?.setString(_keyDecorPositions, jsonStr);
+  }
+
+  static Future<void> resetDecorPositions() async {
+    await _prefs?.remove(_keyDecorPositions);
+  }
+
+  // --- TUTORIAL / ONBOARDING ---
+  static const String _keySeenOnboarding = 'lev_seen_onboarding';
+
+  static bool hasSeenOnboarding() {
+    return _prefs?.getBool(_keySeenOnboarding) ?? false;
+  }
+
+  static Future<void> setSeenOnboarding(bool seen) async {
+    await _prefs?.setBool(_keySeenOnboarding, seen);
+  }
+
+  // --- SALUDO DIARIO ---
+  static const String _keyLastDailyGreetingDate = 'lev_last_daily_greeting_date';
+
+  static String? getLastDailyGreetingDate() {
+    return _prefs?.getString(_keyLastDailyGreetingDate);
+  }
+
+  static Future<void> setLastDailyGreetingDate(String dateStr) async {
+    await _prefs?.setString(_keyLastDailyGreetingDate, dateStr);
+  }
+
+  // --- CLIMA DEL SANTUARIO ---
+  static const String _keySanctuaryWeather = 'lev_sanctuary_weather';
+
+  static String getSanctuaryWeather() {
+    return _prefs?.getString(_keySanctuaryWeather) ?? 'calm';
+  }
+
+  static Future<void> setSanctuaryWeather(String weatherId) async {
+    await _prefs?.setString(_keySanctuaryWeather, weatherId);
+  }
+
+  // --- COPIA DE SEGURIDAD INTEGRAL (EXPORTAR / IMPORTAR) ---
+  static String exportFullBackupJson() {
+    final data = <String, dynamic>{
+      'version': '1.0',
+      'exportedAt': DateTime.now().toIso8601String(),
+      'careDrops': getCareDrops(),
+      'experiencePoints': getExperiencePoints(),
+      'unlockedDecors': getUnlockedDecorIds(),
+      'activeDecors': getActiveDecorIds(),
+      'completedHabitsCount': getCompletedHabitsCount(),
+      'completedHabitIds': getCompletedHabitIds(),
+      'favoriteHabitIds': getFavoriteHabitIds().toList(),
+      'decorPositions': getDecorPositionsRaw(),
+      'sanctuaryWeather': getSanctuaryWeather(),
+      'hasSeenOnboarding': hasSeenOnboarding(),
+      'activeAccessory': _prefs?.getString('lev_active_accessory') ?? 'none',
+      'unlockedAccessories': _prefs?.getStringList('lev_unlocked_accessories') ?? ['none'],
+      'moodEntries': _prefs?.getString(_keyMoodEntries) ?? '[]',
+      'cbtCards': _prefs?.getString(_keyCbtCards) ?? '[]',
+    };
+    return const JsonEncoder.withIndent('  ').convert(data);
+  }
+
+  static Future<bool> importFullBackupJson(String jsonStr) async {
+    try {
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      if (data['careDrops'] is int) await saveCareDropsRaw(data['careDrops'] as int);
+      if (data['experiencePoints'] is int) await saveExperiencePointsRaw(data['experiencePoints'] as int);
+      if (data['unlockedDecors'] is List) {
+        await saveUnlockedDecorIds((data['unlockedDecors'] as List).map((e) => e.toString()).toList());
+      }
+      if (data['activeDecors'] is List) {
+        await saveActiveDecorIds((data['activeDecors'] as List).map((e) => e.toString()).toList());
+      }
+      if (data['completedHabitsCount'] is int) {
+        await _prefs?.setInt(_keyCompletedHabitsCount, data['completedHabitsCount'] as int);
+      }
+      if (data['completedHabitIds'] is List) {
+        await _prefs?.setStringList(
+          _keyCompletedHabitIds,
+          (data['completedHabitIds'] as List).map((e) => e.toString()).toList(),
+        );
+      }
+      if (data['favoriteHabitIds'] is List) {
+        await _prefs?.setStringList(
+          _keyFavoriteHabitIds,
+          (data['favoriteHabitIds'] as List).map((e) => e.toString()).toList(),
+        );
+      }
+      if (data['decorPositions'] is Map) {
+        final posMap = <String, List<double>>{};
+        (data['decorPositions'] as Map).forEach((k, v) {
+          if (v is List && v.length >= 2) {
+            posMap[k.toString()] = [(v[0] as num).toDouble(), (v[1] as num).toDouble()];
+          }
+        });
+        await saveDecorPositionsRaw(posMap);
+      }
+      if (data['sanctuaryWeather'] is String) {
+        await setSanctuaryWeather(data['sanctuaryWeather'] as String);
+      }
+      if (data['activeAccessory'] is String) {
+        await _prefs?.setString('lev_active_accessory', data['activeAccessory'] as String);
+      }
+      if (data['unlockedAccessories'] is List) {
+        await _prefs?.setStringList(
+          'lev_unlocked_accessories',
+          (data['unlockedAccessories'] as List).map((e) => e.toString()).toList(),
+        );
+      }
+      if (data['moodEntries'] is String) {
+        await _prefs?.setString(_keyMoodEntries, data['moodEntries'] as String);
+      }
+      if (data['cbtCards'] is String) {
+        await _prefs?.setString(_keyCbtCards, data['cbtCards'] as String);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

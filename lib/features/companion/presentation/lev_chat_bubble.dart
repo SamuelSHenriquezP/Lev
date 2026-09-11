@@ -512,7 +512,13 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.70),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: msg.isUser ? LevTheme.levMatchaDark : LevTheme.levCream,
+          color: msg.isUser
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? LevTheme.levMatchaNight
+                  : LevTheme.levMatchaDark)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? LevTheme.levDarkSurfaceVariant
+                  : LevTheme.levCream),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -524,7 +530,13 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
           msg.text,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.5,
-            color: msg.isUser ? Colors.white : LevTheme.levTextDark,
+            color: msg.isUser
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? LevTheme.levDarkBg
+                    : Colors.white)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? LevTheme.levDarkText
+                    : LevTheme.levTextDark),
             height: 1.35,
           ),
         ),

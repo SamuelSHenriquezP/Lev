@@ -178,7 +178,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
     return PetalCelebrationOverlay(
       showCelebration: _triggerPetals,
       child: Scaffold(
-        backgroundColor: LevTheme.levCream,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -704,6 +704,7 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                                 ),
                               ],
                             ),
+                            clipBehavior: Clip.antiAlias,
                             child: Center(
                               child: RepaintBoundary(
                                 child: CustomPaint(
@@ -893,7 +894,9 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                               borderRadius: BorderRadius.circular(6),
                               child: LinearProgressIndicator(
                                 value: sanctuary.growthFactor,
-                                backgroundColor: LevTheme.levCream,
+                                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                    ? LevTheme.levDarkSurfaceVariant
+                                    : LevTheme.levCream,
                                 valueColor: const AlwaysStoppedAnimation<Color>(LevTheme.levMatcha),
                                 minHeight: 6,
                               ),

@@ -11,6 +11,8 @@ import 'package:lev/features/home/presentation/widgets/sanctuary_audio_dialog.da
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_pond_painter.dart';
+import 'package:lev/features/sanctuary/presentation/widgets/daily_greeting_dialog.dart';
+import 'package:lev/features/sanctuary/presentation/widgets/evolution_celebration_dialog.dart';
 import 'package:lev/features/crisis/presentation/crisis_sos_modal.dart';
 
 /// Pantalla Principal del Santuario:
@@ -28,6 +30,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   Offset? _touchPosition;
   bool _isFingerActive = false;
+  bool _hasCheckedGreeting = false;
   DateTime _lastPetTime = DateTime.fromMillisecondsSinceEpoch(0);
 
   late final AnimationController _ambientController;
@@ -126,6 +129,138 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  void _checkDailyGreetingAndEvolution(SanctuaryState sanctuary, SanctuaryController controller) {
+    if (sanctuary.pendingEvolutionStage != null) {
+      final stage = sanctuary.pendingEvolutionStage!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        controller.clearPendingEvolution();
+        EvolutionCelebrationDialog.show(
+          context,
+          stage: stage,
+          onDismiss: () {},
+        );
+      });
+      return;
+    }
+
+    if (!_hasCheckedGreeting) {
+      _hasCheckedGreeting = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final greeting = await controller.checkDailyGreeting();
+        if (greeting != null && mounted) {
+          DailyGreetingDialog.show(
+            context,
+            title: greeting['title'] as String,
+            message: greeting['body'] as String,
+            rewardDrops: greeting['rewardDrops'] as int,
+            onClaim: () {},
+          );
+        }
+      });
+    }
+  }
+
+  void _showWeatherSheet(BuildContext context, SanctuaryController controller, SanctuaryWeather currentWeather) {
+    HapticsHelper.selection();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF162420) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF263D36) : LevTheme.levBorder,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : LevTheme.levBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                'Atmósfera del Santuario',
+                style: GoogleFonts.quicksand(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : LevTheme.levTextDark,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Elige el clima que acompañe tu momento presente',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  color: isDark ? Colors.white70 : LevTheme.levTextMuted,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: SanctuaryWeather.values.map((w) {
+                  final isSelected = w == currentWeather;
+                  return InkWell(
+                    onTap: () {
+                      controller.setWeather(w);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(18),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? LevTheme.levMatcha
+                            : (isDark ? const Color(0xFF1E2F29) : LevTheme.levMatchaLight),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isSelected
+                              ? LevTheme.levMatchaDark
+                              : LevTheme.levMatcha.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            w.icon,
+                            size: 24,
+                            color: isSelected ? Colors.white : LevTheme.levMatchaDark,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            w.label,
+                            style: GoogleFonts.quicksand(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : LevTheme.levMatchaDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sanctuary = ref.watch(sanctuaryProvider);
@@ -202,8 +337,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
+    _checkDailyGreetingAndEvolution(sanctuary, controller);
+
     return Scaffold(
-      backgroundColor: LevTheme.levCream,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -219,31 +356,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       onTap: () => _showGrowthInfo(context, sanctuary),
                       borderRadius: LevTheme.pillRadius,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? LevTheme.levDarkSurface
+                              : Colors.white,
                           borderRadius: LevTheme.pillRadius,
-                          border: Border.all(color: LevTheme.levBorder),
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? LevTheme.levDarkBorder
+                                : LevTheme.levBorder,
+                          ),
                           boxShadow: LevTheme.softShadow,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.eco_rounded,
-                              size: 15,
-                              color: LevTheme.levMatchaDark,
+                              sanctuary.stageMaterialIcon,
+                              size: 16,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? LevTheme.levMatchaNight
+                                  : LevTheme.levMatchaDark,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                sanctuary.growthStageName,
+                                sanctuary.stageName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.quicksand(
-                                  fontSize: 12.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: LevTheme.levMatchaDark,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -264,9 +409,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Gotas de cuidado
+                      // Gotas de cuidado -> Navegar a la Tienda
                       InkWell(
-                        onTap: () => _showGrowthInfo(context, sanctuary, initialTab: 1),
+                        onTap: () {
+                          HapticsHelper.selection();
+                          if (widget.onNavigateToTab != null) {
+                            widget.onNavigateToTab!(2);
+                          } else {
+                            _showGrowthInfo(context, sanctuary, initialTab: 1);
+                          }
+                        },
                         borderRadius: LevTheme.pillRadius,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
@@ -307,6 +459,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           context: context,
                           builder: (context) => const SanctuaryAudioDialog(),
                         ),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // Clima dinámico del Santuario
+                      _HeaderIconBtn(
+                        icon: sanctuary.weather.icon,
+                        tooltip: 'Clima: ${sanctuary.weather.label}',
+                        onTap: () => _showWeatherSheet(context, controller, sanctuary.weather),
                       ),
                       const SizedBox(width: 6),
 
@@ -421,6 +581,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 touchLocalPosition: _touchPosition,
                                 isFingerActive: _isFingerActive,
                                 touchDistance: touchDist,
+                                weather: sanctuary.weather,
+                                isWatering: sanctuary.isWatering,
                                 leafWrapProgress: _wrapController.value,
                                 sleepProgress: _sleepController.value,
                                 happyProgress: _happyController.value,
@@ -561,6 +723,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: Row(
                   children: [
                     _buildPillAction(
+                      icon: Icons.water_drop_rounded,
+                      label: 'Regar',
+                      accentColor: const Color(0xFF64B5F6),
+                      isActive: sanctuary.isWatering,
+                      onTap: () => controller.waterLev(),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPillAction(
                       icon: Icons.air_rounded,
                       label: 'Respirar',
                       isActive: sanctuary.emotion == LevEmotion.breathing,
@@ -668,7 +838,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? LevTheme.levDarkSurface
+          : Colors.white,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
@@ -678,6 +850,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           builder: (context, setModalState) {
             final currentSanctuary = ref.watch(sanctuaryProvider);
             final nextXp = currentSanctuary.xpToNextStage;
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -693,7 +867,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: LevTheme.levBorder,
+                        color: isDark ? LevTheme.levDarkBorder : LevTheme.levBorder,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -706,7 +880,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         style: GoogleFonts.quicksand(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: LevTheme.levTextDark,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       Row(
@@ -762,12 +936,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   const SizedBox(height: 14),
 
                   // Selector de 4 pestañas
+                  // Acceso directo a la Tienda & Armario
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      widget.onNavigateToTab?.call(2);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [const Color(0xFF1B3B2B), const Color(0xFF162420)]
+                              : [const Color(0xFFE8F5E9), const Color(0xFFF1F8E9)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark
+                              ? LevTheme.levMatchaNight.withValues(alpha: 0.3)
+                              : LevTheme.levMatcha.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.storefront_rounded,
+                            size: 20,
+                            color: isDark ? LevTheme.levMatchaNight : LevTheme.levMatchaDark,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Abrir Tienda & Armario Completo',
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                Text(
+                                  'Usa tus ${currentSanctuary.careDrops} gotas para vestir a Lev y decorar el santuario',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: isDark ? LevTheme.levDarkTextMuted : LevTheme.levTextMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: isDark ? LevTheme.levMatchaNight : LevTheme.levMatchaDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Selector de pestañas internas del modal
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: LevTheme.levCream,
+                      color: isDark ? LevTheme.levDarkSurfaceVariant : LevTheme.levCream,
                       borderRadius: LevTheme.pillRadius,
-                      border: Border.all(color: LevTheme.levBorder),
+                      border: Border.all(color: isDark ? LevTheme.levDarkBorder : LevTheme.levBorder),
                     ),
                     child: Row(
                       children: [

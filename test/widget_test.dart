@@ -11,6 +11,7 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'lev_care_drops': 15,
       'lev_completed_habits_count': 2,
+      'lev_seen_onboarding': true,
     });
     await LocalStorageService.init();
     await initializeDateFormatting('es', null);
@@ -50,6 +51,7 @@ void main() {
     // Verificar pestañas limpias de navegación
     expect(find.text('Santuario'), findsOneWidget);
     expect(find.text('Hábitos'), findsOneWidget);
+    expect(find.text('Tienda'), findsOneWidget);
     expect(find.text('Progreso'), findsOneWidget);
 
     // Pastillas de interacción somática

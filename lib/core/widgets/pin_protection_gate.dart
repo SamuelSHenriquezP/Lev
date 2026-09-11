@@ -27,7 +27,7 @@ class _PinProtectionGateState extends State<PinProtectionGate> {
     }
 
     return Scaffold(
-      backgroundColor: LevTheme.levCream,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),

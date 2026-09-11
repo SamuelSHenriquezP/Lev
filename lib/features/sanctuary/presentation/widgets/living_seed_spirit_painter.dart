@@ -269,11 +269,21 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final touchY = touchNormalizedOffset?.dy.clamp(-1.0, 1.0) ?? 0.0;
     final touchInfluence = isFingerActive ? 1.0 : 0.0;
 
-    final touchSway = (touchX * stageTouchSwayMultiplier) * touchInfluence;
-    final touchStretchY = (touchY < 0 ? -touchY * stageTouchStretchMultiplier : touchY * (stageTouchStretchMultiplier * 0.5)) * touchInfluence;
+    // Desplazamiento orgánico físico del cuerpo de Lev persiguiendo al dedo en la pantalla
+    final touchTranslateX = (touchX * 36.0) * touchInfluence;
+
+    // Inclinación corporal elástica y expresiva orientada al dedo (hasta ~22°)
+    final touchSway = (touchX * 0.38 * stageTouchSwayMultiplier) * touchInfluence;
+
+    // Deformación somática viva: estiramiento al mirar hacia arriba, compresión al agacharse y caricia directa
+    final touchStretchY = (touchY < 0
+            ? -touchY * stageTouchStretchMultiplier * 1.6
+            : -touchY * stageTouchStretchMultiplier * 0.8) *
+        touchInfluence;
     final touchStretchX = -touchStretchY * 0.5;
     final touchFloatY = (touchY * (stageBaseFloatY.abs() > 10 ? 8.0 : 12.0)) * touchInfluence;
-    final pettingSquash = effectiveIsPetting ? (sin(cycle * 8.0) * stagePetSquashMultiplier) : 0.0;
+    final directTouchSquash = isTouchingLev ? 0.08 : 0.0;
+    final pettingSquash = effectiveIsPetting ? (sin(cycle * 8.0) * stagePetSquashMultiplier) : directTouchSquash;
 
     // --- 4. ACCIONES SOMÁTICAS DE TAREAS ESPECÍFICAS ---
     double taskFloatY = 0.0;
@@ -323,17 +333,28 @@ class LivingSeedSpiritPainter extends CustomPainter {
 
     final stageScaleMultiplier = _getStageScaleMultiplier(growthStage);
 
-    final finalFloatY = baseFloatY + sleepFloat + happyFloat + curiousFloat +
-        sadFloat + tiredFloat + celebrateFloat + jumpFloatY + taskFloatY + taskShakeY + touchFloatY;
+    // Desacoplamiento armónico de animación: si está saltando activamente, el canal de salto domina
+    // sobre la celebración y la respiración base para eliminar cualquier movimiento entrecortado
+    final effectiveCelebrateFloat = isJoyJumping ? (celebrateFloat * 0.25) : celebrateFloat;
+    final effectiveBaseFloat = isJoyJumping ? (baseFloatY * 0.2) : baseFloatY;
+
+    final finalFloatY = effectiveBaseFloat + sleepFloat + happyFloat + curiousFloat +
+        sadFloat + tiredFloat + effectiveCelebrateFloat + jumpFloatY + taskFloatY + taskShakeY + touchFloatY;
     final finalSway = baseSway + sleepSway + happySway + curiousSway + sadSway +
         celebrateSway + jumpSway + taskSway + touchSway;
-    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY + touchStretchY + pettingSquash + celebrateScaleY;
-    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX + touchStretchX - pettingSquash + celebrateScaleX;
+    final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY + touchStretchY - pettingSquash + celebrateScaleY;
+    final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX + touchStretchX + pettingSquash + celebrateScaleX;
+
+    // Auto-ajuste de escala inteligente: garantiza que Lev nunca desborde recuadros ni tarjetas pequeñas
+    // En un lienzo grande (270px+) mantiene su tamaño completo (1.0). En cuadros de 120-190px se auto-escala con holgura visual.
+    final minDim = min(size.width, size.height);
+    final autoFitScale = (minDim / 270.0).clamp(0.20, 1.0);
+    final totalScale = sizeScale * stageScaleMultiplier * autoFitScale;
 
     canvas.save();
-    canvas.translate(centerX + anxiousShakeX + taskShakeX, centerY + finalFloatY + anxiousShakeY);
+    canvas.translate(centerX + anxiousShakeX + taskShakeX + touchTranslateX, centerY + finalFloatY + anxiousShakeY);
     canvas.rotate(finalSway);
-    canvas.scale(sizeScale * stageScaleMultiplier * finalScaleX, sizeScale * stageScaleMultiplier * finalScaleY);
+    canvas.scale(totalScale * finalScaleX, totalScale * finalScaleY);
 
     // 0. Elementos traseros de etapa suprema (Orbes orbitales que pasan por detrás)
     if (growthStage == LevGrowthStage.forestSpirit) {
@@ -377,7 +398,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effCurious,
       effTired,
       effAnxious,
-      touchGazeOffset: Offset(touchX * 5.5 * touchInfluence, touchY * 4.0 * touchInfluence),
+      touchGazeOffset: Offset(touchX * 9.5 * touchInfluence, touchY * 7.0 * touchInfluence),
       isTouchingLev: isTouchingLev,
     );
 

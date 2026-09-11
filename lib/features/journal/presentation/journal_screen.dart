@@ -14,6 +14,7 @@ import '../../sanctuary/presentation/controllers/sanctuary_controller.dart';
 import '../domain/mood_entry.dart';
 import 'cbt_reframer_screen.dart';
 import 'controllers/journal_controller.dart';
+import '../../onboarding/presentation/onboarding_screen.dart';
 
 /// Pantalla de Progreso — solo estadísticas con sentido.
 /// Gráfica emocional, crecimiento de Lev, logros por categoría, mapa de calor.
@@ -28,7 +29,7 @@ class JournalScreen extends ConsumerWidget {
 
     return PinProtectionGate(
       child: Scaffold(
-        backgroundColor: LevTheme.levCream,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -41,43 +42,69 @@ class JournalScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Progreso',
+                              style: GoogleFonts.quicksand(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : LevTheme.levTextDark,
+                              ),
+                            ),
+                            Text(
+                              'Tu camino con Lev',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white70
+                                    : LevTheme.levTextMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Progreso',
-                            style: GoogleFonts.quicksand(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: LevTheme.levTextDark,
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.help_outline_rounded, size: 20),
+                            color: LevTheme.levMatchaDark,
+                            tooltip: 'Guía de inicio',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                            onPressed: () {
+                              HapticsHelper.light();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => OnboardingScreen(
+                                    onFinish: () => Navigator.pop(context),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          Text(
-                            'Tu camino con Lev',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: LevTheme.levTextMuted,
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.backup_outlined, size: 20),
+                            color: LevTheme.levMatchaDark,
+                            tooltip: 'Copia de seguridad',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                            onPressed: () => _showBackupModal(context, ref),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.description_outlined, size: 20),
+                            color: LevTheme.levMatchaDark,
+                            tooltip: 'Reporte clínico',
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                            onPressed: () => _showTherapyReportModal(context, journalState, sanctuary, completedCount),
                           ),
                         ],
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => _showTherapyReportModal(context, journalState, sanctuary, completedCount),
-                        icon: const Icon(Icons.description_outlined, size: 16, color: LevTheme.levMatchaDark),
-                        label: Text(
-                          'Reporte',
-                          style: GoogleFonts.quicksand(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: LevTheme.levMatchaDark,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          side: const BorderSide(color: LevTheme.levMatchaDark),
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: LevTheme.pillRadius),
-                        ),
                       ),
                     ],
                   ),
@@ -325,6 +352,226 @@ class JournalScreen extends ConsumerWidget {
     );
   }
 
+  void _showBackupModal(BuildContext context, WidgetRef ref) {
+    HapticsHelper.light();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF162420) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF263D36) : LevTheme.levBorder,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: LevTheme.levMatchaLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.backup_rounded, size: 20, color: LevTheme.levMatchaDark),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Copia de Seguridad',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : LevTheme.levTextDark,
+                        ),
+                      ),
+                      Text(
+                        'Exporta o restaura tus datos 100% offline',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          color: isDark ? Colors.white70 : LevTheme.levTextMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Opción 1: Exportar
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: LevTheme.levMatchaLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.file_download_outlined, color: LevTheme.levMatchaDark),
+                ),
+                title: Text(
+                  'Exportar Respaldo (Copiar JSON)',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : LevTheme.levTextDark,
+                  ),
+                ),
+                subtitle: Text(
+                  'Copia todos tus hábitos, diario y progreso al portapapeles',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: isDark ? Colors.white70 : LevTheme.levTextMuted,
+                  ),
+                ),
+                onTap: () {
+                  final json = LocalStorageService.exportFullBackupJson();
+                  Clipboard.setData(ClipboardData(text: json));
+                  Navigator.pop(context);
+                  HapticsHelper.medium();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Respaldo JSON copiado al portapapeles. ¡Guárdalo en tus notas o mensajes!'),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 20),
+              // Opción 2: Importar
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.file_upload_outlined, color: Color(0xFF1976D2)),
+                ),
+                title: Text(
+                  'Restaurar Respaldo (Pegar JSON)',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : LevTheme.levTextDark,
+                  ),
+                ),
+                subtitle: Text(
+                  'Pega un respaldo exportado previamente para rehidratar tus datos',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: isDark ? Colors.white70 : LevTheme.levTextMuted,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showImportDialog(context, ref);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showImportDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF162420) : Colors.white,
+          title: Text(
+            'Restaurar Datos',
+            style: GoogleFonts.quicksand(
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : LevTheme.levTextDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Pega aquí el texto JSON de tu respaldo:',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  color: isDark ? Colors.white70 : LevTheme.levTextMuted,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: controller,
+                maxLines: 5,
+                style: GoogleFonts.firaCode(
+                  fontSize: 11,
+                  color: isDark ? Colors.white : LevTheme.levTextDark,
+                ),
+                decoration: InputDecoration(
+                  hintText: '{\n  "version": "1.0", ...\n}',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.all(10),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final text = controller.text.trim();
+                if (text.isEmpty) return;
+                final success = await LocalStorageService.importFullBackupJson(text);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  if (success) {
+                    HapticsHelper.medium();
+                    ref.invalidate(sanctuaryProvider);
+                    ref.invalidate(journalProvider);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✨ Respaldo restaurado con éxito.')),
+                    );
+                  } else {
+                    HapticsHelper.heavy();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('❌ Formato de respaldo no válido.')),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LevTheme.levMatcha,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Restaurar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   String _generateTherapyReportText(
     JournalState journalState,
     SanctuaryState sanctuary,
@@ -433,23 +680,37 @@ class _LevGrowthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final stage = sanctuary.growthStage;
     final progress = sanctuary.growthFactor;
-    final nextDrops = sanctuary.dropsToNextStage;
+    final nextXp = sanctuary.xpToNextStage;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            LevTheme.levMatcha.withValues(alpha: 0.15),
-            LevTheme.levMatchaDark.withValues(alpha: 0.08),
-          ],
-        ),
+        gradient: theme.brightness == Brightness.dark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  LevTheme.levMatchaNight.withValues(alpha: 0.15),
+                  LevTheme.levDarkSurfaceVariant,
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  LevTheme.levMatcha.withValues(alpha: 0.15),
+                  LevTheme.levMatchaDark.withValues(alpha: 0.08),
+                ],
+              ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? LevTheme.levDarkBorder
+              : LevTheme.levMatcha.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,15 +721,23 @@ class _LevGrowthCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.brightness == Brightness.dark
+                      ? LevTheme.levDarkSurface
+                      : Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? LevTheme.levMatchaNight.withValues(alpha: 0.4)
+                        : LevTheme.levMatcha.withValues(alpha: 0.3),
+                  ),
                   boxShadow: LevTheme.softShadow,
                 ),
                 child: Icon(
                   sanctuary.stageMaterialIcon,
                   size: 24,
-                  color: LevTheme.levMatchaDark,
+                  color: theme.brightness == Brightness.dark
+                      ? LevTheme.levMatchaNight
+                      : LevTheme.levMatchaDark,
                 ),
               ),
               const SizedBox(width: 12),
@@ -481,16 +750,18 @@ class _LevGrowthCard extends StatelessWidget {
                       style: GoogleFonts.quicksand(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: LevTheme.levTextDark,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
-                      nextDrops != null
-                          ? 'Faltan $nextDrops gotas para la siguiente etapa'
+                      nextXp != null && nextXp > 0
+                          ? 'Faltan $nextXp XP para la siguiente etapa'
                           : 'Ha alcanzado su forma final',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
-                        color: LevTheme.levTextMuted,
+                        color: theme.brightness == Brightness.dark
+                            ? LevTheme.levDarkTextMuted
+                            : LevTheme.levTextMuted,
                       ),
                     ),
                   ],
@@ -517,14 +788,20 @@ class _LevGrowthCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           // Progreso dentro de la etapa
-          if (nextDrops != null)
+          if (nextXp != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 4,
-                backgroundColor: LevTheme.levMatchaLight,
-                valueColor: const AlwaysStoppedAnimation<Color>(LevTheme.levMatchaDark),
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? LevTheme.levDarkSurfaceVariant
+                    : LevTheme.levMatchaLight,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.brightness == Brightness.dark
+                      ? LevTheme.levMatchaNight
+                      : LevTheme.levMatchaDark,
+                ),
               ),
             ),
         ],

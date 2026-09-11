@@ -141,6 +141,46 @@ void main() {
       final picture = recorder.endRecording();
       picture.dispose();
     });
+
+    test('Free decor positioning: custom coordinates update, persist and reset', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(sanctuaryProvider.notifier);
+      final cat = SanctuaryDecorItem.cozyCat;
+
+      // Default position is within normalized bounds
+      final defaultPos = cat.defaultNormalizedPosition;
+      expect(defaultPos.dx, greaterThan(0.0));
+      expect(defaultPos.dx, lessThan(1.0));
+      expect(defaultPos.dy, greaterThan(0.0));
+      expect(defaultPos.dy, lessThan(1.0));
+
+      // Initial state has default position
+      expect(container.read(sanctuaryProvider).getDecorPosition(cat), equals(defaultPos));
+
+      // Set custom position
+      const customPos = Offset(0.32, 0.45);
+      await notifier.setDecorPosition(cat, customPos);
+
+      // State reflects custom position
+      final updatedState = container.read(sanctuaryProvider);
+      expect(updatedState.getDecorPosition(cat), equals(customPos));
+
+      // Local storage persisted the coordinates
+      final raw = LocalStorageService.getDecorPositionsRaw();
+      expect(raw['cozy_cat'], equals([0.32, 0.45]));
+
+      // A fresh container rehydrates custom positions
+      final freshContainer = ProviderContainer();
+      addTearDown(freshContainer.dispose);
+      expect(freshContainer.read(sanctuaryProvider).getDecorPosition(cat), equals(customPos));
+
+      // Reset positions to default
+      await notifier.resetDecorPositions();
+      expect(container.read(sanctuaryProvider).getDecorPosition(cat), equals(defaultPos));
+      expect(LocalStorageService.getDecorPositionsRaw(), isEmpty);
+    });
   });
 
   group('LevChatBubble & Celebration UI Verification', () {

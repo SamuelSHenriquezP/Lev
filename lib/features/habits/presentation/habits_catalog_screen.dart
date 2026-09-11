@@ -78,15 +78,17 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
         ? HabitsDatabase.searchHabits(_searchQuery)
         : <MicroHabit>[];
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: LevTheme.levCream,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Microhábitos (60s)',
           style: GoogleFonts.quicksand(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: LevTheme.levTextDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         actions: [
@@ -506,7 +508,9 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: LevTheme.levCream,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? LevTheme.levDarkSurfaceVariant
+                          : LevTheme.levCream,
                       borderRadius: LevTheme.pillRadius,
                     ),
                     child: Text(
@@ -679,7 +683,9 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: LevTheme.levCream,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? LevTheme.levDarkSurfaceVariant
+                          : LevTheme.levCream,
                       borderRadius: LevTheme.pillRadius,
                     ),
                     child: Text(
