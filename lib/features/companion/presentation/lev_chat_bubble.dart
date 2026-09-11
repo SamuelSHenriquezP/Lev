@@ -144,29 +144,75 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
     return fallbacks[Random().nextInt(fallbacks.length)];
   }
 
+  double _bottomOffset = 135.0;
+  bool _isDragging = false;
+
+  void _onVerticalDragStart(DragStartDetails details) {
+    if (_isOpen) return;
+    HapticsHelper.selection();
+    setState(() => _isDragging = true);
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_isOpen) return;
+    setState(() {
+      final screenHeight = MediaQuery.of(context).size.height;
+      _bottomOffset = (_bottomOffset - details.delta.dy).clamp(88.0, screenHeight - 160.0);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_isOpen) return;
+    HapticsHelper.light();
+    setState(() => _isDragging = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final sanctuary = ref.watch(sanctuaryProvider);
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardOpen = keyboardHeight > 0;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Overlay de chat (atrás del FAB)
+        // Backdrop clickeable para cerrar suavemente el chat al tocar fuera
+        if (_isOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _close,
+              child: AnimatedBuilder(
+                animation: _overlayController,
+                builder: (context, _) => Container(
+                  color: Colors.black.withValues(
+                    alpha: (_overlayController.value * 0.28).clamp(0.0, 0.28),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Overlay de chat interactivo y reactivo al teclado
         if (_isOpen)
           Positioned(
-            bottom: 148,
-            right: 16,
-            left: 16,
+            bottom: isKeyboardOpen ? keyboardHeight + 12 : 82,
+            right: 14,
+            left: 14,
             child: AnimatedBuilder(
               animation: _overlayController,
               builder: (context, child) {
                 final scale = Curves.easeOutBack.transform(_overlayController.value);
-                return Transform.scale(
-                  scale: scale.clamp(0.0, 1.05),
-                  alignment: Alignment.bottomRight,
-                  child: Opacity(
-                    opacity: _overlayController.value.clamp(0.0, 1.0),
-                    child: child,
+                final slideY = (1.0 - _overlayController.value) * 24.0;
+                return Transform.translate(
+                  offset: Offset(0, slideY),
+                  child: Transform.scale(
+                    scale: scale.clamp(0.0, 1.05),
+                    alignment: Alignment.bottomRight,
+                    child: Opacity(
+                      opacity: _overlayController.value.clamp(0.0, 1.0),
+                      child: child,
+                    ),
                   ),
                 );
               },
@@ -174,10 +220,10 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
             ),
           ),
 
-        // FAB de Lev animado
+        // Botón FAB de Lev animado, compacto y arrastrable
         Positioned(
-          bottom: 74,
-          right: 16,
+          bottom: _bottomOffset,
+          right: 14,
           child: _buildLevFab(),
         ),
       ],
@@ -185,71 +231,95 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
   }
 
   Widget _buildLevFab() {
+    const fabSize = 50.0;
     return AnimatedBuilder(
       animation: Listenable.merge([_levFabController, _pulseController]),
       builder: (context, child) {
         return GestureDetector(
           onTap: _isOpen ? _close : _open,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Halo pulsante de fondo
-              Positioned.fill(
-                child: Container(
+          onVerticalDragStart: _onVerticalDragStart,
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
+          child: AnimatedScale(
+            scale: _isDragging ? 1.08 : 1.0,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Halo pulsante de fondo suave
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: LevTheme.levMatcha.withValues(
+                        alpha: 0.12 + _pulseController.value * 0.10,
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: fabSize,
+                  height: fabSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: LevTheme.levMatcha.withValues(
-                      alpha: 0.15 + _pulseController.value * 0.12,
+                    color: Colors.white,
+                    border: Border.all(
+                      color: LevTheme.levMatcha,
+                      width: 1.8,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: LevTheme.levMatcha.withValues(alpha: _isDragging ? 0.38 : 0.22),
+                        blurRadius: _isDragging ? 22 : 14,
+                        offset: Offset(0, _isDragging ? 8 : 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: CustomPaint(
+                      size: const Size(fabSize, fabSize),
+                      painter: LivingSeedSpiritPainter(
+                        animationValue: _levFabController.value,
+                        emotion: _isOpen ? LevEmotion.curious : LevEmotion.peaceful,
+                        isPetting: false,
+                        sizeScale: 0.28,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Container(
-                width: 68,
-                height: 68,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  border: Border.all(
-                    color: LevTheme.levMatcha,
-                    width: 2.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: LevTheme.levMatcha.withValues(alpha: 0.28),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: CustomPaint(
-                    size: const Size(68, 68),
-                    painter: LivingSeedSpiritPainter(
-                      animationValue: _levFabController.value,
-                      emotion: _isOpen ? LevEmotion.curious : LevEmotion.peaceful,
-                      isPetting: false,
-                      sizeScale: 0.38,
+                // Indicador de badge / mini icono de chat cuando está cerrado
+                if (!_isOpen)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                      child: const Icon(Icons.chat_bubble_outline_rounded, size: 10, color: Colors.white),
                     ),
                   ),
-                ),
-              ),
-              // Indicador de cierre cuando está abierto
-              if (_isOpen)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: LevTheme.levMatchaDark,
+                // Indicador de cierre cuando está abierto
+                if (_isOpen)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: LevTheme.levMatchaDark,
+                      ),
+                      child: const Icon(Icons.close_rounded, size: 11, color: Colors.white),
                     ),
-                    child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -257,8 +327,14 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
   }
 
   Widget _buildChatOverlay(SanctuaryState sanctuary) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final overlayHeight = keyboardHeight > 0
+        ? (screenHeight * 0.44).clamp(260.0, 380.0)
+        : (screenHeight * 0.58).clamp(320.0, 520.0);
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.60,
+      height: overlayHeight,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),

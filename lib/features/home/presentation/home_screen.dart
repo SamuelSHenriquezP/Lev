@@ -259,32 +259,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Gotas de cuidado
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: LevTheme.pillRadius,
-                          border: Border.all(color: LevTheme.levBorder),
-                          boxShadow: LevTheme.softShadow,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.water_drop_rounded,
-                              size: 14,
-                              color: Color(0xFF64B5F6),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${sanctuary.careDrops}',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: LevTheme.levTextDark,
+                      InkWell(
+                        onTap: () => _showGrowthInfo(context, sanctuary, initialTab: 1),
+                        borderRadius: LevTheme.pillRadius,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: LevTheme.pillRadius,
+                            border: Border.all(color: LevTheme.levBorder),
+                            boxShadow: LevTheme.softShadow,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.water_drop_rounded,
+                                size: 14,
+                                color: Color(0xFF64B5F6),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                '${sanctuary.careDrops}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: LevTheme.levTextDark,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -359,6 +363,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             isPetting: sanctuary.isPetting,
                             growthStage: sanctuary.growthStage,
                             growthFactor: sanctuary.growthFactor,
+                            activeDecors: sanctuary.activeDecors,
                             leafWrapProgress: _wrapController.value,
                             sleepProgress: _sleepController.value,
                             happyProgress: _happyController.value,
@@ -586,24 +591,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  void _showGrowthInfo(BuildContext context, SanctuaryState sanctuary) {
-    final nextDrops = sanctuary.dropsToNextStage;
+  void _showGrowthInfo(BuildContext context, SanctuaryState sanctuary, {int initialTab = 0}) {
     final controller = ref.read(sanctuaryProvider.notifier);
+    int activeTab = initialTab; // 0 = Evolución (XP), 1 = Entorno (Gotas)
 
     final stagesInfo = [
-      {'stage': LevGrowthStage.seed, 'name': 'Semilla', 'drops': 0, 'desc': 'Bulbo dorado que descansa.'},
-      {'stage': LevGrowthStage.sprout, 'name': 'Brote', 'drops': 5, 'desc': 'Primeras hojitas tiernas.'},
-      {'stage': LevGrowthStage.seedling, 'name': 'Plántula', 'drops': 10, 'desc': 'Hojas medianas con cáliz.'},
-      {'stage': LevGrowthStage.youngPlant, 'name': 'Planta Joven', 'drops': 20, 'desc': 'Alas canónicas completas.'},
-      {'stage': LevGrowthStage.vibrantPlant, 'name': 'Planta Vibrante', 'drops': 35, 'desc': 'Flores en floración.'},
-      {'stage': LevGrowthStage.youngTree, 'name': 'Árbol Juvenil', 'drops': 55, 'desc': '4 alas con nervaduras.'},
-      {'stage': LevGrowthStage.adultTree, 'name': 'Árbol Adulto', 'drops': 80, 'desc': 'Corona y halo místico.'},
-      {'stage': LevGrowthStage.forestSpirit, 'name': 'Espíritu del Bosque', 'drops': 120, 'desc': '6 alas y 3 orbes sagrados.'},
+      {'stage': LevGrowthStage.seed, 'name': 'Semilla', 'xp': 0, 'desc': 'Bulbo dorado que descansa.'},
+      {'stage': LevGrowthStage.sprout, 'name': 'Brote', 'xp': 50, 'desc': 'Primeras hojitas tiernas.'},
+      {'stage': LevGrowthStage.seedling, 'name': 'Plántula', 'xp': 100, 'desc': 'Hojas medianas con cáliz.'},
+      {'stage': LevGrowthStage.youngPlant, 'name': 'Planta Joven', 'xp': 200, 'desc': 'Alas canónicas completas.'},
+      {'stage': LevGrowthStage.vibrantPlant, 'name': 'Planta Vibrante', 'xp': 350, 'desc': 'Flores en floración.'},
+      {'stage': LevGrowthStage.youngTree, 'name': 'Árbol Juvenil', 'xp': 550, 'desc': '4 alas con nervaduras.'},
+      {'stage': LevGrowthStage.adultTree, 'name': 'Árbol Adulto', 'xp': 800, 'desc': 'Corona y halo místico.'},
+      {'stage': LevGrowthStage.forestSpirit, 'name': 'Espíritu del Bosque', 'xp': 1200, 'desc': '6 alas y 3 orbes sagrados.'},
     ];
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
       ),
@@ -611,147 +617,406 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return StatefulBuilder(
           builder: (context, setModalState) {
             final currentSanctuary = ref.watch(sanctuaryProvider);
+            final nextXp = currentSanctuary.xpToNextStage;
+
             return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              padding: EdgeInsets.fromLTRB(
+                20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 28,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: LevTheme.levBorder,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Evolución Botánica de Lev',
+                        'Santuario Botánico',
                         style: GoogleFonts.quicksand(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: LevTheme.levTextDark,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: LevTheme.levMatchaLight,
-                          borderRadius: LevTheme.pillRadius,
-                        ),
-                        child: Text(
-                          '${currentSanctuary.careDrops} gotas',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: LevTheme.levMatchaDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Toca cualquier etapa para previsualizar su sprite o progresa completando microhábitos.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: LevTheme.levTextMuted,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Lista scrolleable de las 8 etapas
-                  SizedBox(
-                    height: 130,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: stagesInfo.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 10),
-                      itemBuilder: (context, i) {
-                        final item = stagesInfo[i];
-                        final stage = item['stage'] as LevGrowthStage;
-                        final isSelected = currentSanctuary.growthStage == stage;
-                        final minDrops = item['drops'] as int;
-
-                        return InkWell(
-                          onTap: () {
-                            HapticsHelper.selection();
-                            controller.setCareDrops(minDrops);
-                            setModalState(() {});
-                          },
-                          borderRadius: LevTheme.cardRadius,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            width: 110,
-                            padding: const EdgeInsets.all(10),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? LevTheme.levMatchaLight
-                                  : const Color(0xFFFAF8F5),
-                              borderRadius: LevTheme.cardRadius,
-                              border: Border.all(
-                                color: isSelected
-                                    ? LevTheme.levMatchaDark
-                                    : LevTheme.levBorder,
-                                width: isSelected ? 2.0 : 1.0,
-                              ),
+                              color: LevTheme.levMatchaLight,
+                              borderRadius: LevTheme.pillRadius,
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Row(
                               children: [
-                                Icon(
-                                  isSelected ? Icons.check_circle_rounded : Icons.eco_rounded,
-                                  size: 22,
-                                  color: isSelected
-                                      ? LevTheme.levMatchaDark
-                                      : LevTheme.levTextMuted,
-                                ),
-                                const SizedBox(height: 6),
+                                const Icon(Icons.eco_rounded, size: 14, color: LevTheme.levMatchaDark),
+                                const SizedBox(width: 4),
                                 Text(
-                                  item['name'] as String,
-                                  style: GoogleFonts.quicksand(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: isSelected
-                                        ? LevTheme.levMatchaDark
-                                        : LevTheme.levTextDark,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${item['drops']}+ gotas',
+                                  '${currentSanctuary.experiencePoints} XP',
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10.5,
-                                    color: LevTheme.levTextMuted,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: LevTheme.levMatchaDark,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE3F2FD),
+                              borderRadius: LevTheme.pillRadius,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.water_drop_rounded, size: 14, color: Color(0xFF1976D2)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${currentSanctuary.careDrops} 💧',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1976D2),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Selector de pestañas
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: LevTheme.levCream,
+                      borderRadius: LevTheme.pillRadius,
+                      border: Border.all(color: LevTheme.levBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setModalState(() => activeTab = 0),
+                            borderRadius: LevTheme.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: activeTab == 0 ? Colors.white : Colors.transparent,
+                                borderRadius: LevTheme.pillRadius,
+                                boxShadow: activeTab == 0 ? LevTheme.softShadow : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '🌱 Crecimiento (XP)',
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 13,
+                                    fontWeight: activeTab == 0 ? FontWeight.w700 : FontWeight.w500,
+                                    color: activeTab == 0 ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setModalState(() => activeTab = 1),
+                            borderRadius: LevTheme.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: activeTab == 1 ? Colors.white : Colors.transparent,
+                                borderRadius: LevTheme.pillRadius,
+                                boxShadow: activeTab == 1 ? LevTheme.softShadow : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '🌺 Entorno (Gotas)',
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 13,
+                                    fontWeight: activeTab == 1 ? FontWeight.w700 : FontWeight.w500,
+                                    color: activeTab == 1 ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
                   const SizedBox(height: 14),
-                  if (nextDrops != null)
+
+                  if (activeTab == 0) ...[
                     Text(
-                      'Faltan $nextDrops gotas para desbloquear la siguiente etapa de forma natural.',
+                      'Toca cualquier etapa para previsualizar su sprite o progresa ganando +25 XP por hábito.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: LevTheme.levMatchaDark,
-                      ),
-                    )
-                  else
-                    Text(
-                      'Lev ha alcanzado su forma final suprema. Sigue nutriendo tu bienestar.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: LevTheme.levMatchaDark,
+                        color: LevTheme.levTextMuted,
+                        height: 1.35,
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      height: 125,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: stagesInfo.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 10),
+                        itemBuilder: (context, i) {
+                          final item = stagesInfo[i];
+                          final stage = item['stage'] as LevGrowthStage;
+                          final isSelected = currentSanctuary.growthStage == stage;
+                          final minXp = item['xp'] as int;
+
+                          return InkWell(
+                            onTap: () {
+                              HapticsHelper.selection();
+                              final dropsForXp = (minXp / 10).round();
+                              controller.setCareDrops(dropsForXp);
+                              setModalState(() {});
+                            },
+                            borderRadius: LevTheme.cardRadius,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              width: 108,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? LevTheme.levMatchaLight
+                                    : const Color(0xFFFAF8F5),
+                                borderRadius: LevTheme.cardRadius,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? LevTheme.levMatchaDark
+                                      : LevTheme.levBorder,
+                                  width: isSelected ? 2.0 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isSelected ? Icons.check_circle_rounded : Icons.eco_rounded,
+                                    size: 20,
+                                    color: isSelected
+                                        ? LevTheme.levMatchaDark
+                                        : LevTheme.levTextMuted,
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    item['name'] as String,
+                                    style: GoogleFonts.quicksand(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isSelected
+                                          ? LevTheme.levMatchaDark
+                                          : LevTheme.levTextDark,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${item['xp']}+ XP',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10.5,
+                                      color: LevTheme.levTextMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (nextXp != null)
+                      Text(
+                        'Faltan $nextXp XP para la siguiente evolución botánica.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: LevTheme.levMatchaDark,
+                        ),
+                      )
+                    else
+                      Text(
+                        'Lev ha alcanzado su forma final suprema. Sigue nutriendo tu bienestar.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: LevTheme.levMatchaDark,
+                        ),
+                      ),
+                  ] else ...[
+                    Text(
+                      'Usa tus Gotas de Cuidado acumuladas para embellecer y transformar el entorno del santuario.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: LevTheme.levTextMuted,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 155,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: SanctuaryDecorItem.values.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 10),
+                        itemBuilder: (context, i) {
+                          final item = SanctuaryDecorItem.values[i];
+                          final isUnlocked = currentSanctuary.unlockedDecors.contains(item);
+                          final isActive = currentSanctuary.activeDecors.contains(item);
+                          final canAfford = currentSanctuary.careDrops >= item.dropCost;
+
+                          return Container(
+                            width: 140,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? LevTheme.levMatchaLight.withValues(alpha: 0.7)
+                                  : const Color(0xFFFAF8F5),
+                              borderRadius: LevTheme.cardRadius,
+                              border: Border.all(
+                                color: isActive
+                                    ? LevTheme.levMatchaDark
+                                    : LevTheme.levBorder,
+                                width: isActive ? 1.8 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Icon(item.icon, size: 20, color: LevTheme.levMatchaDark),
+                                    if (isUnlocked)
+                                      Icon(
+                                        isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                                        size: 16,
+                                        color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
+                                      )
+                                    else
+                                      Text(
+                                        '${item.dropCost} 💧',
+                                        style: GoogleFonts.quicksand(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: canAfford ? const Color(0xFF1976D2) : LevTheme.levTextMuted,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.quicksand(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: LevTheme.levTextDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.description,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        color: LevTheme.levTextMuted,
+                                        height: 1.25,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 28,
+                                  child: isUnlocked
+                                      ? OutlinedButton(
+                                          onPressed: () {
+                                            controller.toggleDecor(item);
+                                            setModalState(() {});
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            side: BorderSide(
+                                              color: isActive ? LevTheme.levMatchaDark : LevTheme.levBorder,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            isActive ? 'Activo' : 'Colocar',
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextDark,
+                                            ),
+                                          ),
+                                        )
+                                      : ElevatedButton(
+                                          onPressed: canAfford
+                                              ? () async {
+                                                  final success = await controller.unlockDecor(item);
+                                                  if (success) setModalState(() {});
+                                                }
+                                              : null,
+                                          style: ElevatedButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            backgroundColor: LevTheme.levMatcha,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Desbloquear',
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );

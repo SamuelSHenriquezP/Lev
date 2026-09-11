@@ -6,11 +6,12 @@ import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/domain/micro_habit.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
+import 'widgets/lev_task_animation_widget.dart';
 import 'habit_timer_screen.dart';
 
 /// Pantalla inmersiva para cada emoción.
-/// Lev reacciona arriba en vivo con su animación correspondiente,
-/// se muestra una tarjeta de mensaje sutil (chat integrado) y las ayudas se despliegan en cuadraditos táctiles.
+/// Lev entra flotando suavemente a 60 FPS con entrada orgánica y adopta su postura
+/// sin cortes abruptos, con mensaje sutil tipo chat y tarjetas de microhábitos diferenciadas.
 class EmotionDetailScreen extends StatefulWidget {
   final String categoryName;
   final String emoji;
@@ -26,8 +27,10 @@ class EmotionDetailScreen extends StatefulWidget {
 }
 
 class _EmotionDetailScreenState extends State<EmotionDetailScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _animationController;
+  late final AnimationController _entranceController;
+  late final Animation<double> _entranceAnimation;
 
   @override
   void initState() {
@@ -36,11 +39,22 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
       vsync: this,
       duration: const Duration(milliseconds: 3600),
     )..repeat();
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
+    _entranceAnimation = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOutCubic,
+    );
+    _entranceController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -133,20 +147,33 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Lev animado con su estado emocional exacto
+                      // Lev animado con su estado emocional exacto y entrada suave (sin cortes ni saltos)
                       AnimatedBuilder(
-                        animation: _animationController,
+                        animation: Listenable.merge([_animationController, _entranceAnimation]),
                         builder: (context, child) {
-                          return CustomPaint(
-                            size: const Size(190, 190),
-                            painter: LivingSeedSpiritPainter(
-                              animationValue: _animationController.value,
-                              emotion: emotion,
-                              isPetting: false,
-                              sizeScale: 0.95,
-                              leafWrapProgress: emotion == LevEmotion.sheltered ? 1.0 : 0.0,
-                              sleepProgress: emotion == LevEmotion.sleeping ? 1.0 : 0.0,
-                              breathingProgress: emotion == LevEmotion.breathing ? 1.0 : 0.0,
+                          final enter = _entranceAnimation.value;
+                          return FadeTransition(
+                            opacity: _entranceAnimation,
+                            child: Transform.scale(
+                              scale: 0.88 + (0.12 * enter),
+                              child: CustomPaint(
+                                size: const Size(190, 190),
+                                painter: LivingSeedSpiritPainter(
+                                  animationValue: _animationController.value,
+                                  emotion: emotion,
+                                  isPetting: false,
+                                  sizeScale: 0.95,
+                                  leafWrapProgress: (emotion == LevEmotion.sheltered ? 1.0 : 0.0) * enter,
+                                  sleepProgress: (emotion == LevEmotion.sleeping ? 1.0 : 0.0) * enter,
+                                  breathingProgress: (emotion == LevEmotion.breathing ? 1.0 : 0.0) * enter,
+                                  sadProgress: (emotion == LevEmotion.sad ? 1.0 : 0.0) * enter,
+                                  anxiousProgress: (emotion == LevEmotion.anxious ? 1.0 : 0.0) * enter,
+                                  tiredProgress: (emotion == LevEmotion.tired ? 1.0 : 0.0) * enter,
+                                  curiousProgress: (emotion == LevEmotion.curious ? 1.0 : 0.0) * enter,
+                                  happyProgress: (emotion == LevEmotion.happy ? 1.0 : 0.0) * enter,
+                                  celebrateProgress: (emotion == LevEmotion.celebrating ? 1.0 : 0.0) * enter,
+                                ),
+                              ),
                             ),
                           );
                         },
@@ -296,16 +323,11 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: Icon(habit.icon, size: 20, color: accentColor),
-                    ),
+                  LevTaskBadge(
+                    action: habit.taskAction,
+                    bgColor: bgColor,
+                    accentColor: accentColor,
+                    size: 42,
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

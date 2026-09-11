@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -123,94 +124,28 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
   }
 
   void _showCompletionDialog() {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: LevTheme.levBorder,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const _LevCelebrationView(),
-              const SizedBox(height: 16),
-              Text(
-                'Lo lograste',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.quicksand(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: LevTheme.levTextDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Lev está celebrando tu pausa consciente. Sumaste +1 gota de cuidado para su crecimiento.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: LevTheme.levTextMuted,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: LevTheme.levCream,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: LevTheme.levMatcha.withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Impacto en tu sistema nervioso:',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: LevTheme.levMatchaDark,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.habit.psychologicalBasis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: LevTheme.levTextDark,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticsHelper.light();
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Hecho, gracias Lev'),
-                ),
-              ),
-            ],
+      barrierDismissible: false,
+      barrierLabel: 'Celebration',
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (dialogContext, anim1, anim2) {
+        return _LevCelebrationModal(
+          habit: widget.habit,
+          onClose: () {
+            HapticsHelper.light();
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        final curved = CurvedAnimation(parent: anim1, curve: Curves.easeOutBack);
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.86, end: 1.0).animate(curved),
+            child: child,
           ),
         );
       },
@@ -487,7 +422,9 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
           ),
         ),
         const SizedBox(height: 12),
-        Expanded(
+        SizedBox(
+          width: 260,
+          height: 150,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: StatefulBuilder(
@@ -606,67 +543,437 @@ class _GesturePainter extends CustomPainter {
   bool shouldRepaint(_GesturePainter old) => true;
 }
 
-/// Widget de celebración de Lev al terminar el hábito
-class _LevCelebrationView extends StatefulWidget {
-  const _LevCelebrationView();
+/// Pantalla modal de celebración orgánica y luminosa para Lev al terminar el hábito.
+class _LevCelebrationModal extends ConsumerStatefulWidget {
+  final MicroHabit habit;
+  final VoidCallback onClose;
+
+  const _LevCelebrationModal({
+    required this.habit,
+    required this.onClose,
+  });
 
   @override
-  State<_LevCelebrationView> createState() => _LevCelebrationViewState();
+  ConsumerState<_LevCelebrationModal> createState() => _LevCelebrationModalState();
 }
 
-class _LevCelebrationViewState extends State<_LevCelebrationView>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
+    with TickerProviderStateMixin {
+  late final AnimationController _jumpController;
+  late final AnimationController _glowController;
+  late final AnimationController _badgePopController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _jumpController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1300),
+      duration: const Duration(milliseconds: 1400),
     )..repeat();
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _badgePopController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _jumpController.dispose();
+    _glowController.dispose();
+    _badgePopController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
-          width: 160,
-          height: 160,
+    final sanctuary = ref.watch(sanctuaryProvider);
+    final size = MediaQuery.of(context).size;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: min(size.width * 0.90, 400.0),
+          constraints: BoxConstraints(maxHeight: size.height * 0.88),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: LevTheme.levCream,
+            color: const Color(0xFFFAF8F5),
+            borderRadius: BorderRadius.circular(38),
+            border: Border.all(
+              color: LevTheme.levMatchaLight.withValues(alpha: 0.9),
+              width: 1.8,
+            ),
             boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFFD166).withValues(alpha: 0.35),
-                blurRadius: 28,
+              const BoxShadow(
+                color: Color(0x332D3748),
+                blurRadius: 36,
+                offset: Offset(0, 14),
+              ),
+              const BoxShadow(
+                color: Color(0x22FFE082),
+                blurRadius: 40,
                 spreadRadius: 4,
               ),
             ],
           ),
-          child: ClipOval(
-            child: CustomPaint(
-              size: const Size(160, 160),
-              painter: LivingSeedSpiritPainter(
-                animationValue: _controller.value,
-                emotion: LevEmotion.joyJump,
-                isPetting: true,
-                sizeScale: 0.85,
-                jumpProgress: _controller.value,
-                happyProgress: 1.0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(38),
+            child: Stack(
+              children: [
+                // Overlay sutil de pétalos flotantes dentro del modal
+                const Positioned.fill(
+                  child: IgnorePointer(
+                    child: PetalCelebrationOverlay(),
+                  ),
+                ),
+
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Encabezado con insignia de felicitación
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: LevTheme.levMatchaLight,
+                                borderRadius: LevTheme.pillRadius,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.auto_awesome_rounded, size: 14, color: LevTheme.levMatchaDark),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Pausa Consciente Completada',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.quicksand(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: LevTheme.levMatchaDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                      // Medallón orgánico de Lev en salto de alegría
+                      AnimatedBuilder(
+                        animation: Listenable.merge([_jumpController, _glowController]),
+                        builder: (context, child) {
+                          final glowVal = _glowController.value;
+                          return Container(
+                            width: 170,
+                            height: 170,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  const Color(0xFFFFF8E1),
+                                  const Color(0xFFFFF3D6).withValues(alpha: 0.8),
+                                  const Color(0xFFE8F5E9).withValues(alpha: 0.3),
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.35, 0.65, 0.85, 1.0],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFD54F).withValues(alpha: 0.30 + glowVal * 0.20),
+                                  blurRadius: 32 + glowVal * 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: CustomPaint(
+                                size: const Size(170, 170),
+                                painter: LivingSeedSpiritPainter(
+                                  animationValue: _jumpController.value,
+                                  emotion: LevEmotion.joyJump,
+                                  isPetting: true,
+                                  sizeScale: 0.88,
+                                  jumpProgress: _jumpController.value,
+                                  happyProgress: 1.0,
+                                  celebrateProgress: 1.0,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Título cálido y cariñoso
+                      Text(
+                        '¡Lo lograste!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.quicksand(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: LevTheme.levTextDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Lev está saltando de alegría por tu pausa de cuidado.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: LevTheme.levTextMuted,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Bloque de Recompensas: +Gotas y +XP diferenciadas
+                      ScaleTransition(
+                        scale: CurvedAnimation(
+                          parent: _badgePopController,
+                          curve: Curves.elasticOut,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFFBBDEFB)),
+                                  boxShadow: LevTheme.softShadow,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.water_drop_rounded, size: 18, color: Color(0xFF1976D2)),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '+1 Gota 💧',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF1976D2),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Santuario',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10,
+                                              color: LevTheme.levTextMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: LevTheme.levMatchaLight),
+                                  boxShadow: LevTheme.softShadow,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.eco_rounded, size: 18, color: LevTheme.levMatchaDark),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '+25 XP 🌱',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: LevTheme.levMatchaDark,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Evolución Lev',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10,
+                                              color: LevTheme.levTextMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Barra de progreso botánico
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: LevTheme.levBorder),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(sanctuary.stageMaterialIcon, size: 16, color: LevTheme.levMatchaDark),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      sanctuary.stageName,
+                                      style: GoogleFonts.quicksand(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: LevTheme.levTextDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '${sanctuary.experiencePoints} XP',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: LevTheme.levMatchaDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: sanctuary.growthFactor,
+                                backgroundColor: LevTheme.levCream,
+                                valueColor: const AlwaysStoppedAnimation<Color>(LevTheme.levMatcha),
+                                minHeight: 6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Tarjeta de base neurocientífica
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF6F4ED),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: LevTheme.levBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.psychology_outlined, size: 16, color: LevTheme.levMatchaDark),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Impacto en tu sistema nervioso:',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: LevTheme.levMatchaDark,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              widget.habit.psychologicalBasis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.5,
+                                color: LevTheme.levTextDark,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+
+                    // Botón táctil para continuar siempre visible al pie
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 6, 20, 18),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: widget.onClose,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: LevTheme.levMatcha,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: LevTheme.pillRadius,
+                            ),
+                          ),
+                          child: Text(
+                            'Hecho, gracias Lev 🌿',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

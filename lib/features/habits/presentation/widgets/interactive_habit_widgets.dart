@@ -670,7 +670,10 @@ class _EyeTrackerWidgetState extends State<EyeTrackerWidget>
     return AnimatedBuilder(
       animation: Listenable.merge([_orbitController, _levController]),
       builder: (context, child) {
-        return Column(
+        return SizedBox(
+          width: 320,
+          height: 320,
+          child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -756,9 +759,10 @@ class _EyeTrackerWidgetState extends State<EyeTrackerWidget>
               ),
             ),
           ],
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 }
 

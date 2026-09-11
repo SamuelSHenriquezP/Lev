@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// La salud mental es privada: todo permanece en el dispositivo del usuario.
 class LocalStorageService {
   static const String _keyCareDrops = 'lev_care_drops';
+  static const String _keyExperiencePoints = 'lev_experience_points';
+  static const String _keyUnlockedDecors = 'lev_unlocked_decors';
+  static const String _keyActiveDecors = 'lev_active_decors';
   static const String _keyCompletedHabitsCount = 'lev_completed_habits_count';
   static const String _keyMoodEntries = 'lev_mood_entries_json';
   static const String _keyCbtCards = 'lev_cbt_cards_json';
@@ -25,7 +28,7 @@ class LocalStorageService {
     return _prefs!;
   }
 
-  // --- GOTAS DE CUIDADO (STREAK COMPASIVO) ---
+  // --- GOTAS DE CUIDADO (RECURSO / MONEDA TÁCTIL) ---
   static int getCareDrops() {
     return _prefs?.getInt(_keyCareDrops) ?? 15; // Bienvenida cálida
   }
@@ -37,6 +40,42 @@ class LocalStorageService {
 
   static Future<void> saveCareDropsRaw(int drops) async {
     await _prefs?.setInt(_keyCareDrops, drops);
+  }
+
+  // --- PUNTOS DE EXPERIENCIA (XP BOTÁNICA ACUMULADA) ---
+  static int getExperiencePoints() {
+    final stored = _prefs?.getInt(_keyExperiencePoints);
+    if (stored != null) return stored;
+    // Si es primera vez, se deriva de las gotas existentes para no perder progreso
+    final initialXp = getCareDrops() * 10;
+    _prefs?.setInt(_keyExperiencePoints, initialXp);
+    return initialXp;
+  }
+
+  static Future<void> addExperiencePoints(int amount) async {
+    final current = getExperiencePoints();
+    await _prefs?.setInt(_keyExperiencePoints, current + amount);
+  }
+
+  static Future<void> saveExperiencePointsRaw(int xp) async {
+    await _prefs?.setInt(_keyExperiencePoints, xp);
+  }
+
+  // --- DESBLOQUEOS Y DECORACIONES DEL SANTUARIO ---
+  static List<String> getUnlockedDecorIds() {
+    return _prefs?.getStringList(_keyUnlockedDecors) ?? [];
+  }
+
+  static Future<void> saveUnlockedDecorIds(List<String> ids) async {
+    await _prefs?.setStringList(_keyUnlockedDecors, ids);
+  }
+
+  static List<String> getActiveDecorIds() {
+    return _prefs?.getStringList(_keyActiveDecors) ?? [];
+  }
+
+  static Future<void> saveActiveDecorIds(List<String> ids) async {
+    await _prefs?.setStringList(_keyActiveDecors, ids);
   }
 
   // --- HÁBITOS COMPLETADOS ---

@@ -16,14 +16,30 @@ class SanctuaryController extends Notifier<SanctuaryState> {
   @override
   SanctuaryState build() {
     final drops = LocalStorageService.getCareDrops();
+    final xp = LocalStorageService.getExperiencePoints();
     final completed = LocalStorageService.getCompletedHabitsCount();
     final flowers = 3 + min<int>(completed, 12);
+
+    final unlockedIds = LocalStorageService.getUnlockedDecorIds();
+    final activeIds = LocalStorageService.getActiveDecorIds();
+    final unlocked = unlockedIds
+        .map((id) => SanctuaryDecorItem.fromId(id))
+        .whereType<SanctuaryDecorItem>()
+        .toSet();
+    final active = activeIds
+        .map((id) => SanctuaryDecorItem.fromId(id))
+        .whereType<SanctuaryDecorItem>()
+        .toSet();
+
     return SanctuaryState(
       careDrops: drops,
+      experiencePoints: xp,
       bloomingFlowers: flowers,
       emotion: LevEmotion.peaceful,
       dialogue: _getGreeting(_calculateTimeOfDay()),
       timeOfDay: _calculateTimeOfDay(),
+      unlockedDecors: unlocked,
+      activeDecors: active,
     );
   }
 
@@ -209,18 +225,20 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     );
   }
 
-  /// Al completar un microhábito — chequea si subió de etapa
+  /// Al completar un microhábito — otorga +Gotas y +XP, chequea si subió de etapa
   Future<void> onHabitCompleted(String habitId) async {
     final prevStage = state.growthStage;
     await LocalStorageService.incrementCompletedHabits(habitId);
+    await LocalStorageService.addExperiencePoints(25); // +25 XP botánica por hábito
     final drops = LocalStorageService.getCareDrops();
+    final xp = LocalStorageService.getExperiencePoints();
     final completed = LocalStorageService.getCompletedHabitsCount();
     final flowers = 3 + min<int>(completed, 15);
 
     await HapticsHelper.medium();
 
-    // Detectar si subió de etapa
-    final tempState = state.copyWith(careDrops: drops);
+    // Detectar si subió de etapa según XP
+    final tempState = state.copyWith(careDrops: drops, experiencePoints: xp);
     final newStage = tempState.growthStage;
     final justLeveledUp = newStage.index > prevStage.index;
 
@@ -231,8 +249,9 @@ class SanctuaryController extends Notifier<SanctuaryState> {
 
     state = state.copyWith(
       careDrops: drops,
+      experiencePoints: xp,
       bloomingFlowers: flowers,
-      emotion: justLeveledUp ? LevEmotion.celebrating : LevEmotion.celebrating,
+      emotion: LevEmotion.celebrating,
       dialogue: celebrationQuote,
       tapCount: state.tapCount + 1,
       justLeveledUp: justLeveledUp,
@@ -246,6 +265,65 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         );
       } catch (_) {}
     });
+  }
+
+  /// Desbloquear un elemento del entorno usando Gotas de Cuidado
+  Future<bool> unlockDecor(SanctuaryDecorItem item) async {
+    if (state.unlockedDecors.contains(item)) return true;
+    if (state.careDrops < item.dropCost) {
+      await HapticsHelper.light();
+      return false;
+    }
+
+    final newDrops = state.careDrops - item.dropCost;
+    await LocalStorageService.saveCareDropsRaw(newDrops);
+
+    final updatedUnlocked = {...state.unlockedDecors, item};
+    final updatedActive = {...state.activeDecors, item};
+
+    await LocalStorageService.saveUnlockedDecorIds(
+      updatedUnlocked.map((e) => e.id).toList(),
+    );
+    await LocalStorageService.saveActiveDecorIds(
+      updatedActive.map((e) => e.id).toList(),
+    );
+
+    await HapticsHelper.medium();
+
+    state = state.copyWith(
+      careDrops: newDrops,
+      unlockedDecors: updatedUnlocked,
+      activeDecors: updatedActive,
+      emotion: LevEmotion.celebrating,
+      dialogue: '¡Qué hermoso! Desbloqueamos "${item.name}". Nuestro santuario se siente aún más vivo.',
+    );
+    return true;
+  }
+
+  /// Activar o desactivar un elemento decorativo ya desbloqueado
+  Future<void> toggleDecor(SanctuaryDecorItem item) async {
+    if (!state.unlockedDecors.contains(item)) return;
+
+    final updatedActive = Set<SanctuaryDecorItem>.from(state.activeDecors);
+    final isNowActive = !updatedActive.contains(item);
+    if (isNowActive) {
+      updatedActive.add(item);
+    } else {
+      updatedActive.remove(item);
+    }
+
+    await LocalStorageService.saveActiveDecorIds(
+      updatedActive.map((e) => e.id).toList(),
+    );
+
+    await HapticsHelper.light();
+
+    state = state.copyWith(
+      activeDecors: updatedActive,
+      dialogue: isNowActive
+          ? 'Colocamos "${item.name}" en nuestro rinconcito.'
+          : 'Guardamos "${item.name}" por ahora.',
+    );
   }
 
   void setShelteredState() {
@@ -297,13 +375,16 @@ class SanctuaryController extends Notifier<SanctuaryState> {
 
   Future<void> setCareDrops(int drops) async {
     await LocalStorageService.saveCareDropsRaw(drops);
+    final xp = drops * 10;
+    await LocalStorageService.saveExperiencePointsRaw(xp);
     final prevStage = state.growthStage;
-    final tempState = state.copyWith(careDrops: drops);
+    final tempState = state.copyWith(careDrops: drops, experiencePoints: xp);
     final newStage = tempState.growthStage;
     final justLeveledUp = newStage.index != prevStage.index;
 
     state = state.copyWith(
       careDrops: drops,
+      experiencePoints: xp,
       justLeveledUp: justLeveledUp,
       dialogue: justLeveledUp ? _getLevelUpDialogue(newStage) : state.dialogue,
     );

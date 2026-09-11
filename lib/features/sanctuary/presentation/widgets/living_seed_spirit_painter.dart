@@ -21,16 +21,16 @@ class LivingSeedSpiritPainter extends CustomPainter {
   final double growthFactor; // 0.0 a 1.0 dentro de la etapa actual
 
   // Factores de transición suave (0.0 a 1.0 interpolados dinámicamente)
-  final double leafWrapProgress;   // Abrazo protector envuelto
-  final double sleepProgress;      // Siesta plácida con Zzz
-  final double happyProgress;      // Cosquillas / alegría
-  final double breathingProgress;  // Respiración somática guiada profunda
-  final double jumpProgress;       // Salto elástico con anticipación, ápice y aterrizaje amortiguado
-  final double curiousProgress;    // Curiosidad: inclinación lúdica y oreja alzada
-  final double sadProgress;        // Tristeza somática: alas caídas y lágrima de rocío
-  final double anxiousProgress;    // Ansiedad somática: microtemblor y respiración superficial
-  final double tiredProgress;      // Cansancio: parpadeo pesado y cabeceo
-  final double celebrateProgress;  // Celebración: giro festivo y lluvia botánica
+  final double? leafWrapProgress;   // Abrazo protector envuelto
+  final double? sleepProgress;      // Siesta plácida con Zzz
+  final double? happyProgress;      // Cosquillas / alegría
+  final double? breathingProgress;  // Respiración somática guiada profunda
+  final double jumpProgress;        // Salto elástico con anticipación, ápice y aterrizaje amortiguado
+  final double? curiousProgress;    // Curiosidad: inclinación lúdica y oreja alzada
+  final double? sadProgress;        // Tristeza somática: alas caídas y lágrima de rocío
+  final double? anxiousProgress;    // Ansiedad somática: microtemblor y respiración superficial
+  final double? tiredProgress;      // Cansancio: parpadeo pesado y cabeceo
+  final double? celebrateProgress;  // Celebración: giro festivo y lluvia botánica
 
   LivingSeedSpiritPainter({
     required this.animationValue,
@@ -40,16 +40,16 @@ class LivingSeedSpiritPainter extends CustomPainter {
     this.taskAction,
     this.growthStage = LevGrowthStage.youngPlant,
     this.growthFactor = 0.0,
-    this.leafWrapProgress = 0.0,
-    this.sleepProgress = 0.0,
-    this.happyProgress = 0.0,
-    this.breathingProgress = 0.0,
+    this.leafWrapProgress,
+    this.sleepProgress,
+    this.happyProgress,
+    this.breathingProgress,
     this.jumpProgress = 0.0,
-    this.curiousProgress = 0.0,
-    this.sadProgress = 0.0,
-    this.anxiousProgress = 0.0,
-    this.tiredProgress = 0.0,
-    this.celebrateProgress = 0.0,
+    this.curiousProgress,
+    this.sadProgress,
+    this.anxiousProgress,
+    this.tiredProgress,
+    this.celebrateProgress,
   });
 
   @override
@@ -60,16 +60,16 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final t = animationValue;
     final cycle = t * 2 * pi;
 
-    // --- EFECTIVIDAD DE EMOCIONES ---
-    final effWrap = max(leafWrapProgress, (emotion == LevEmotion.sheltered ? 1.0 : 0.0));
-    final effSleep = max(sleepProgress, (emotion == LevEmotion.sleeping ? 1.0 : 0.0));
-    final effHappy = max(happyProgress, max(isPetting ? 1.0 : 0.0, (emotion == LevEmotion.happy ? 1.0 : 0.0)));
-    final effBreath = max(breathingProgress, (emotion == LevEmotion.breathing ? 1.0 : 0.0));
-    final effCurious = max(curiousProgress, (emotion == LevEmotion.curious ? 1.0 : 0.0));
-    final effSad = max(sadProgress, (emotion == LevEmotion.sad ? 1.0 : 0.0));
-    final effAnxious = max(anxiousProgress, (emotion == LevEmotion.anxious ? 1.0 : 0.0));
-    final effTired = max(tiredProgress, (emotion == LevEmotion.tired ? 1.0 : 0.0));
-    final effCelebrate = max(celebrateProgress, (emotion == LevEmotion.celebrating ? 1.0 : 0.0));
+    // --- EFECTIVIDAD DE EMOCIONES (Interpolación suave 0.0 -> 1.0 sin saltos bruscos) ---
+    final effWrap = leafWrapProgress ?? (emotion == LevEmotion.sheltered ? 1.0 : 0.0);
+    final effSleep = sleepProgress ?? (emotion == LevEmotion.sleeping ? 1.0 : 0.0);
+    final effHappy = happyProgress ?? max(isPetting ? 1.0 : 0.0, (emotion == LevEmotion.happy ? 1.0 : 0.0));
+    final effBreath = breathingProgress ?? (emotion == LevEmotion.breathing ? 1.0 : 0.0);
+    final effCurious = curiousProgress ?? (emotion == LevEmotion.curious ? 1.0 : 0.0);
+    final effSad = sadProgress ?? (emotion == LevEmotion.sad ? 1.0 : 0.0);
+    final effAnxious = anxiousProgress ?? (emotion == LevEmotion.anxious ? 1.0 : 0.0);
+    final effTired = tiredProgress ?? (emotion == LevEmotion.tired ? 1.0 : 0.0);
+    final effCelebrate = celebrateProgress ?? (emotion == LevEmotion.celebrating ? 1.0 : 0.0);
 
     // --- 1. FÍSICA BASE CONTINUA A 60 FPS (LEV NUNCA ESTÁ ESTÁTICO) ---
     final breatheSpeedMultiplier = (effSleep > 0.5) ? 0.6 : (effAnxious > 0.5 ? 2.2 : 1.0);

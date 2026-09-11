@@ -7,8 +7,8 @@ class PetalCelebrationOverlay extends StatefulWidget {
 
   const PetalCelebrationOverlay({
     super.key,
-    required this.child,
-    required this.showCelebration,
+    this.child = const SizedBox.shrink(),
+    this.showCelebration = true,
   });
 
   @override
@@ -32,6 +32,9 @@ class _PetalCelebrationOverlayState extends State<PetalCelebrationOverlay>
       });
 
     _spawnPetals();
+    if (widget.showCelebration) {
+      _controller.forward(from: 0.0);
+    }
   }
 
   void _spawnPetals() {
