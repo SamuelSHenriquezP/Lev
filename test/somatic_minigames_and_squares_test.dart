@@ -51,7 +51,7 @@ void main() {
       expect(find.text('Favoritos'), findsOneWidget);
     });
 
-    testWidgets('Tapping on a minigame opens SomaticMinigamesContainer with all 3 games', (tester) async {
+    testWidgets('Tapping on a minigame opens SomaticMinigamesContainer with all 7 games', (tester) async {
       await tester.binding.setSurfaceSize(const Size(430, 932));
       await tester.pumpWidget(
         const ProviderScope(
@@ -72,16 +72,52 @@ void main() {
       expect(find.byType(BubblePopMinigame), findsOneWidget);
 
       // Switch tab to Arena Zen
+      await tester.ensureVisible(find.text('Arena Zen').last);
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.tap(find.text('Arena Zen').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(ZenSandMinigame), findsOneWidget);
 
       // Switch tab to Foco de Luz
+      await tester.ensureVisible(find.text('Foco de Luz').last);
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.tap(find.text('Foco de Luz').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(LightTrackerMinigame), findsOneWidget);
+
+      // Switch tab to Estanque
+      await tester.ensureVisible(find.text('Estanque'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Estanque'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(WaterRippleMinigame), findsOneWidget);
+
+      // Switch tab to Cuenco Zen
+      await tester.ensureVisible(find.text('Cuenco Zen'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Cuenco Zen'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(TibetanBowlMinigame), findsOneWidget);
+
+      // Switch tab to Diente León
+      await tester.ensureVisible(find.text('Diente León'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Diente León'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(DandelionMinigame), findsOneWidget);
+
+      // Switch tab to Piedras Zen
+      await tester.ensureVisible(find.text('Piedras Zen'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Piedras Zen'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(StoneBalanceMinigame), findsOneWidget);
     });
 
     testWidgets('Tapping an emotion square navigates to EmotionDetailScreen with reactive Lev', (tester) async {
@@ -122,6 +158,68 @@ void main() {
       expect(find.text('Lev'), findsAtLeastNWidgets(1));
       expect(find.text('Toca a Lev para acariciarlo 🌿'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('New minigames handle taps, pan gestures, and button triggers', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+
+      // 1. WaterRippleMinigame
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: WaterRippleMinigame()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.textContaining('Gotas de calma'), findsOneWidget);
+      // Tap on pond
+      await tester.tapAt(const Offset(200, 400));
+      await tester.pump(const Duration(milliseconds: 100));
+      // Toggle rain
+      await tester.tap(find.text('Lluvia serena'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Pausar lluvia'), findsOneWidget);
+
+      // 2. TibetanBowlMinigame
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: TibetanBowlMinigame()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.textContaining('Resonancia'), findsOneWidget);
+      // Gong strike
+      await tester.tapAt(const Offset(215, 450));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 3. DandelionMinigame
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: DandelionMinigame()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.textContaining('Pensamientos soltados'), findsOneWidget);
+      // Pan to blow seeds
+      await tester.dragFrom(const Offset(215, 500), const Offset(0, -120));
+      await tester.pump(const Duration(milliseconds: 100));
+      // Reset
+      await tester.tap(find.text('Nuevo brote'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 4. StoneBalanceMinigame
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: StoneBalanceMinigame()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.textContaining('Piedras en calma'), findsOneWidget);
+      // Drag next stone towards stack
+      await tester.dragFrom(const Offset(215, 750), const Offset(0, -200));
+      await tester.pump(const Duration(milliseconds: 200));
+      // Reset tower
+      await tester.tap(find.text('Reiniciar'));
+      await tester.pump(const Duration(milliseconds: 100));
     });
   });
 }
