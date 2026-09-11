@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lev/core/audio/sanctuary_audio_service.dart';
+import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/core/theme/lev_theme.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/habits/domain/micro_habit.dart';
@@ -301,16 +302,20 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: _togglePlayPause,
-                      icon: Icon(_isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                      label: Text(_isRunning ? 'Pausar' : 'Continuar'),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _togglePlayPause,
+                        icon: Icon(_isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                        label: Text(_isRunning ? 'Pausar' : 'Continuar'),
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      onPressed: _onFinish,
-                      icon: const Icon(Icons.check_rounded),
-                      label: const Text('Completar'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _onFinish,
+                        icon: const Icon(Icons.check_rounded),
+                        label: const Text('Completar'),
+                      ),
                     ),
                   ],
                 ),
@@ -562,6 +567,8 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
   late final AnimationController _jumpController;
   late final AnimationController _glowController;
   late final AnimationController _badgePopController;
+  String? _selectedRelief;
+  String? _reliefValidationMsg;
 
   @override
   void initState() {
@@ -936,6 +943,69 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                           ],
                         ),
                       ),
+                      const SizedBox(height: 14),
+
+                      // Medición somática post-hábito (1-tap check-in)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _selectedRelief != null ? LevTheme.levMatcha : LevTheme.levBorder,
+                            width: _selectedRelief != null ? 1.6 : 1.0,
+                          ),
+                          boxShadow: LevTheme.softShadow,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.self_improvement_rounded, size: 16, color: LevTheme.levMatchaDark),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    '¿Cómo siente tu cuerpo esta pausa?',
+                                    style: GoogleFonts.quicksand(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: LevTheme.levTextDark,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                _buildReliefOption('lighter', '🍃 Más ligero'),
+                                const SizedBox(width: 6),
+                                _buildReliefOption('same', '⚖️ Igual'),
+                                const SizedBox(width: 6),
+                                _buildReliefOption('tense', '🌧️ Aún tenso'),
+                              ],
+                            ),
+                            if (_reliefValidationMsg != null) ...[
+                              const SizedBox(height: 8),
+                              AnimatedOpacity(
+                                opacity: 1.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Text(
+                                  _reliefValidationMsg!,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: LevTheme.levMatchaDark,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -970,6 +1040,52 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                   ],
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReliefOption(String key, String label) {
+    final isSelected = _selectedRelief == key;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticsHelper.selection();
+          setState(() {
+            _selectedRelief = key;
+            if (key == 'lighter') {
+              _reliefValidationMsg = 'Qué hermoso alivio. Tu cuerpo absorbió la calma.';
+            } else if (key == 'same') {
+              _reliefValidationMsg = 'Normal y válido. Cada pausa va sembrando alivio poco a poco.';
+            } else {
+              _reliefValidationMsg = 'Está bien, no te juzgues. Lev te acompaña con paciencia infinita.';
+            }
+          });
+          LocalStorageService.recordHabitRelief(widget.habit.id, key);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? LevTheme.levMatchaLight : const Color(0xFFF9F9F8),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? LevTheme.levMatchaDark : LevTheme.levBorder,
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.quicksand(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? LevTheme.levMatchaDark : LevTheme.levTextDark,
+              ),
             ),
           ),
         ),

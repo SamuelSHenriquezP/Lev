@@ -72,11 +72,15 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                     size: const Size(double.infinity, 380),
                     painter: SanctuaryPondPainter(
                       animationValue: _controller.value,
-                      timeOfDay: sanctuary.timeOfDay,
+                      timeOfDay: sanctuary.effectiveTimeOfDay,
                       emotion: sanctuary.emotion,
                       bloomingFlowers: sanctuary.bloomingFlowers,
                       careDrops: sanctuary.careDrops,
                       isPetting: sanctuary.isPetting,
+                      growthStage: sanctuary.growthStage,
+                      growthFactor: sanctuary.growthFactor,
+                      activeDecors: sanctuary.activeDecors,
+                      activeAccessory: sanctuary.activeAccessory,
                     ),
                   );
                 },

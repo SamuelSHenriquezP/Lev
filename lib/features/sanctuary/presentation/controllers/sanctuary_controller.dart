@@ -31,6 +31,28 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         .whereType<SanctuaryDecorItem>()
         .toSet();
 
+    final activeAccId = LocalStorageService.getActiveAccessoryId();
+    final unlockedAccIds = LocalStorageService.getUnlockedAccessoryIds();
+    final activeAcc = LevAccessory.fromId(activeAccId) ?? LevAccessory.none;
+    final unlockedAcc = unlockedAccIds
+        .map((id) => LevAccessory.fromId(id))
+        .whereType<LevAccessory>()
+        .toSet();
+    if (!unlockedAcc.contains(LevAccessory.none)) {
+      unlockedAcc.add(LevAccessory.none);
+    }
+
+    final circadianStr = LocalStorageService.getCircadianOverride();
+    SanctuaryTimeOfDay? circadianOverride;
+    if (circadianStr != null) {
+      for (final t in SanctuaryTimeOfDay.values) {
+        if (t.name == circadianStr) {
+          circadianOverride = t;
+          break;
+        }
+      }
+    }
+
     return SanctuaryState(
       careDrops: drops,
       experiencePoints: xp,
@@ -40,6 +62,9 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       timeOfDay: _calculateTimeOfDay(),
       unlockedDecors: unlocked,
       activeDecors: active,
+      activeAccessory: activeAcc,
+      unlockedAccessories: unlockedAcc,
+      circadianOverride: circadianOverride,
     );
   }
 
@@ -324,6 +349,67 @@ class SanctuaryController extends Notifier<SanctuaryState> {
           ? 'Colocamos "${item.name}" en nuestro rinconcito.'
           : 'Guardamos "${item.name}" por ahora.',
     );
+  }
+
+  /// Desbloquear un accesorio botánico para vestir a Lev con Gotas de Cuidado
+  Future<bool> unlockAccessory(LevAccessory accessory) async {
+    if (state.unlockedAccessories.contains(accessory)) {
+      await equipAccessory(accessory);
+      return true;
+    }
+    if (state.careDrops < accessory.dropCost) return false;
+
+    final newDrops = state.careDrops - accessory.dropCost;
+    final newUnlocked = Set<LevAccessory>.from(state.unlockedAccessories)..add(accessory);
+
+    await LocalStorageService.saveCareDropsRaw(newDrops);
+    await LocalStorageService.saveUnlockedAccessoryIds(newUnlocked.map((a) => a.id).toList());
+    await LocalStorageService.saveActiveAccessoryId(accessory.id);
+
+    await HapticsHelper.medium();
+
+    state = state.copyWith(
+      careDrops: newDrops,
+      unlockedAccessories: newUnlocked,
+      activeAccessory: accessory,
+      emotion: LevEmotion.celebrating,
+      dialogue: '¡Me encanta este nuevo detalle! Gracias por cuidarme 🌿',
+    );
+    return true;
+  }
+
+  /// Equipar o desequipar un accesorio ya desbloqueado
+  Future<void> equipAccessory(LevAccessory accessory) async {
+    if (!state.unlockedAccessories.contains(accessory)) return;
+    await HapticsHelper.selection();
+    final newAccessory = state.activeAccessory == accessory ? LevAccessory.none : accessory;
+    await LocalStorageService.saveActiveAccessoryId(newAccessory.id);
+    state = state.copyWith(
+      activeAccessory: newAccessory,
+      dialogue: newAccessory == LevAccessory.none
+          ? 'Lev vuelve a su estado natural.'
+          : '¡Qué lindo me veo con "${newAccessory.name}"!',
+    );
+  }
+
+  /// Cambiar manualmente la atmósfera circadiana del Santuario (o volver a auto)
+  Future<void> setCircadianOverride(SanctuaryTimeOfDay? override) async {
+    await HapticsHelper.selection();
+    if (override == null) {
+      await LocalStorageService.saveCircadianOverride(null);
+      state = state.copyWith(
+        clearCircadianOverride: true,
+        dialogue: 'Sincronizado con la hora natural de tu entorno.',
+      );
+    } else {
+      await LocalStorageService.saveCircadianOverride(override.name);
+      state = state.copyWith(
+        circadianOverride: override,
+        dialogue: override == SanctuaryTimeOfDay.night
+            ? 'Modo noche profundo activado: descansamos bajo las estrellas.'
+            : 'Atmósfera ajustada con calma.',
+      );
+    }
   }
 
   void setShelteredState() {

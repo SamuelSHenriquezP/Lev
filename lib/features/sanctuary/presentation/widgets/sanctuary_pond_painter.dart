@@ -18,6 +18,7 @@ class SanctuaryPondPainter extends CustomPainter {
   final LevGrowthStage growthStage;
   final double growthFactor;
   final Set<SanctuaryDecorItem> activeDecors;
+  final LevAccessory activeAccessory;
 
   // Parámetros de transición continua entre animaciones
   final double? leafWrapProgress;
@@ -41,6 +42,7 @@ class SanctuaryPondPainter extends CustomPainter {
     this.growthStage = LevGrowthStage.youngPlant,
     this.growthFactor = 0.0,
     this.activeDecors = const {},
+    this.activeAccessory = LevAccessory.none,
     this.leafWrapProgress,
     this.sleepProgress,
     this.happyProgress,
@@ -79,27 +81,103 @@ class SanctuaryPondPainter extends CustomPainter {
     }
   }
 
-  /// Fondo crema botánico cálido suave (#FAF8F5 a #F5EFE6 sutil)
+  /// Fondo crema botánico cálido suave adaptado al ciclo circadiano natural
   void _drawCreamBackground(Canvas canvas, Rect rect) {
-    final bgPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
+    final List<Color> bgColors;
+    final Color glowColor;
+
+    switch (timeOfDay) {
+      case SanctuaryTimeOfDay.morning:
+        bgColors = const [
+          Color(0xFFFFF9EE),
+          Color(0xFFFBF4E6),
+          Color(0xFFF2E7D5),
+        ];
+        glowColor = const Color(0xFFFFE8BA).withValues(alpha: 0.50);
+        break;
+      case SanctuaryTimeOfDay.afternoon:
+        bgColors = const [
           Color(0xFFFCFBF9),
           Color(0xFFFAF8F5),
           Color(0xFFF4EFE6),
-        ],
+        ];
+        glowColor = const Color(0xFFFFF3D6).withValues(alpha: 0.45);
+        break;
+      case SanctuaryTimeOfDay.dusk:
+        bgColors = const [
+          Color(0xFFFDF1EA),
+          Color(0xFFF7E6DF),
+          Color(0xFFEBE0EA),
+        ];
+        glowColor = const Color(0xFFFFD5C2).withValues(alpha: 0.48);
+        break;
+      case SanctuaryTimeOfDay.night:
+        bgColors = const [
+          Color(0xFF131C24),
+          Color(0xFF192530),
+          Color(0xFF1E2E3B),
+        ];
+        glowColor = const Color(0xFF2E4657).withValues(alpha: 0.40);
+        break;
+    }
+
+    final bgPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: bgColors,
       ).createShader(rect);
 
     canvas.drawRect(rect, bgPaint);
 
     // Halo muy sutil y amplio de calidez detrás de Lev
     final warmGlowPaint = Paint()
-      ..color = const Color(0xFFFFF3D6).withValues(alpha: 0.45)
+      ..color = glowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
 
     canvas.drawCircle(Offset(rect.width * 0.5, rect.height * 0.48), 120, warmGlowPaint);
+
+    // Si es de noche, dibujamos cielo estrellado sereno sin luz azul y luna creciente
+    if (timeOfDay == SanctuaryTimeOfDay.night) {
+      _drawNightStarsAndMoon(canvas, rect);
+    }
+  }
+
+  /// Dibuja estrellas titilantes suaves y una luna creciente botánica para noche relajante
+  void _drawNightStarsAndMoon(Canvas canvas, Rect rect) {
+    // 1. Luna creciente suave en la esquina superior derecha
+    final moonCenter = Offset(rect.width * 0.82, rect.height * 0.12);
+    final moonGlow = Paint()
+      ..color = const Color(0xFFFFFCE8).withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+    canvas.drawCircle(moonCenter, 24, moonGlow);
+
+    final moonPath = Path()
+      ..addOval(Rect.fromCircle(center: moonCenter, radius: 17));
+    final cutPath = Path()
+      ..addOval(Rect.fromCircle(center: moonCenter.translate(-7, -4), radius: 15));
+    final crescent = Path.combine(PathOperation.difference, moonPath, cutPath);
+
+    final moonPaint = Paint()..color = const Color(0xFFFFF9E0);
+    canvas.drawPath(crescent, moonPaint);
+
+    // 2. Doce estrellas titilantes en el cielo nocturno
+    const stars = [
+      Offset(0.12, 0.08), Offset(0.24, 0.15), Offset(0.38, 0.07),
+      Offset(0.55, 0.12), Offset(0.70, 0.06), Offset(0.88, 0.22),
+      Offset(0.18, 0.28), Offset(0.48, 0.22), Offset(0.64, 0.26),
+      Offset(0.08, 0.20), Offset(0.32, 0.32), Offset(0.78, 0.34),
+    ];
+
+    for (var i = 0; i < stars.length; i++) {
+      final s = stars[i];
+      final twinkle = (sin(animationValue * 2 * pi * (1.2 + i * 0.3) + i * 0.9) + 1.0) * 0.5;
+      final starAlpha = 0.20 + 0.65 * twinkle;
+      final starRadius = 1.1 + 0.9 * twinkle;
+      final starPaint = Paint()
+        ..color = const Color(0xFFFFFDF2).withValues(alpha: starAlpha);
+      canvas.drawCircle(Offset(rect.width * s.dx, rect.height * s.dy), starRadius, starPaint);
+    }
   }
 
   /// Sombra etérea de suspensión sobre el suelo crema que respira con la altura de Lev
@@ -123,7 +201,7 @@ class SanctuaryPondPainter extends CustomPainter {
         baseShadowWidth = 115.0;
         break;
       case LevGrowthStage.vibrantPlant:
-        baseShadowWidth = 122.0;
+        baseShadowWidth = 125.0;
         break;
       case LevGrowthStage.youngTree:
         baseShadowWidth = 135.0;
@@ -153,8 +231,12 @@ class SanctuaryPondPainter extends CustomPainter {
     final shadowWidth = (baseShadowWidth + (floatShift * 10.0)) * jumpShadowScale;
     final shadowAlpha = (0.12 - (floatShift * 0.03)) * jumpShadowAlpha;
 
+    final shadowBaseColor = timeOfDay == SanctuaryTimeOfDay.night
+        ? const Color(0xFF090E14)
+        : const Color(0xFF4A5568);
+
     final shadowPaint = Paint()
-      ..color = const Color(0xFF4A5568).withValues(alpha: shadowAlpha.clamp(0.02, 0.22))
+      ..color = shadowBaseColor.withValues(alpha: shadowAlpha.clamp(0.02, 0.25))
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
 
     canvas.drawOval(
@@ -176,6 +258,7 @@ class SanctuaryPondPainter extends CustomPainter {
       sizeScale: 1.22,
       growthStage: growthStage,
       growthFactor: growthFactor,
+      activeAccessory: activeAccessory,
       leafWrapProgress: leafWrapProgress,
       sleepProgress: sleepProgress,
       happyProgress: happyProgress,

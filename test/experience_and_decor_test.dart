@@ -15,6 +15,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await LocalStorageService.init();
+    await LocalStorageService.prefs.clear();
   });
 
   group('Experience Points (XP) vs Care Drops (??) Progression Suite', () {
@@ -236,15 +237,126 @@ void main() {
       expect(find.text('¡Lo lograste!'), findsOneWidget);
       expect(find.textContaining('+1 Gota'), findsOneWidget);
       expect(find.textContaining('+25 XP'), findsOneWidget);
-      expect(find.textContaining('Hecho, gracias Lev'), findsOneWidget);
+
+      // Somatic check-in 1-tap option
+      expect(find.text('¿Cómo siente tu cuerpo esta pausa?'), findsOneWidget);
+      final reliefFinder = find.textContaining('Más ligero');
+      expect(reliefFinder, findsOneWidget);
+      await tester.ensureVisible(reliefFinder);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(reliefFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.textContaining('Qué hermoso alivio'), findsOneWidget);
+
+      final finishButton = find.textContaining('Hecho, gracias Lev');
+      expect(finishButton, findsOneWidget);
+      await tester.ensureVisible(finishButton);
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Tap finish button
-      await tester.tap(find.textContaining('Hecho, gracias Lev'));
+      await tester.tap(finishButton);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 700));
 
       // Modal is cleanly dismissed
       expect(find.text('Pausa Consciente Completada'), findsNothing);
+    });
+  });
+
+  group('Circadian, Botanical Accessories, Somatic Relief & PIN Security Suite', () {
+    test('Circadian cycle override controls effectiveTimeOfDay and persists', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(sanctuaryProvider.notifier);
+      expect(container.read(sanctuaryProvider).circadianOverride, isNull);
+
+      // Force Night mode
+      await notifier.setCircadianOverride(SanctuaryTimeOfDay.night);
+      expect(container.read(sanctuaryProvider).circadianOverride, equals(SanctuaryTimeOfDay.night));
+      expect(container.read(sanctuaryProvider).effectiveTimeOfDay, equals(SanctuaryTimeOfDay.night));
+      expect(LocalStorageService.getCircadianOverride(), equals('night'));
+
+      // Force Dusk mode
+      await notifier.setCircadianOverride(SanctuaryTimeOfDay.dusk);
+      expect(container.read(sanctuaryProvider).effectiveTimeOfDay, equals(SanctuaryTimeOfDay.dusk));
+
+      // Return to automatic
+      await notifier.setCircadianOverride(null);
+      expect(container.read(sanctuaryProvider).circadianOverride, isNull);
+      expect(LocalStorageService.getCircadianOverride(), isNull);
+    });
+
+    test('Lev botanical accessories can be unlocked with drops, equipped, and unequipped', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(sanctuaryProvider.notifier);
+      await notifier.setCareDrops(50); // Set enough drops
+
+      final initialAcc = container.read(sanctuaryProvider).activeAccessory;
+      expect(initialAcc, equals(LevAccessory.none));
+
+      // Unlock Sakura flower (8 drops)
+      final success = await notifier.unlockAccessory(LevAccessory.sakuraFlower);
+      expect(success, isTrue);
+      expect(container.read(sanctuaryProvider).unlockedAccessories.contains(LevAccessory.sakuraFlower), isTrue);
+      expect(container.read(sanctuaryProvider).activeAccessory, equals(LevAccessory.sakuraFlower));
+      expect(container.read(sanctuaryProvider).careDrops, equals(42));
+
+      // Unequip to none
+      await notifier.equipAccessory(LevAccessory.none);
+      expect(container.read(sanctuaryProvider).activeAccessory, equals(LevAccessory.none));
+
+      // Re-equip unlocked Sakura
+      await notifier.equipAccessory(LevAccessory.sakuraFlower);
+      expect(container.read(sanctuaryProvider).activeAccessory, equals(LevAccessory.sakuraFlower));
+    });
+
+    test('Somatic relief records are properly stored and computed', () async {
+      expect(LocalStorageService.getHabitReliefEntries(), isEmpty);
+
+      await LocalStorageService.recordHabitRelief('box_breathing', 'lighter');
+      await LocalStorageService.recordHabitRelief('grounding_54321', 'lighter');
+      await LocalStorageService.recordHabitRelief('shoulder_roll', 'same');
+
+      final entries = LocalStorageService.getHabitReliefEntries();
+      expect(entries.length, equals(3));
+      expect(entries[0]['reliefLevel'], equals('lighter'));
+      expect(entries[1]['reliefLevel'], equals('lighter'));
+      expect(entries[2]['reliefLevel'], equals('same'));
+    });
+
+    test('Privacy PIN lock activation and validation works seamlessly', () async {
+      expect(LocalStorageService.isPinProtectionActive(), isFalse);
+      expect(LocalStorageService.getPrivacyPin(), isNull);
+
+      // Set 4-digit PIN
+      await LocalStorageService.setPrivacyPin('1234');
+      expect(LocalStorageService.isPinProtectionActive(), isTrue);
+      expect(LocalStorageService.getPrivacyPin(), equals('1234'));
+
+      // Remove PIN
+      await LocalStorageService.setPrivacyPin(null);
+      expect(LocalStorageService.isPinProtectionActive(), isFalse);
+      expect(LocalStorageService.getPrivacyPin(), isNull);
+    });
+
+    test('Gentle reminders configuration persists accurately', () async {
+      final defaultConfig = LocalStorageService.getGentleReminders();
+      expect(defaultConfig['enabled'], isFalse);
+
+      await LocalStorageService.saveGentleReminders({
+        'enabled': true,
+        'morning': true,
+        'afternoon': false,
+        'night': true,
+      });
+
+      final updated = LocalStorageService.getGentleReminders();
+      expect(updated['enabled'], isTrue);
+      expect(updated['afternoon'], isFalse);
     });
   });
 }

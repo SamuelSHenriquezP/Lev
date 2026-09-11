@@ -157,4 +157,108 @@ class LocalStorageService {
   static Future<void> setUserName(String name) async {
     await _prefs?.setString(_keyUserName, name);
   }
+
+  // --- ACCESORIOS BOTÁNICOS DE LEV ---
+  static const String _keyActiveAccessory = 'lev_active_accessory';
+  static const String _keyUnlockedAccessories = 'lev_unlocked_accessories';
+
+  static String getActiveAccessoryId() {
+    return _prefs?.getString(_keyActiveAccessory) ?? 'none';
+  }
+
+  static Future<void> saveActiveAccessoryId(String id) async {
+    await _prefs?.setString(_keyActiveAccessory, id);
+  }
+
+  static List<String> getUnlockedAccessoryIds() {
+    return _prefs?.getStringList(_keyUnlockedAccessories) ?? ['none'];
+  }
+
+  static Future<void> saveUnlockedAccessoryIds(List<String> ids) async {
+    await _prefs?.setStringList(_keyUnlockedAccessories, ids);
+  }
+
+  // --- MEDICIÓN DE ALIVIO SOMÁTICO POST-HÁBITO ---
+  static const String _keyHabitRelief = 'lev_habit_relief_ratings_json';
+
+  static List<Map<String, dynamic>> getHabitReliefEntries() {
+    final jsonStr = _prefs?.getString(_keyHabitRelief);
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+    try {
+      final List<dynamic> decoded = jsonDecode(jsonStr);
+      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> recordHabitRelief(String habitId, String reliefLevel) async {
+    final entries = getHabitReliefEntries();
+    entries.add({
+      'habitId': habitId,
+      'reliefLevel': reliefLevel, // 'lighter', 'same', 'tense'
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    await _prefs?.setString(_keyHabitRelief, jsonEncode(entries));
+  }
+
+  // --- ANULACIÓN / FORZADO DE CICLO CIRCADIANO ---
+  static const String _keyCircadianOverride = 'lev_circadian_override';
+
+  static String? getCircadianOverride() {
+    return _prefs?.getString(_keyCircadianOverride);
+  }
+
+  static Future<void> saveCircadianOverride(String? override) async {
+    if (override == null) {
+      await _prefs?.remove(_keyCircadianOverride);
+    } else {
+      await _prefs?.setString(_keyCircadianOverride, override);
+    }
+  }
+
+  // --- BLOQUEO DE PRIVACIDAD POR PIN DE 4 DÍGITOS ---
+  static const String _keyPrivacyPin = 'lev_privacy_pin';
+
+  static String? getPrivacyPin() {
+    return _prefs?.getString(_keyPrivacyPin);
+  }
+
+  static bool isPinProtectionActive() {
+    final pin = getPrivacyPin();
+    return pin != null && pin.length == 4;
+  }
+
+  static Future<void> setPrivacyPin(String? pin) async {
+    if (pin == null || pin.isEmpty) {
+      await _prefs?.remove(_keyPrivacyPin);
+    } else {
+      await _prefs?.setString(_keyPrivacyPin, pin);
+    }
+  }
+
+  // --- RECORDATORIOS GENTILES DE MICRO-PAUSA ---
+  static const String _keyGentleReminders = 'lev_gentle_reminders_json';
+
+  static Map<String, dynamic> getGentleReminders() {
+    final jsonStr = _prefs?.getString(_keyGentleReminders);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      return {
+        'enabled': false,
+        'morning': true,
+        'afternoon': true,
+        'night': true,
+        'rule20': false,
+      };
+    }
+    try {
+      return Map<String, dynamic>.from(jsonDecode(jsonStr) as Map);
+    } catch (_) {
+      return {'enabled': false};
+    }
+  }
+
+  static Future<void> saveGentleReminders(Map<String, dynamic> config) async {
+    await _prefs?.setString(_keyGentleReminders, jsonEncode(config));
+  }
 }

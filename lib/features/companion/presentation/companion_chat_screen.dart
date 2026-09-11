@@ -10,6 +10,7 @@ import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
+import '../../../core/widgets/pin_protection_gate.dart';
 
 class CompanionChatScreen extends ConsumerStatefulWidget {
   const CompanionChatScreen({super.key});
@@ -87,14 +88,15 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
       }
     });
 
-    return Scaffold(
-      backgroundColor: LevTheme.levCream,
-      appBar: AppBar(
+    return PinProtectionGate(
+      child: Scaffold(
         backgroundColor: LevTheme.levCream,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleSpacing: 16,
-        title: Row(
+        appBar: AppBar(
+          backgroundColor: LevTheme.levCream,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleSpacing: 16,
+          title: Row(
           children: [
             Container(
               width: 36,
@@ -290,7 +292,7 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen>
           ],
         ),
       ),
-    );
+    ));
   }
 
   /// Tarjeta compañera interactiva en la parte superior donde Lev vive y reacciona

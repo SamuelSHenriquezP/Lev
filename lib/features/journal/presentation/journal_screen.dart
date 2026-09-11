@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/storage/local_storage_service.dart';
 import '../../../core/theme/lev_theme.dart';
 import '../../../core/utils/haptics_helper.dart';
+import '../../../core/widgets/pin_protection_gate.dart';
 import '../../sanctuary/domain/sanctuary_state.dart';
 import '../../sanctuary/presentation/controllers/sanctuary_controller.dart';
 import '../domain/mood_entry.dart';
@@ -24,54 +26,87 @@ class JournalScreen extends ConsumerWidget {
     final sanctuary = ref.watch(sanctuaryProvider);
     final completedCount = LocalStorageService.getCompletedHabitsCount();
 
-    return Scaffold(
-      backgroundColor: LevTheme.levCream,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // App bar con título
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Progreso',
-                      style: GoogleFonts.quicksand(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: LevTheme.levTextDark,
+    return PinProtectionGate(
+      child: Scaffold(
+        backgroundColor: LevTheme.levCream,
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // App bar con título y botón de reporte clínico
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Progreso',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: LevTheme.levTextDark,
+                            ),
+                          ),
+                          Text(
+                            'Tu camino con Lev',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: LevTheme.levTextMuted,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      'Tu camino con Lev',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: LevTheme.levTextMuted,
+                      OutlinedButton.icon(
+                        onPressed: () => _showTherapyReportModal(context, journalState, sanctuary, completedCount),
+                        icon: const Icon(Icons.description_outlined, size: 16, color: LevTheme.levMatchaDark),
+                        label: Text(
+                          'Reporte',
+                          style: GoogleFonts.quicksand(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: LevTheme.levMatchaDark,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          side: const BorderSide(color: LevTheme.levMatchaDark),
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: LevTheme.pillRadius),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Estadísticas de crecimiento de Lev
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: _LevGrowthCard(sanctuary: sanctuary),
+              // Estadísticas de crecimiento de Lev
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: _LevGrowthCard(sanctuary: sanctuary),
+                ),
               ),
-            ),
 
-            // Resumen de estadísticas (3 tarjetas)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: _buildStatsRow(completedCount, sanctuary),
+              // Resumen de estadísticas (3 tarjetas)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: _buildStatsRow(completedCount, sanctuary),
+                ),
               ),
-            ),
+
+              // Eficacia somática y alivio corporal
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: _SomaticReliefCard(),
+                ),
+              ),
 
             // Check-in emocional rápido (2 toques)
             const SliverToBoxAdapter(
@@ -131,7 +166,228 @@ class JournalScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ));
+  }
+
+  void _showTherapyReportModal(
+    BuildContext context,
+    JournalState journalState,
+    SanctuaryState sanctuary,
+    int completedCount,
+  ) {
+    HapticsHelper.light();
+    final reportText = _generateTherapyReportText(journalState, sanctuary, completedCount);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: LevTheme.sheetRadius.topLeft),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: LevTheme.levBorder,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: LevTheme.levMatchaLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.summarize_rounded, size: 20, color: LevTheme.levMatchaDark),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reporte Clínico',
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: LevTheme.levTextDark,
+                                ),
+                              ),
+                              Text(
+                                'Para tus sesiones de terapia o auto-observación',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  color: LevTheme.levTextMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded, size: 20, color: LevTheme.levTextMuted),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Área de texto del reporte
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9F8F5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: LevTheme.levBorder),
+                      ),
+                      child: SingleChildScrollView(
+                        controller: scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        child: SelectableText(
+                          reportText,
+                          style: GoogleFonts.firaCode(
+                            fontSize: 11.5,
+                            color: LevTheme.levTextDark,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Botón Copiar al Portapapeles
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        HapticsHelper.medium();
+                        await Clipboard.setData(ClipboardData(text: reportText));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '📋 Reporte copiado al portapapeles con éxito',
+                                style: GoogleFonts.quicksand(fontWeight: FontWeight.w600),
+                              ),
+                              backgroundColor: LevTheme.levMatchaDark,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: LevTheme.cardRadius),
+                            ),
+                          );
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.white),
+                      label: Text(
+                        'Copiar Reporte Completo',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: LevTheme.levMatcha,
+                        shape: RoundedRectangleBorder(borderRadius: LevTheme.pillRadius),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  String _generateTherapyReportText(
+    JournalState journalState,
+    SanctuaryState sanctuary,
+    int completedCount,
+  ) {
+    final entries = LocalStorageService.getHabitReliefEntries();
+    final totalRelief = entries.length;
+    final lighter = entries.where((e) => e['reliefLevel'] == 'lighter').length;
+    final same = entries.where((e) => e['reliefLevel'] == 'same').length;
+    final tense = entries.where((e) => e['reliefLevel'] == 'tense').length;
+    final lighterPct = totalRelief > 0 ? (lighter / totalRelief * 100).round() : 0;
+    final samePct = totalRelief > 0 ? (same / totalRelief * 100).round() : 0;
+    final tensePct = totalRelief > 0 ? (tense / totalRelief * 100).round() : 0;
+
+    final cbtCards = journalState.cbtCards;
+    final moodEntries = journalState.moodEntries;
+
+    final buffer = StringBuffer();
+    buffer.writeln('==============================================');
+    buffer.writeln('📋 REPORTE CLÍNICO DE BIENESTAR SOMÁTICO Y EMOCIONAL');
+    buffer.writeln('Lev Health Companion — Privacidad 100% Local');
+    buffer.writeln('Fecha: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}');
+    buffer.writeln('Usuario: ${LocalStorageService.getUserName()}');
+    buffer.writeln('==============================================\n');
+
+    buffer.writeln('1. INTERVENCIONES SOMÁTICAS Y CONDUCTUALES');
+    buffer.writeln('• Micro-pausas conscientes completadas: $completedCount');
+    buffer.writeln('• Gotas de autorregulación acumuladas: ${sanctuary.careDrops}');
+    buffer.writeln('• Etapa de maduración somática: ${sanctuary.stageName} (${sanctuary.experiencePoints} XP)');
+    buffer.writeln('• Evaluaciones corporales post-hábito registradas: $totalRelief');
+    if (totalRelief > 0) {
+      buffer.writeln('  - Sensación de mayor ligereza (alivio somático): $lighter ($lighterPct%)');
+      buffer.writeln('  - Estado neutro / en proceso: $same ($samePct%)');
+      buffer.writeln('  - Tensión persistente (alerta de sobrecarga): $tense ($tensePct%)');
+    }
+    buffer.writeln('');
+
+    buffer.writeln('2. HISTORIAL DE ÁNIMO Y AFECTO');
+    buffer.writeln('• Total de check-ins registrados: ${moodEntries.length}');
+    if (moodEntries.isNotEmpty) {
+      final recent = moodEntries.take(10).toList();
+      for (final e in recent) {
+        buffer.writeln('  - ${DateFormat('dd/MM HH:mm').format(e.timestamp)}: ${e.mood.emoji} ${e.mood.label} (Nivel: ${e.mood.score}/5)');
+        if (e.note.isNotEmpty) {
+          buffer.writeln('    Nota: "${e.note}"');
+        }
+      }
+    }
+    buffer.writeln('');
+
+    buffer.writeln('3. REGISTROS DE REESTRUCTURACIÓN COGNITIVA (TCC)');
+    buffer.writeln('• Pensamientos automáticos reencuadrados: ${cbtCards.length}');
+    if (cbtCards.isNotEmpty) {
+      for (final card in cbtCards.take(5)) {
+        buffer.writeln('  - Pensamiento automático: "${card.automaticThought}"');
+        buffer.writeln('    Distorsión cognitiva: ${card.distortionName}');
+        buffer.writeln('    Reencuadre compasivo: "${card.compassionateReframe}"');
+      }
+    }
+    buffer.writeln('');
+    buffer.writeln('==============================================');
+    buffer.writeln('Nota clínica: Este informe resume las micro-intervenciones conductuales, somáticas y cognitivas realizadas de forma autónoma entre sesiones de acompañamiento profesional.');
+    return buffer.toString();
   }
 
   Widget _buildStatsRow(int completedCount, SanctuaryState sanctuary) {
@@ -1063,6 +1319,240 @@ class _CbtSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+// =============================================================================
+// TARJETA DE EFICACIA Y ALIVIO SOMÁTICO CORPORAL
+// =============================================================================
+class _SomaticReliefCard extends StatelessWidget {
+  const _SomaticReliefCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = LocalStorageService.getHabitReliefEntries();
+    final total = entries.length;
+    final lighter = entries.where((e) => e['reliefLevel'] == 'lighter').length;
+    final same = entries.where((e) => e['reliefLevel'] == 'same').length;
+    final tense = entries.where((e) => e['reliefLevel'] == 'tense').length;
+
+    final lighterPct = total > 0 ? (lighter / total * 100).round() : 0;
+    final samePct = total > 0 ? (same / total * 100).round() : 0;
+    final tensePct = total > 0 ? (tense / total * 100).round() : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: LevTheme.levBorder),
+        boxShadow: LevTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: LevTheme.levMatchaLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.spa_rounded, size: 20, color: LevTheme.levMatchaDark),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Alivio Somático',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: LevTheme.levTextDark,
+                            ),
+                          ),
+                          Text(
+                            'Eficacia en tu sistema nervioso',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: LevTheme.levTextMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: LevTheme.levCream,
+                  borderRadius: LevTheme.pillRadius,
+                  border: Border.all(color: LevTheme.levBorder),
+                ),
+                child: Text(
+                  '$total registros',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: LevTheme.levTextDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          if (total == 0)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAF8F5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 18, color: LevTheme.levMatchaDark),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Al terminar tu próxima pausa, indica cómo siente tu cuerpo para construir tu mapa de regulación somática.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: LevTheme.levTextDark,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // Barra acumulativa segmentada
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 12,
+                child: Row(
+                  children: [
+                    if (lighter > 0)
+                      Expanded(
+                        flex: lighter,
+                        child: Container(color: LevTheme.levMatcha),
+                      ),
+                    if (same > 0)
+                      Expanded(
+                        flex: same,
+                        child: Container(color: const Color(0xFFECC94B)),
+                      ),
+                    if (tense > 0)
+                      Expanded(
+                        flex: tense,
+                        child: Container(color: const Color(0xFFE2E8F0)),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Chips con porcentajes
+            Row(
+              children: [
+                Expanded(
+                  child: _buildReliefMetric(
+                    label: 'Más ligero',
+                    pct: lighterPct,
+                    count: lighter,
+                    color: LevTheme.levMatchaDark,
+                    bgColor: LevTheme.levMatchaLight,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildReliefMetric(
+                    label: 'Igual',
+                    pct: samePct,
+                    count: same,
+                    color: const Color(0xFFB7791F),
+                    bgColor: const Color(0xFFFEFCBF),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildReliefMetric(
+                    label: 'Aún tenso',
+                    pct: tensePct,
+                    count: tense,
+                    color: const Color(0xFF4A5568),
+                    bgColor: const Color(0xFFEDF2F7),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '💡 La intercepción consciente recurrente fortalece la resiliencia somática y reduce la fatiga acumulada.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: LevTheme.levTextMuted,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReliefMetric({
+    required String label,
+    required int pct,
+    required int count,
+    required Color color,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '$pct%',
+            style: GoogleFonts.quicksand(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

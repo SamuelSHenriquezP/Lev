@@ -21,6 +21,73 @@ enum SanctuaryTimeOfDay {
   night,
 }
 
+/// Accesorios botánicos y de abrigo para personalizar a Lev.
+enum LevAccessory {
+  none(
+    id: 'none',
+    name: 'Natural',
+    description: 'Lev en su estado botánico puro.',
+    icon: Icons.eco_rounded,
+    dropCost: 0,
+  ),
+  sakuraFlower(
+    id: 'sakura_flower',
+    name: 'Flor de Sakura',
+    description: 'Delicada flor de cerezo rosada en la cabeza.',
+    icon: Icons.local_florist_rounded,
+    dropCost: 8,
+  ),
+  cloverSprout(
+    id: 'clover_sprout',
+    name: 'Trébol de Paz',
+    description: 'Trébol de cuatro hojas que se mece con su respiración.',
+    icon: Icons.yard_rounded,
+    dropCost: 6,
+  ),
+  lavenderScarf(
+    id: 'lavender_scarf',
+    name: 'Bufanda Lavanda',
+    description: 'Tejido suave de lana para días fríos o vulnerables.',
+    icon: Icons.waves_rounded,
+    dropCost: 12,
+  ),
+  nightCap(
+    id: 'night_cap',
+    name: 'Gorrito de Dormir',
+    description: 'Gorro nocturno con borla suave para descansar.',
+    icon: Icons.bedtime_rounded,
+    dropCost: 10,
+  ),
+  goldenCrown(
+    id: 'golden_crown',
+    name: 'Corona Zen',
+    description: 'Laurel dorado botánico para celebrar tu constancia.',
+    icon: Icons.military_tech_rounded,
+    dropCost: 16,
+  );
+
+  final String id;
+  final String name;
+  final String description;
+  final IconData icon;
+  final int dropCost;
+
+  const LevAccessory({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.dropCost,
+  });
+
+  static LevAccessory? fromId(String id) {
+    for (final a in values) {
+      if (a.id == id) return a;
+    }
+    return null;
+  }
+}
+
 /// Categorías de objetos y decoraciones para la casa de Lev.
 enum DecorCategory {
   all(label: 'Todos', icon: Icons.auto_awesome_mosaic_rounded),
@@ -246,6 +313,9 @@ class SanctuaryState {
   final bool justLeveledUp; // true por un ciclo cuando sube de etapa
   final Set<SanctuaryDecorItem> unlockedDecors;
   final Set<SanctuaryDecorItem> activeDecors;
+  final LevAccessory activeAccessory;
+  final Set<LevAccessory> unlockedAccessories;
+  final SanctuaryTimeOfDay? circadianOverride;
 
   SanctuaryState({
     required this.careDrops,
@@ -259,9 +329,16 @@ class SanctuaryState {
     this.justLeveledUp = false,
     Set<SanctuaryDecorItem>? unlockedDecors,
     Set<SanctuaryDecorItem>? activeDecors,
+    this.activeAccessory = LevAccessory.none,
+    Set<LevAccessory>? unlockedAccessories,
+    this.circadianOverride,
   })  : experiencePoints = experiencePoints ?? (careDrops * 10),
         unlockedDecors = unlockedDecors ?? const {},
-        activeDecors = activeDecors ?? const {};
+        activeDecors = activeDecors ?? const {},
+        unlockedAccessories = unlockedAccessories ?? const {LevAccessory.none};
+
+  /// Momento del día efectivo (con soporte para anulación/previsualización manual).
+  SanctuaryTimeOfDay get effectiveTimeOfDay => circadianOverride ?? timeOfDay;
 
   /// Calcula la etapa de crecimiento según los puntos de experiencia acumulados.
   LevGrowthStage get growthStage {
@@ -394,6 +471,10 @@ class SanctuaryState {
     bool? justLeveledUp,
     Set<SanctuaryDecorItem>? unlockedDecors,
     Set<SanctuaryDecorItem>? activeDecors,
+    LevAccessory? activeAccessory,
+    Set<LevAccessory>? unlockedAccessories,
+    SanctuaryTimeOfDay? circadianOverride,
+    bool clearCircadianOverride = false,
   }) {
     return SanctuaryState(
       careDrops: careDrops ?? this.careDrops,
@@ -407,6 +488,9 @@ class SanctuaryState {
       justLeveledUp: justLeveledUp ?? false,
       unlockedDecors: unlockedDecors ?? this.unlockedDecors,
       activeDecors: activeDecors ?? this.activeDecors,
+      activeAccessory: activeAccessory ?? this.activeAccessory,
+      unlockedAccessories: unlockedAccessories ?? this.unlockedAccessories,
+      circadianOverride: clearCircadianOverride ? null : (circadianOverride ?? this.circadianOverride),
     );
   }
 }
