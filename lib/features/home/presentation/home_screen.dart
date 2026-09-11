@@ -593,7 +593,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _showGrowthInfo(BuildContext context, SanctuaryState sanctuary, {int initialTab = 0}) {
     final controller = ref.read(sanctuaryProvider.notifier);
-    int activeTab = initialTab; // 0 = Evolución (XP), 1 = Entorno (Gotas)
+    int activeTab = initialTab; // 0 = Evolución (XP), 1 = Casa (Gotas)
+    DecorCategory selectedCategory = DecorCategory.all;
 
     final stagesInfo = [
       {'stage': LevGrowthStage.seed, 'name': 'Semilla', 'xp': 0, 'desc': 'Bulbo dorado que descansa.'},
@@ -748,7 +749,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ),
                               child: Center(
                                 child: Text(
-                                  '🌺 Entorno (Gotas)',
+                                  '🏡 Casa de Lev (Gotas)',
                                   style: GoogleFonts.quicksand(
                                     fontSize: 13,
                                     fontWeight: activeTab == 1 ? FontWeight.w700 : FontWeight.w500,
@@ -870,151 +871,241 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
                   ] else ...[
-                    Text(
-                      'Usa tus Gotas de Cuidado acumuladas para embellecer y transformar el entorno del santuario.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        color: LevTheme.levTextMuted,
-                        height: 1.35,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Objetos para la casa de Lev:',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: LevTheme.levTextDark,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: LevTheme.levMatchaLight,
+                            borderRadius: LevTheme.pillRadius,
+                          ),
+                          child: Text(
+                            '${currentSanctuary.activeDecors.length}/${SanctuaryDecorItem.values.length} en casa',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: LevTheme.levMatchaDark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
+
+                    // Selector de categorías de objetos
                     SizedBox(
-                      height: 155,
+                      height: 34,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        itemCount: SanctuaryDecorItem.values.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 10),
-                        itemBuilder: (context, i) {
-                          final item = SanctuaryDecorItem.values[i];
-                          final isUnlocked = currentSanctuary.unlockedDecors.contains(item);
-                          final isActive = currentSanctuary.activeDecors.contains(item);
-                          final canAfford = currentSanctuary.careDrops >= item.dropCost;
+                        itemCount: DecorCategory.values.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, catIndex) {
+                          final cat = DecorCategory.values[catIndex];
+                          final isCatSelected = selectedCategory == cat;
 
-                          return Container(
-                            width: 140,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? LevTheme.levMatchaLight.withValues(alpha: 0.7)
-                                  : const Color(0xFFFAF8F5),
-                              borderRadius: LevTheme.cardRadius,
-                              border: Border.all(
-                                color: isActive
-                                    ? LevTheme.levMatchaDark
-                                    : LevTheme.levBorder,
-                                width: isActive ? 1.8 : 1.0,
+                          return InkWell(
+                            onTap: () => setModalState(() => selectedCategory = cat),
+                            borderRadius: LevTheme.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: isCatSelected ? LevTheme.levMatcha : Colors.white,
+                                borderRadius: LevTheme.pillRadius,
+                                border: Border.all(
+                                  color: isCatSelected ? LevTheme.levMatchaDark : LevTheme.levBorder,
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Icon(item.icon, size: 20, color: LevTheme.levMatchaDark),
-                                    if (isUnlocked)
-                                      Icon(
-                                        isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                                        size: 16,
-                                        color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
-                                      )
-                                    else
-                                      Text(
-                                        '${item.dropCost} 💧',
-                                        style: GoogleFonts.quicksand(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: canAfford ? const Color(0xFF1976D2) : LevTheme.levTextMuted,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.quicksand(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: LevTheme.levTextDark,
-                                      ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    cat.icon,
+                                    size: 13,
+                                    color: isCatSelected ? Colors.white : LevTheme.levMatchaDark,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    cat.label,
+                                    style: GoogleFonts.quicksand(
+                                      fontSize: 11.5,
+                                      fontWeight: isCatSelected ? FontWeight.w700 : FontWeight.w600,
+                                      color: isCatSelected ? Colors.white : LevTheme.levTextDark,
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.description,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        color: LevTheme.levTextMuted,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 28,
-                                  child: isUnlocked
-                                      ? OutlinedButton(
-                                          onPressed: () {
-                                            controller.toggleDecor(item);
-                                            setModalState(() {});
-                                          },
-                                          style: OutlinedButton.styleFrom(
-                                            padding: EdgeInsets.zero,
-                                            side: BorderSide(
-                                              color: isActive ? LevTheme.levMatchaDark : LevTheme.levBorder,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            isActive ? 'Activo' : 'Colocar',
-                                            style: GoogleFonts.quicksand(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextDark,
-                                            ),
-                                          ),
-                                        )
-                                      : ElevatedButton(
-                                          onPressed: canAfford
-                                              ? () async {
-                                                  final success = await controller.unlockDecor(item);
-                                                  if (success) setModalState(() {});
-                                                }
-                                              : null,
-                                          style: ElevatedButton.styleFrom(
-                                            padding: EdgeInsets.zero,
-                                            backgroundColor: LevTheme.levMatcha,
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'Desbloquear',
-                                            style: GoogleFonts.quicksand(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
                       ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Lista horizontal de objetos filtrados
+                    Builder(
+                      builder: (context) {
+                        final filteredItems = selectedCategory == DecorCategory.all
+                            ? SanctuaryDecorItem.values
+                            : SanctuaryDecorItem.values.where((d) => d.category == selectedCategory).toList();
+
+                        return SizedBox(
+                          height: 165,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: filteredItems.length,
+                            separatorBuilder: (context, index) => const SizedBox(width: 10),
+                            itemBuilder: (context, i) {
+                              final item = filteredItems[i];
+                              final isUnlocked = currentSanctuary.unlockedDecors.contains(item);
+                              final isActive = currentSanctuary.activeDecors.contains(item);
+                              final canAfford = currentSanctuary.careDrops >= item.dropCost;
+
+                              return Container(
+                                width: 144,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? LevTheme.levMatchaLight.withValues(alpha: 0.75)
+                                      : const Color(0xFFFAF8F5),
+                                  borderRadius: LevTheme.cardRadius,
+                                  border: Border.all(
+                                    color: isActive
+                                        ? LevTheme.levMatchaDark
+                                        : LevTheme.levBorder,
+                                    width: isActive ? 1.8 : 1.0,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(5),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(item.icon, size: 18, color: LevTheme.levMatchaDark),
+                                        ),
+                                        if (isUnlocked)
+                                          Icon(
+                                            isActive ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                            size: 16,
+                                            color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextMuted,
+                                          )
+                                        else
+                                          Text(
+                                            '${item.dropCost} 💧',
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: canAfford ? const Color(0xFF1976D2) : LevTheme.levTextMuted,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.quicksand(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: LevTheme.levTextDark,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.description,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 10,
+                                            color: LevTheme.levTextMuted,
+                                            height: 1.25,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 28,
+                                      child: isUnlocked
+                                          ? OutlinedButton(
+                                              onPressed: () {
+                                                HapticsHelper.light();
+                                                controller.toggleDecor(item);
+                                                setModalState(() {});
+                                              },
+                                              style: OutlinedButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                backgroundColor: isActive ? Colors.white : Colors.transparent,
+                                                side: BorderSide(
+                                                  color: isActive ? LevTheme.levMatchaDark : LevTheme.levBorder,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                isActive ? 'Colocado 🌿' : 'Poner',
+                                                style: GoogleFonts.quicksand(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: isActive ? LevTheme.levMatchaDark : LevTheme.levTextDark,
+                                                ),
+                                              ),
+                                            )
+                                          : ElevatedButton(
+                                              onPressed: canAfford
+                                                  ? () async {
+                                                      HapticsHelper.medium();
+                                                      final success = await controller.unlockDecor(item);
+                                                      if (success) setModalState(() {});
+                                                    }
+                                                  : null,
+                                              style: ElevatedButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                backgroundColor: LevTheme.levMatcha,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Desbloquear',
+                                                style: GoogleFonts.quicksand(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ],

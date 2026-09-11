@@ -21,13 +21,28 @@ enum SanctuaryTimeOfDay {
   night,
 }
 
-/// Elementos botánicos de entorno desbloqueables para el Santuario.
+/// Categorías de objetos y decoraciones para la casa de Lev.
+enum DecorCategory {
+  all(label: 'Todos', icon: Icons.auto_awesome_mosaic_rounded),
+  furniture(label: 'Muebles', icon: Icons.chair_rounded),
+  lighting(label: 'Luces', icon: Icons.lightbulb_rounded),
+  companions(label: 'Compañeros', icon: Icons.pets_rounded),
+  nature(label: 'Jardín', icon: Icons.park_rounded);
+
+  final String label;
+  final IconData icon;
+  const DecorCategory({required this.label, required this.icon});
+}
+
+/// Elementos botánicos, muebles y fauna desbloqueables para la casa de Lev.
 enum SanctuaryDecorItem {
+  // --- Jardín & Naturaleza ---
   lotusPond(
     id: 'lotus_pond',
     name: 'Estanque de Loto',
     description: 'Nenúfares flotantes y ondas cristalinas de agua.',
     icon: Icons.water_rounded,
+    category: DecorCategory.nature,
     dropCost: 8,
   ),
   zenStones(
@@ -35,6 +50,7 @@ enum SanctuaryDecorItem {
     name: 'Rocas de Jardín Zen',
     description: 'Piedras de río pulidas que anclan la paz.',
     icon: Icons.filter_hdr_rounded,
+    category: DecorCategory.nature,
     dropCost: 12,
   ),
   bioMoss(
@@ -42,6 +58,7 @@ enum SanctuaryDecorItem {
     name: 'Musgo Bioluminiscente',
     description: 'Suaves destellos de luz esmeralda en el suelo.',
     icon: Icons.flare_rounded,
+    category: DecorCategory.nature,
     dropCost: 18,
   ),
   windChimes(
@@ -49,13 +66,141 @@ enum SanctuaryDecorItem {
     name: 'Campanillas de Bambú',
     description: 'Susurros de viento que limpian pensamientos ruidosos.',
     icon: Icons.yard_rounded,
-    dropCost: 25,
+    category: DecorCategory.nature,
+    dropCost: 20,
+  ),
+  sakuraVase(
+    id: 'sakura_vase',
+    name: 'Jarrón de Sakura',
+    description: 'Flores de cerezo con pétalos rosados flotantes.',
+    icon: Icons.local_florist_rounded,
+    category: DecorCategory.nature,
+    dropCost: 13,
+  ),
+  bambooPartition(
+    id: 'bamboo_partition',
+    name: 'Biombo de Bambú',
+    description: 'Cañas verdes esbeltas que cobijan la estancia.',
+    icon: Icons.density_small_rounded,
+    category: DecorCategory.nature,
+    dropCost: 9,
+  ),
+  magicMushrooms(
+    id: 'magic_mushrooms',
+    name: 'Hongos Bioluminiscentes',
+    description: 'Sombreros brillantes turquesa con aura suave.',
+    icon: Icons.bubble_chart_rounded,
+    category: DecorCategory.nature,
+    dropCost: 14,
+  ),
+  waterFountain(
+    id: 'water_fountain',
+    name: 'Fuente Shishi-Odoshi',
+    description: 'Caña oscilante de bambú con flujo de agua en calma.',
+    icon: Icons.opacity_rounded,
+    category: DecorCategory.nature,
+    dropCost: 22,
+  ),
+
+  // --- Mobiliario & Confort Zen ---
+  meditationCushion(
+    id: 'meditation_cushion',
+    name: 'Cojín Zafu',
+    description: 'Cojín redondo acolchado de lino matcha.',
+    icon: Icons.circle_outlined,
+    category: DecorCategory.furniture,
+    dropCost: 6,
+  ),
+  matchaTable(
+    id: 'matcha_table',
+    name: 'Mesa de Té Matcha',
+    description: 'Mesita baja con cuenco y vapor animado ondeante.',
+    icon: Icons.coffee_rounded,
+    category: DecorCategory.furniture,
+    dropCost: 10,
+  ),
+  bonsaiTree(
+    id: 'bonsai_tree',
+    name: 'Bonsái Ancestral',
+    description: 'Árbol miniatura en maceta de barro cocido.',
+    icon: Icons.nature_rounded,
+    category: DecorCategory.furniture,
+    dropCost: 14,
+  ),
+  readingBooks(
+    id: 'reading_books',
+    name: 'Rincón de Libros',
+    description: 'Pila de lecturas botánicas con marcapáginas.',
+    icon: Icons.menu_book_rounded,
+    category: DecorCategory.furniture,
+    dropCost: 8,
+  ),
+
+  // --- Iluminación & Fuego Vivo ---
+  paperLantern(
+    id: 'paper_lantern',
+    name: 'Farolillo de Papel',
+    description: 'Farol colgante que oscila con luz dorada suave.',
+    icon: Icons.light_mode_rounded,
+    category: DecorCategory.lighting,
+    dropCost: 12,
+  ),
+  aromaCandle(
+    id: 'aroma_candle',
+    name: 'Vela Aromática',
+    description: 'Llama viva parpadeante de lavanda y cera pura.',
+    icon: Icons.wb_incandescent_rounded,
+    category: DecorCategory.lighting,
+    dropCost: 7,
+  ),
+  saltLamp(
+    id: 'salt_lamp',
+    name: 'Lámpara de Sal',
+    description: 'Cristal ámbar del Himalaya con resplandor cálido.',
+    icon: Icons.wb_twilight_rounded,
+    category: DecorCategory.lighting,
+    dropCost: 15,
+  ),
+
+  // --- Compañeros & Fauna ---
+  fireflies(
+    id: 'fireflies',
+    name: 'Enjambre de Luciérnagas',
+    description: 'Destellos de luz que revolotean por la casa.',
+    icon: Icons.auto_awesome_rounded,
+    category: DecorCategory.companions,
+    dropCost: 16,
+  ),
+  spiritButterfly(
+    id: 'spirit_butterfly',
+    name: 'Mariposa de Cristal',
+    description: 'Alas translúcidas que aletean con gentileza.',
+    icon: Icons.flutter_dash_rounded,
+    category: DecorCategory.companions,
+    dropCost: 11,
+  ),
+  zenBird(
+    id: 'zen_bird',
+    name: 'Pajarito Cantor',
+    description: 'Pajarito azul en rama que acompaña tus pausas.',
+    icon: Icons.cruelty_free_rounded,
+    category: DecorCategory.companions,
+    dropCost: 15,
+  ),
+  cozyCat(
+    id: 'cozy_cat',
+    name: 'Gatito en Siesta',
+    description: 'Bolita de pelo dormida que respira acompasada.',
+    icon: Icons.pets_rounded,
+    category: DecorCategory.companions,
+    dropCost: 20,
   );
 
   final String id;
   final String name;
   final String description;
   final IconData icon;
+  final DecorCategory category;
   final int dropCost;
 
   const SanctuaryDecorItem({
@@ -63,6 +208,7 @@ enum SanctuaryDecorItem {
     required this.name,
     required this.description,
     required this.icon,
+    required this.category,
     required this.dropCost,
   });
 

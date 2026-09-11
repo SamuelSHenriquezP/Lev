@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
+import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_pond_painter.dart';
 
 void main() {
   setUp(() async {
@@ -96,8 +98,46 @@ void main() {
 
       // Unlocking an unaffordable decor fails
       await notifier.setCareDrops(1);
-      final failedUnlock = await notifier.unlockDecor(SanctuaryDecorItem.windChimes); // Cost is 8
+      final failedUnlock = await notifier.unlockDecor(SanctuaryDecorItem.windChimes); // Cost is 20
       expect(failedUnlock, isFalse);
+    });
+
+    test('House items expansion: 19 items across all 4 categories render without errors', () {
+      // 19 total items
+      expect(SanctuaryDecorItem.values.length, equals(19));
+
+      // Each category contains items
+      for (final cat in [
+        DecorCategory.furniture,
+        DecorCategory.lighting,
+        DecorCategory.companions,
+        DecorCategory.nature,
+      ]) {
+        final itemsInCat = SanctuaryDecorItem.values.where((item) => item.category == cat);
+        expect(itemsInCat, isNotEmpty);
+      }
+
+      // fromId works for all 19 items
+      for (final item in SanctuaryDecorItem.values) {
+        expect(SanctuaryDecorItem.fromId(item.id), equals(item));
+      }
+
+      // Test SanctuaryPondPainter rendering all 19 items active simultaneously
+      final painter = SanctuaryPondPainter(
+        animationValue: 0.5,
+        timeOfDay: SanctuaryTimeOfDay.morning,
+        emotion: LevEmotion.peaceful,
+        bloomingFlowers: 5,
+        careDrops: 99,
+        isPetting: false,
+        activeDecors: SanctuaryDecorItem.values.toSet(),
+      );
+
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      expect(() => painter.paint(canvas, const Size(400, 700)), returnsNormally);
+      final picture = recorder.endRecording();
+      picture.dispose();
     });
   });
 
