@@ -19,6 +19,10 @@ class SanctuaryPondPainter extends CustomPainter {
   final double growthFactor;
   final Set<SanctuaryDecorItem> activeDecors;
   final LevAccessory activeAccessory;
+  final Offset? touchNormalizedOffset;
+  final Offset? touchLocalPosition;
+  final bool isFingerActive;
+  final double touchDistance;
 
   // Parámetros de transición continua entre animaciones
   final double? leafWrapProgress;
@@ -43,6 +47,10 @@ class SanctuaryPondPainter extends CustomPainter {
     this.growthFactor = 0.0,
     this.activeDecors = const {},
     this.activeAccessory = LevAccessory.none,
+    this.touchNormalizedOffset,
+    this.touchLocalPosition,
+    this.isFingerActive = false,
+    this.touchDistance = 999.0,
     this.leafWrapProgress,
     this.sleepProgress,
     this.happyProgress,
@@ -61,6 +69,11 @@ class SanctuaryPondPainter extends CustomPainter {
 
     // 1. Fondo Crema Botánico Cálido con iluminación suave
     _drawCreamBackground(canvas, rect);
+
+    // 1.2. Ondas y estela reactivas al arrastrar el dedo en la pantalla
+    if (isFingerActive && touchLocalPosition != null) {
+      _drawTouchWaterRipples(canvas, touchLocalPosition!);
+    }
 
     // 1.5. Decoraciones de fondo del Santuario (detrás de Lev)
     _drawActiveDecorationsBackground(canvas, size);
@@ -259,6 +272,9 @@ class SanctuaryPondPainter extends CustomPainter {
       growthStage: growthStage,
       growthFactor: growthFactor,
       activeAccessory: activeAccessory,
+      touchNormalizedOffset: touchNormalizedOffset,
+      isFingerActive: isFingerActive,
+      touchDistance: touchDistance,
       leafWrapProgress: leafWrapProgress,
       sleepProgress: sleepProgress,
       happyProgress: happyProgress,
@@ -271,6 +287,29 @@ class SanctuaryPondPainter extends CustomPainter {
       celebrateProgress: celebrateProgress,
     );
     spiritPainter.paint(canvas, size);
+  }
+
+  /// Ondas concéntricas de agua botánica que nacen interactivamente bajo el dedo
+  void _drawTouchWaterRipples(Canvas canvas, Offset touchPos) {
+    final ripplePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < 3; i++) {
+      final phase = (animationValue * 2.2 + i * 0.33) % 1.0;
+      final radius = 10.0 + phase * 42.0;
+      final opacity = ((1.0 - phase) * 0.45).clamp(0.0, 1.0);
+      ripplePaint
+        ..strokeWidth = (2.2 * (1.0 - phase)).clamp(0.6, 2.5)
+        ..color = LevTheme.levMatchaLight.withValues(alpha: opacity);
+      canvas.drawCircle(touchPos, radius, ripplePaint);
+    }
+
+    // Pequeño halo de rocío de luz brillante en el epicentro del toque
+    final corePaint = Paint()
+      ..color = LevTheme.levMatcha.withValues(alpha: 0.35)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(touchPos, 6.0, corePaint);
   }
 
   /// Corazoncitos tiernos al acariciar con atenuación suave
@@ -919,6 +958,10 @@ class SanctuaryPondPainter extends CustomPainter {
         oldDelegate.growthStage != growthStage ||
         oldDelegate.growthFactor != growthFactor ||
         oldDelegate.activeDecors != activeDecors ||
+        oldDelegate.touchNormalizedOffset != touchNormalizedOffset ||
+        oldDelegate.touchLocalPosition != touchLocalPosition ||
+        oldDelegate.isFingerActive != isFingerActive ||
+        oldDelegate.touchDistance != touchDistance ||
         oldDelegate.leafWrapProgress != leafWrapProgress ||
         oldDelegate.sleepProgress != sleepProgress ||
         oldDelegate.happyProgress != happyProgress ||

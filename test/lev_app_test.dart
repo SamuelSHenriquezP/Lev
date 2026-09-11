@@ -14,6 +14,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       'lev_care_drops': 25,
+      'lev_experience_points': 200,
       'lev_completed_habits_count': 5,
       'lev_favorite_habit_ids': ['doom_01', 'anx_01'],
     });

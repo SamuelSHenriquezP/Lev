@@ -7,7 +7,6 @@ import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/controllers/sanctuary_controller.dart';
-import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
 import 'package:lev/features/companion/presentation/companion_chat_screen.dart';
 
 /// Botón flotante de Lev + overlay emergente de chat.
@@ -276,48 +275,14 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
                       ),
                     ],
                   ),
-                  child: ClipOval(
-                    child: CustomPaint(
-                      size: const Size(fabSize, fabSize),
-                      painter: LivingSeedSpiritPainter(
-                        animationValue: _levFabController.value,
-                        emotion: _isOpen ? LevEmotion.curious : LevEmotion.peaceful,
-                        isPetting: false,
-                        sizeScale: 0.28,
-                      ),
+                  child: Center(
+                    child: Icon(
+                      _isOpen ? Icons.close_rounded : Icons.chat_bubble_outline_rounded,
+                      color: LevTheme.levMatchaDark,
+                      size: 24,
                     ),
                   ),
                 ),
-                // Indicador de badge / mini icono de chat cuando está cerrado
-                if (!_isOpen)
-                  Positioned(
-                    top: -1,
-                    right: -1,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: LevTheme.levMatchaDark,
-                      ),
-                      child: const Icon(Icons.chat_bubble_outline_rounded, size: 10, color: Colors.white),
-                    ),
-                  ),
-                // Indicador de cierre cuando está abierto
-                if (_isOpen)
-                  Positioned(
-                    top: -1,
-                    right: -1,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: LevTheme.levMatchaDark,
-                      ),
-                      child: const Icon(Icons.close_rounded, size: 11, color: Colors.white),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -354,20 +319,20 @@ class _LevChatBubbleState extends ConsumerState<LevChatBubble>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
             child: Row(
               children: [
-                // Lev pequeño animado en el header
-                SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: AnimatedBuilder(
-                    animation: _levFabController,
-                    builder: (context, _) => CustomPaint(
-                      painter: LivingSeedSpiritPainter(
-                        animationValue: _levFabController.value,
-                        emotion: LevEmotion.curious,
-                        isPetting: false,
-                        sizeScale: 0.24,
-                      ),
+                // Emblema botánico de conversación en el header
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: LevTheme.levMatchaLight,
+                    border: Border.all(
+                      color: LevTheme.levMatcha.withValues(alpha: 0.4),
+                      width: 1.5,
                     ),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.spa_rounded, color: LevTheme.levMatchaDark, size: 20),
                   ),
                 ),
                 const SizedBox(width: 10),

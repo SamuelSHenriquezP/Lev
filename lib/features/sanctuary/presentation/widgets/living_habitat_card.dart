@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,8 @@ class LivingHabitatCard extends ConsumerStatefulWidget {
 class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Offset? _touchPosition;
+  bool _isFingerActive = false;
 
   @override
   void initState() {
@@ -60,27 +63,78 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
         borderRadius: BorderRadius.circular(32),
         child: Stack(
           children: [
-            // Lienzo interactivo del estanque
-            GestureDetector(
-              onTap: () {
-                ref.read(sanctuaryProvider.notifier).petLev();
-              },
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return CustomPaint(
-                    size: const Size(double.infinity, 380),
-                    painter: SanctuaryPondPainter(
-                      animationValue: _controller.value,
-                      timeOfDay: sanctuary.effectiveTimeOfDay,
-                      emotion: sanctuary.emotion,
-                      bloomingFlowers: sanctuary.bloomingFlowers,
-                      careDrops: sanctuary.careDrops,
-                      isPetting: sanctuary.isPetting,
-                      growthStage: sanctuary.growthStage,
-                      growthFactor: sanctuary.growthFactor,
-                      activeDecors: sanctuary.activeDecors,
-                      activeAccessory: sanctuary.activeAccessory,
+            // Lienzo interactivo del estanque con reactividad táctil continua
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth = constraints.maxWidth;
+                  final cardHeight = constraints.maxHeight;
+                  final centerX = cardWidth * 0.5;
+                  final centerY = cardHeight * 0.48;
+
+                  Offset? normOffset;
+                  double touchDist = 999.0;
+                  if (_touchPosition != null && _isFingerActive) {
+                    final dx = _touchPosition!.dx - centerX;
+                    final dy = _touchPosition!.dy - centerY;
+                    touchDist = sqrt(dx * dx + dy * dy);
+                    normOffset = Offset(
+                      (dx / (cardWidth * 0.5)).clamp(-1.0, 1.0),
+                      (dy / (cardHeight * 0.48)).clamp(-1.0, 1.0),
+                    );
+                  }
+
+                  void handleTouch(Offset localPos) {
+                    setState(() {
+                      _touchPosition = localPos;
+                      _isFingerActive = true;
+                    });
+                    final dx = localPos.dx - centerX;
+                    final dy = localPos.dy - centerY;
+                    final dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 85.0) {
+                      ref.read(sanctuaryProvider.notifier).petLev();
+                    }
+                  }
+
+                  void handleTouchEnd() {
+                    setState(() {
+                      _isFingerActive = false;
+                      _touchPosition = null;
+                    });
+                  }
+
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onPanDown: (details) => handleTouch(details.localPosition),
+                    onPanUpdate: (details) => handleTouch(details.localPosition),
+                    onPanEnd: (_) => handleTouchEnd(),
+                    onPanCancel: () => handleTouchEnd(),
+                    onTapDown: (details) => handleTouch(details.localPosition),
+                    onTapUp: (_) => handleTouchEnd(),
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          size: Size(cardWidth, cardHeight),
+                          painter: SanctuaryPondPainter(
+                            animationValue: _controller.value,
+                            timeOfDay: sanctuary.effectiveTimeOfDay,
+                            emotion: sanctuary.emotion,
+                            bloomingFlowers: sanctuary.bloomingFlowers,
+                            careDrops: sanctuary.careDrops,
+                            isPetting: sanctuary.isPetting,
+                            growthStage: sanctuary.growthStage,
+                            growthFactor: sanctuary.growthFactor,
+                            activeDecors: sanctuary.activeDecors,
+                            activeAccessory: sanctuary.activeAccessory,
+                            touchNormalizedOffset: normOffset,
+                            touchLocalPosition: _touchPosition,
+                            isFingerActive: _isFingerActive,
+                            touchDistance: touchDist,
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

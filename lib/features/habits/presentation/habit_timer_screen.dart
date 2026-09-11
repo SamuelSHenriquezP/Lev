@@ -705,16 +705,18 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                               ],
                             ),
                             child: Center(
-                              child: CustomPaint(
-                                size: const Size(170, 170),
-                                painter: LivingSeedSpiritPainter(
-                                  animationValue: _jumpController.value,
-                                  emotion: LevEmotion.joyJump,
-                                  isPetting: true,
-                                  sizeScale: 0.88,
-                                  jumpProgress: _jumpController.value,
-                                  happyProgress: 1.0,
-                                  celebrateProgress: 1.0,
+                              child: RepaintBoundary(
+                                child: CustomPaint(
+                                  size: const Size(170, 170),
+                                  painter: LivingSeedSpiritPainter(
+                                    animationValue: _jumpController.value,
+                                    emotion: LevEmotion.joyJump,
+                                    isPetting: true,
+                                    sizeScale: 0.88,
+                                    jumpProgress: _jumpController.value,
+                                    happyProgress: 1.0,
+                                    celebrateProgress: 1.0,
+                                  ),
                                 ),
                               ),
                             ),

@@ -19,6 +19,11 @@ class LocalStorageService {
 
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
+    // Si es un inicio nuevo (0 hábitos y 15 gotas del template anterior), ajustar a 0
+    if ((getCompletedHabitsCount() == 0) && (_prefs?.getInt(_keyCareDrops) == 15)) {
+      await _prefs?.setInt(_keyCareDrops, 0);
+      await _prefs?.setInt(_keyExperiencePoints, 0);
+    }
   }
 
   static SharedPreferences get prefs {
@@ -30,7 +35,7 @@ class LocalStorageService {
 
   // --- GOTAS DE CUIDADO (RECURSO / MONEDA TÁCTIL) ---
   static int getCareDrops() {
-    return _prefs?.getInt(_keyCareDrops) ?? 15; // Bienvenida cálida
+    return _prefs?.getInt(_keyCareDrops) ?? 0; // Comienza desde cero
   }
 
   static Future<void> addCareDrops(int amount) async {
@@ -44,12 +49,7 @@ class LocalStorageService {
 
   // --- PUNTOS DE EXPERIENCIA (XP BOTÁNICA ACUMULADA) ---
   static int getExperiencePoints() {
-    final stored = _prefs?.getInt(_keyExperiencePoints);
-    if (stored != null) return stored;
-    // Si es primera vez, se deriva de las gotas existentes para no perder progreso
-    final initialXp = getCareDrops() * 10;
-    _prefs?.setInt(_keyExperiencePoints, initialXp);
-    return initialXp;
+    return _prefs?.getInt(_keyExperiencePoints) ?? 0; // Comienza desde cero
   }
 
   static Future<void> addExperiencePoints(int amount) async {
