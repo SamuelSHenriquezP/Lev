@@ -27,6 +27,9 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
   double _targetInfluence = 0.0;
   Offset? _touchPosition;
   bool _isFingerActive = false;
+  final DateTime _animStartTime = DateTime.now();
+  double get _continuousTime =>
+      DateTime.now().difference(_animStartTime).inMicroseconds / 3600000.0;
 
   @override
   void initState() {
@@ -162,7 +165,7 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                         return CustomPaint(
                           size: Size(cardWidth, cardHeight),
                           painter: SanctuaryPondPainter(
-                            animationValue: _controller.value,
+                            animationValue: _continuousTime,
                             timeOfDay: sanctuary.effectiveTimeOfDay,
                             emotion: sanctuary.emotion,
                             bloomingFlowers: sanctuary.bloomingFlowers,

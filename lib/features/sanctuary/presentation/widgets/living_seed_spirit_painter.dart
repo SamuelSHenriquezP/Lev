@@ -246,7 +246,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double jumpSway = 0.0;
 
     if (isJoyJumping) {
-      final p = jumpProgress > 0.0 ? jumpProgress : t;
+      final p = jumpProgress > 0.0 ? jumpProgress : (t % 1.0);
       final phi = p * 2 * pi;
       final jumpSin = sin(phi);
 
@@ -1092,7 +1092,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final leftCenter = Offset(-eyeDist + touchGazeOffset.dx, eyeY);
     final rightCenter = Offset(eyeDist + touchGazeOffset.dx, eyeY);
 
-    final isBlinking = (effSleep < 0.3 && t > 0.50 && t < 0.54) || (effTired > 0.5 && t > 0.46 && t < 0.58);
+    final blinkT = t % 1.0;
+    final isBlinking = (effSleep < 0.3 && blinkT > 0.50 && blinkT < 0.54) || (effTired > 0.5 && blinkT > 0.46 && blinkT < 0.58);
 
     final featurePaint = Paint()
       ..color = const Color(0xFF0E382B)

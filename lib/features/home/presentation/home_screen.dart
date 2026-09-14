@@ -41,6 +41,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Offset _touchVelocity = Offset.zero;
   double _currentInfluence = 0.0;
   double _targetInfluence = 0.0;
+  final DateTime _animStartTime = DateTime.now();
+  double get _continuousTime =>
+      DateTime.now().difference(_animStartTime).inMicroseconds / 3600000.0;
 
   late final AnimationController _ambientController;
   late final AnimationController _wrapController;
@@ -379,7 +382,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       // Salto elástico con física de 4 fases
       if (next.emotion == LevEmotion.joyJump) {
-        _jumpController.forward(from: 0.0);
+        _jumpController.forward(from: 0.0).then((_) {
+          if (mounted) _jumpController.reset();
+        });
       }
     });
 
@@ -613,7 +618,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             return CustomPaint(
                               size: Size.infinite,
                               painter: SanctuaryPondPainter(
-                                animationValue: _ambientController.value,
+                                animationValue: _continuousTime,
                                 timeOfDay: sanctuary.effectiveTimeOfDay,
                                 emotion: sanctuary.emotion,
                                 bloomingFlowers: sanctuary.bloomingFlowers,
