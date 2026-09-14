@@ -46,3 +46,7 @@ app.*.map.json
 
 # Package artifacts
 *.apk
+
+# Allow release APKs
+!release/
+!release/*.apk
