@@ -153,7 +153,7 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                             activeAccessory: sanctuary.activeAccessory,
                             touchNormalizedOffset: _currentSmoothedOffset,
                             touchLocalPosition: _touchPosition,
-                            isFingerActive: _isFingerActive || _currentInfluence > 0.02,
+                            isFingerActive: _isFingerActive,
                             touchDistance: _touchPosition != null ? touchDist : (_currentSmoothedOffset.distance * 100.0),
                           ),
                         );

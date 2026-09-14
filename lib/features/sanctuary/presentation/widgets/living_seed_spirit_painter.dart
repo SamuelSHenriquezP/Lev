@@ -267,8 +267,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     // --- 5. REACTIVIDAD TÁCTIL Y CARICIAS ADAPTADAS A CADA ETAPA ---
     final touchX = touchNormalizedOffset?.dx.clamp(-1.0, 1.0) ?? 0.0;
     final touchY = touchNormalizedOffset?.dy.clamp(-1.0, 1.0) ?? 0.0;
-    final touchMagnitude = (touchNormalizedOffset?.distance ?? 0.0).clamp(0.0, 1.0);
-    final touchInfluence = isFingerActive ? 1.0 : touchMagnitude;
+    final touchInfluence = isFingerActive ? 1.0 : 0.0;
 
     // Desplazamiento orgánico físico del cuerpo de Lev persiguiendo al dedo en la pantalla
     final touchTranslateX = (touchX * 36.0) * touchInfluence;
@@ -401,6 +400,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effAnxious,
       touchGazeOffset: Offset(touchX * 9.5 * touchInfluence, touchY * 7.0 * touchInfluence),
       isTouchingLev: isTouchingLev,
+      isFingerActive: isFingerActive,
+      effectiveIsPetting: effectiveIsPetting,
     );
 
     // 7. Detalles botánicos ornamentales según etapa reactiva al dedo y caricias
@@ -1037,6 +1038,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effAnxious, {
     Offset touchGazeOffset = Offset.zero,
     bool isTouchingLev = false,
+    bool isFingerActive = false,
+    bool effectiveIsPetting = false,
   }) {
     if (growthStage == LevGrowthStage.seed) {
       final babyEyeY = -8.0 + touchGazeOffset.dy * 0.4;
@@ -1049,15 +1052,25 @@ class LivingSeedSpiritPainter extends CustomPainter {
         ..strokeWidth = 3.2
         ..strokeCap = StrokeCap.round;
 
-      // Ojos durmientes curvos tiernos con seguimiento de mirada
-      final leftEyePath = Path()
-        ..moveTo(-babyEyeDist - 5 + touchGazeOffset.dx * 0.4, babyEyeY)
-        ..quadraticBezierTo(-babyEyeDist + touchGazeOffset.dx * 0.4, babyEyeY + 3.5, -babyEyeDist + 5 + touchGazeOffset.dx * 0.4, babyEyeY);
-      final rightEyePath = Path()
-        ..moveTo(babyEyeDist - 5 + touchGazeOffset.dx * 0.4, babyEyeY)
-        ..quadraticBezierTo(babyEyeDist + touchGazeOffset.dx * 0.4, babyEyeY + 3.5, babyEyeDist + 5 + touchGazeOffset.dx * 0.4, babyEyeY);
-      canvas.drawPath(leftEyePath, babyPaint);
-      canvas.drawPath(rightEyePath, babyPaint);
+      if (isFingerActive && !effectiveIsPetting && effSleep < 0.3) {
+        // Bebé semilla abre ojos curiosos tiernos con pupilas y reflejos siguiendo el dedo
+        final babyPupil = Paint()..color = const Color(0xFF0E382B);
+        final babyGlint = Paint()..color = Colors.white;
+        canvas.drawCircle(Offset(-babyEyeDist + touchGazeOffset.dx * 0.4, babyEyeY), 3.4, babyPupil);
+        canvas.drawCircle(Offset(-babyEyeDist - 1.0 + touchGazeOffset.dx * 0.4, babyEyeY - 1.0), 1.2, babyGlint);
+        canvas.drawCircle(Offset(babyEyeDist + touchGazeOffset.dx * 0.4, babyEyeY), 3.4, babyPupil);
+        canvas.drawCircle(Offset(babyEyeDist - 1.0 + touchGazeOffset.dx * 0.4, babyEyeY - 1.0), 1.2, babyGlint);
+      } else {
+        // Ojos durmientes curvos tiernos descansando en paz zen
+        final leftEyePath = Path()
+          ..moveTo(-babyEyeDist - 5, babyEyeY)
+          ..quadraticBezierTo(-babyEyeDist, babyEyeY + 3.5, -babyEyeDist + 5, babyEyeY);
+        final rightEyePath = Path()
+          ..moveTo(babyEyeDist - 5, babyEyeY)
+          ..quadraticBezierTo(babyEyeDist, babyEyeY + 3.5, babyEyeDist + 5, babyEyeY);
+        canvas.drawPath(leftEyePath, babyPaint);
+        canvas.drawPath(rightEyePath, babyPaint);
+      }
 
       // Sonrisita de bebé semilla
       final babyMouth = Path()
@@ -1090,12 +1103,14 @@ class LivingSeedSpiritPainter extends CustomPainter {
     if (isBlinking) {
       canvas.drawLine(Offset(leftCenter.dx - 5, eyeY), Offset(leftCenter.dx + 5, eyeY), featurePaint);
       canvas.drawLine(Offset(rightCenter.dx - 5, eyeY), Offset(rightCenter.dx + 5, eyeY), featurePaint);
-    } else if (effCurious > 0.5 || (touchGazeOffset != Offset.zero && !isTouchingLev)) {
+    } else if (isFingerActive && !effectiveIsPetting && effSleep < 0.3) {
+      // Dedo activo sobre la pantalla: Lev abre sus ojos curiosos siguiendo la mirada
       _drawCuriousEye(canvas, leftCenter, 13.0, featurePaint);
       _drawCuriousEye(canvas, rightCenter, 13.0, featurePaint);
     } else {
-      _drawDynamicEye(canvas, leftCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired);
-      _drawDynamicEye(canvas, rightCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired);
+      // Dedo libre o reposo zen: Lev cierra los ojos serenamente
+      _drawDynamicEye(canvas, leftCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired, effectiveIsPetting);
+      _drawDynamicEye(canvas, rightCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired, effectiveIsPetting);
     }
 
     final mouthY = 13.0 + touchGazeOffset.dy * 0.4;
@@ -1122,7 +1137,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
 
     final cheekAlpha = isTouchingLev
         ? 0.60
-        : lerpDouble(0.14, 0.34, max(effHappy, isPetting ? 1.0 : 0.0))!;
+        : lerpDouble(0.14, 0.34, max(effHappy, effectiveIsPetting ? 1.0 : 0.0))!;
     final cheekPaint = Paint()
       ..color = const Color(0xFFFFAE52).withValues(alpha: cheekAlpha)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
@@ -1140,10 +1155,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effSleep,
     double effSad,
     double effTired,
+    bool effectiveIsPetting,
   ) {
-    final happyWeight = max(effHappy, isPetting ? 1.0 : 0.0);
-    var curve = lerpDouble(6.8, -6.5, happyWeight)!;
-    curve = lerpDouble(curve, 4.2, effSleep)!;
+    final happyWeight = max(effHappy, effectiveIsPetting ? 1.0 : 0.0);
+    // Párpados relajados cerrados en calma zen (+4.2) o arqueados hacia arriba con felicidad (^ ^ -6.5)
+    var curve = lerpDouble(4.2, -6.5, happyWeight)!;
+    curve = lerpDouble(curve, 3.8, effSleep)!;
     curve = lerpDouble(curve, 2.5, effSad)!;
     curve = lerpDouble(curve, 3.0, effTired)!;
 

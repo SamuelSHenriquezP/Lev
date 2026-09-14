@@ -122,8 +122,8 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
   }
 
   void _onFinish() {
-    HapticsHelper.medium();
-    ref.read(sanctuaryAudioProvider.notifier).playChimeSfx();
+    HapticsHelper.timerAlarm();
+    ref.read(sanctuaryAudioProvider.notifier).playTimerAlarmSfx();
     setState(() => _triggerPetals = true);
     ref.read(sanctuaryProvider.notifier).onHabitCompleted(widget.habit.id);
     _showCompletionDialog();
@@ -324,22 +324,23 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
                 ),
               ),
 
-              // Área principal: widget interactivo con Lev
+              // Área principal: Presencia de Lev + Timeline unificado de pasos
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: _buildInteractiveArea(),
-                    ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                  child: Column(
+                    children: [
+                      // Presencia visual zen de Lev o Guía de respiración
+                      _buildCompanionVisual(),
+                      const SizedBox(height: 14),
+                      // Pasos guiados y fundamento somático unificados
+                      _buildStepsTimeline(accentColor),
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
               ),
-
-              // Paso actual (uno a la vez con slide)
-              if (widget.habit.steps.isNotEmpty && !_isCompleted)
-                _buildCurrentStep(),
 
               // Controles
               Padding(
@@ -454,28 +455,29 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
                         foregroundColor: Colors.white70,
                         side: const BorderSide(color: Colors.white24),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                       icon: const Icon(Icons.visibility_outlined, size: 18),
                       label: Text(
                         'Ver pantalla',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: _onFinish,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: LevTheme.levMatcha,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      child: Text(
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: Text(
                         'Completar',
-                        style: GoogleFonts.quicksand(fontSize: 13.5, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.quicksand(fontSize: 13, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -489,160 +491,276 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
     );
   }
 
-  Widget _buildInteractiveArea() {
-    final currentInstruction = widget.habit.steps.isNotEmpty
-        ? widget.habit.steps[_currentStepIndex.clamp(0, widget.habit.steps.length - 1)]
-        : widget.habit.levIntro;
-
-    switch (widget.habit.interactionType) {
-      case HabitInteractionType.breathGuided:
-        return BreathGuideWidget(
-          isPhysiologicalSigh: widget.habit.id == 'anx_01',
-        );
-      case HabitInteractionType.audioGrounding:
-        return AudioGroundingCard(
-          title: widget.habit.title,
-          actionPrompt: currentInstruction,
-          physiologicalNote: widget.habit.psychologicalBasis,
-        );
-      case HabitInteractionType.postureRelease:
-        return PostureReleaseCard(
-          focusArea: widget.habit.taskAction.label,
-          instructions: currentInstruction,
-        );
-      case HabitInteractionType.sensoryAnchor:
-        return SensoryAnchorCard(
-          sensoryPrompt: currentInstruction,
-        );
-      case HabitInteractionType.countingBreath:
-        return const CountingBreathWidget(targetCycles: 6);
-      case HabitInteractionType.bilateralTap:
-        return const BilateralTapWidget();
-      case HabitInteractionType.holdPressure:
-        return const HoldPressureWidget();
-      case HabitInteractionType.slideRelease:
-        return const SlideReleaseWidget();
-      case HabitInteractionType.eyeTracker:
-        return const EyeTrackerWidget();
-      case HabitInteractionType.gestureInput:
-      case HabitInteractionType.timer:
-        return _buildLevWithTimer();
+  Widget _buildCompanionVisual() {
+    if (widget.habit.interactionType == HabitInteractionType.breathGuided) {
+      return BreathGuideWidget(
+        isPhysiologicalSigh: widget.habit.id == 'anx_01',
+      );
     }
-  }
 
-  Widget _buildLevWithTimer() {
-    return AnimatedBuilder(
-      animation: _levController,
-      builder: (context, child) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 220,
-              height: 220,
-              child: CustomPaint(
+    return SizedBox(
+      height: 150,
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: 150,
+            height: 150,
+            child: AnimatedBuilder(
+              animation: _levController,
+              builder: (context, _) => CustomPaint(
                 painter: LivingSeedSpiritPainter(
                   animationValue: _levController.value,
                   emotion: LevEmotion.peaceful,
                   isPetting: false,
-                  sizeScale: 0.9,
+                  sizeScale: 0.85,
                   taskAction: widget.habit.taskAction,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Frase introductoria de Lev
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: LevTheme.softShadow,
-              ),
-              child: Text(
-                widget.habit.levIntro,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.5,
-                  fontStyle: FontStyle.italic,
-                  color: LevTheme.levTextDark,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildCurrentStep() {
-    final step = widget.habit.steps[_currentStepIndex];
-    final totalSteps = widget.habit.steps.length;
-    final accentColor = LevTheme.getEmotionAccentColor(widget.habit.category);
+  Widget _buildStepsTimeline(Color accentColor) {
+    final steps = widget.habit.steps;
+    if (steps.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: LevTheme.softShadow,
+        ),
+        child: Text(
+          widget.habit.levIntro,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13.5,
+            fontStyle: FontStyle.italic,
+            color: LevTheme.levTextDark,
+            height: 1.4,
+          ),
+        ),
+      );
+    }
 
-    return AnimatedBuilder(
-      animation: _stepSlideController,
-      builder: (context, child) {
-        final slide = Curves.easeInOut.transform(_stepSlideController.value);
-        return Transform.translate(
-          offset: Offset(0, -slide * 20),
-          child: Opacity(
-            opacity: 1.0 - slide * 0.5,
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-                boxShadow: LevTheme.softShadow,
-              ),
-              child: Row(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+        boxShadow: LevTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cabecera de la tarjeta de pasos
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: accentColor,
+                  Icon(Icons.spa_outlined, size: 18, color: accentColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Pasos Guiados',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: LevTheme.levTextDark,
                     ),
-                    child: Center(
-                      child: Text(
-                        '${_currentStepIndex + 1}',
-                        style: GoogleFonts.quicksand(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _isCompleted ? '¡Completado!' : 'Paso ${_currentStepIndex + 1} de ${steps.length}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Lista de pasos con indicadores numerados y estado visual
+          ...steps.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final text = entry.value;
+            final isCurrent = idx == _currentStepIndex;
+            final isCompleted = idx < _currentStepIndex;
+            final isLast = idx == steps.length - 1;
+
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Columna izquierda: Indicador circular + línea conectora
+                  Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isCompleted
+                              ? LevTheme.levMatchaDark
+                              : (isCurrent ? accentColor : Colors.transparent),
+                          border: Border.all(
+                            color: isCompleted
+                                ? LevTheme.levMatchaDark
+                                : (isCurrent ? accentColor : LevTheme.levMatchaLight),
+                            width: 2,
+                          ),
+                          boxShadow: isCurrent
+                              ? [
+                                  BoxShadow(
+                                    color: accentColor.withValues(alpha: 0.35),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: isCompleted
+                              ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                              : Text(
+                                  '${idx + 1}',
+                                  style: GoogleFonts.quicksand(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isCurrent ? Colors.white : LevTheme.levTextMuted,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      if (!isLast)
+                        Expanded(
+                          child: Container(
+                            width: 2,
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            color: isCompleted
+                                ? LevTheme.levMatchaDark.withValues(alpha: 0.4)
+                                : LevTheme.levMatchaLight.withValues(alpha: 0.6),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Columna derecha: Contenido del paso
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: isCurrent
+                            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+                            : const EdgeInsets.symmetric(vertical: 4),
+                        decoration: isCurrent
+                            ? BoxDecoration(
+                                color: accentColor.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: accentColor.withValues(alpha: 0.25),
+                                ),
+                              )
+                            : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isCurrent)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  'EN CURSO',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ),
+                            Text(
+                              text,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: isCurrent ? 13.5 : 12.5,
+                                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                                color: isCurrent
+                                    ? LevTheme.levTextDark
+                                    : (isCompleted
+                                        ? LevTheme.levTextMuted
+                                        : LevTheme.levTextMuted.withValues(alpha: 0.8)),
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                ],
+              ),
+            );
+          }),
+
+          // Nota de Fundamento Psicológico / Somático unificada
+          if (widget.habit.psychologicalBasis.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: LevTheme.levMatcha.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: LevTheme.levMatcha.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.psychology_outlined,
+                    size: 16,
+                    color: LevTheme.levMatchaDark,
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      step,
+                      'Fundamento somático: ${widget.habit.psychologicalBasis}',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: LevTheme.levTextDark,
+                        fontSize: 11.5,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                        color: LevTheme.levTextDark.withValues(alpha: 0.9),
                         height: 1.35,
                       ),
-                    ),
-                  ),
-                  Text(
-                    '$_currentStepIndex/$totalSteps',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: LevTheme.levTextMuted,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ],
+      ),
     );
   }
 }

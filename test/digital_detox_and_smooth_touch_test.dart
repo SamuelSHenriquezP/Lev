@@ -7,6 +7,8 @@ import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/features/detox/presentation/phone_down_screen.dart';
 import 'package:lev/features/habits/presentation/habits_catalog_screen.dart';
 import 'package:lev/features/home/presentation/home_screen.dart';
+import 'package:lev/features/habits/data/habits_database.dart';
+import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_habitat_card.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/living_seed_spirit_painter.dart';
@@ -193,6 +195,36 @@ void main() {
       );
       expect(painterDecaying.isFingerActive, isFalse);
       expect(painterDecaying.touchNormalizedOffset, equals(const Offset(0.3, 0.2)));
+    });
+
+    testWidgets('HabitTimerScreen displays unified steps timeline with no duplicate cards', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      final habit = HabitsDatabase.getById('doom_01')!;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: HabitTimerScreen(habit: habit),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Title & header elements
+      expect(find.text(habit.title), findsOneWidget);
+      expect(find.text('Pasos Guiados'), findsOneWidget);
+      expect(find.text('Paso 1 de ${habit.steps.length}'), findsOneWidget);
+
+      // All 3 steps visible in the timeline
+      for (final step in habit.steps) {
+        expect(find.text(step), findsOneWidget);
+      }
+
+      // Active step indicator
+      expect(find.text('EN CURSO'), findsOneWidget);
+
+      // Single psychological note
+      expect(find.textContaining('Fundamento somático:'), findsOneWidget);
     });
   });
 }

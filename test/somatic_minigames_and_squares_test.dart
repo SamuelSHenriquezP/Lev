@@ -261,7 +261,7 @@ void main() {
 
       // Toggle button is displayed
       expect(find.text('Cerrar Ojos / Dejar Móvil 📵'), findsOneWidget);
-      expect(find.text('Acción Fuera de Pantalla'), findsOneWidget);
+      expect(find.text('Pasos Guiados'), findsOneWidget);
 
       // Tap toggle to activate eyes-closed mode
       await tester.tap(find.text('Cerrar Ojos / Dejar Móvil 📵'));

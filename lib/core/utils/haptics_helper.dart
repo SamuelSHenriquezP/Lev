@@ -48,5 +48,17 @@ class HapticsHelper {
       // Ignorar
     }
   }
+
+  /// Alarma háptica perceptible al finalizar el tiempo: 3 pulsos de vibración firmes
+  static Future<void> timerAlarm() async {
+    try {
+      for (int i = 0; i < 3; i++) {
+        await HapticFeedback.vibrate();
+        await Future.delayed(const Duration(milliseconds: 260));
+      }
+    } catch (_) {
+      // Ignorar
+    }
+  }
 }
 

@@ -192,6 +192,21 @@ class SanctuaryAudioNotifier extends Notifier<SanctuaryAudioState> {
       debugPrint('SanctuaryAudioNotifier: Error al reproducir SFX de chime: $e');
     }
   }
+
+  /// Reproduce una alarma zen de campanillas claras y resonantes al terminar el temporizador
+  Future<void> playTimerAlarmSfx() async {
+    if (_isTest) return;
+    try {
+      final sfx = _getSfxPlayer();
+      if (sfx == null) return;
+      await sfx.setVolume(1.0);
+      await sfx.play(AssetSource('audio/chime.wav'), mode: PlayerMode.lowLatency);
+      await Future.delayed(const Duration(milliseconds: 600));
+      await sfx.play(AssetSource('audio/chime.wav'), mode: PlayerMode.lowLatency);
+    } catch (e) {
+      debugPrint('SanctuaryAudioNotifier: Error al reproducir alarma: $e');
+    }
+  }
 }
 
 final sanctuaryAudioProvider =
