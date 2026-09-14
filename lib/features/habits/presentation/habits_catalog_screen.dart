@@ -8,6 +8,7 @@ import 'package:lev/features/habits/domain/micro_habit.dart';
 import 'emotion_detail_screen.dart';
 import 'habit_timer_screen.dart';
 import 'widgets/somatic_focus_minigames.dart';
+import 'package:lev/features/detox/presentation/phone_down_screen.dart';
 
 /// Catálogo de Microhábitos en Cuadraditos Táctiles e Inmersivos.
 /// Se reemplazaron las listas largas y la sobrecarga visual por:
@@ -215,6 +216,135 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                   ),
               ] else ...[
                 // --- CASO B: MODO EXPLORACIÓN COZY Y TÁCTIL ---
+
+                // --- SECCIÓN HERO: MODO SOLTAR EL TELÉFONO ---
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF233B32),
+                        Color(0xFF14241E),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF233B32).withValues(alpha: 0.25),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: LevTheme.levMatcha.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Text('📵', style: TextStyle(fontSize: 24)),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Soltar el Teléfono',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.quicksand(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: LevTheme.levMatcha.withValues(alpha: 0.25),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        'Meta Principal',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: LevTheme.levMatchaLight,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Tu meta hoy es alejarte de la pantalla.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.5,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'El cerebro no descansa consumiendo contenido; descansa en el mundo real. Inicia una pausa, pon tu teléfono boca abajo y gana presencia.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5,
+                          height: 1.45,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            HapticsHelper.selection();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PhoneDownScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: LevTheme.levMatcha,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.bedtime_rounded, size: 18),
+                          label: Text(
+                            'Iniciar Desconexión (5 - 60 min)',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
                 // 2. SECCIÓN: MINIJUEGOS SOMÁTICOS DE CONCENTRACIÓN
                 Text(

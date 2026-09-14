@@ -339,6 +339,47 @@ class LocalStorageService {
     await _prefs?.setString(_keySanctuaryWeather, weatherId);
   }
 
+  // --- DESCONEXIÓN CONSCIENTE (SOLTAR EL TELÉFONO) ---
+  static const String _keyTotalDetoxMinutes = 'lev_total_detox_minutes';
+  static const String _keyTotalDetoxSessions = 'lev_total_detox_sessions';
+  static const String _keyTodayDetoxMinutes = 'lev_today_detox_minutes';
+  static const String _keyLastDetoxDate = 'lev_last_detox_date';
+
+  static int getTotalDetoxMinutes() {
+    return _prefs?.getInt(_keyTotalDetoxMinutes) ?? 0;
+  }
+
+  static int getTotalDetoxSessions() {
+    return _prefs?.getInt(_keyTotalDetoxSessions) ?? 0;
+  }
+
+  static int getTodayDetoxMinutes() {
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final lastDate = _prefs?.getString(_keyLastDetoxDate) ?? '';
+    if (lastDate != todayStr) {
+      return 0;
+    }
+    return _prefs?.getInt(_keyTodayDetoxMinutes) ?? 0;
+  }
+
+  static Future<void> addDetoxSession(int minutes) async {
+    if (minutes <= 0) return;
+    final currentTotal = getTotalDetoxMinutes();
+    final currentSessions = getTotalDetoxSessions();
+    await _prefs?.setInt(_keyTotalDetoxMinutes, currentTotal + minutes);
+    await _prefs?.setInt(_keyTotalDetoxSessions, currentSessions + 1);
+
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final lastDate = _prefs?.getString(_keyLastDetoxDate) ?? '';
+    if (lastDate != todayStr) {
+      await _prefs?.setString(_keyLastDetoxDate, todayStr);
+      await _prefs?.setInt(_keyTodayDetoxMinutes, minutes);
+    } else {
+      final todayMins = _prefs?.getInt(_keyTodayDetoxMinutes) ?? 0;
+      await _prefs?.setInt(_keyTodayDetoxMinutes, todayMins + minutes);
+    }
+  }
+
   // --- COPIA DE SEGURIDAD INTEGRAL (EXPORTAR / IMPORTAR) ---
   static String exportFullBackupJson() {
     final data = <String, dynamic>{
@@ -354,6 +395,8 @@ class LocalStorageService {
       'decorPositions': getDecorPositionsRaw(),
       'sanctuaryWeather': getSanctuaryWeather(),
       'hasSeenOnboarding': hasSeenOnboarding(),
+      'totalDetoxMinutes': getTotalDetoxMinutes(),
+      'totalDetoxSessions': getTotalDetoxSessions(),
       'activeAccessory': _prefs?.getString('lev_active_accessory') ?? 'none',
       'unlockedAccessories': _prefs?.getStringList('lev_unlocked_accessories') ?? ['none'],
       'moodEntries': _prefs?.getString(_keyMoodEntries) ?? '[]',
@@ -414,6 +457,12 @@ class LocalStorageService {
       }
       if (data['cbtCards'] is String) {
         await _prefs?.setString(_keyCbtCards, data['cbtCards'] as String);
+      }
+      if (data['totalDetoxMinutes'] is int) {
+        await _prefs?.setInt(_keyTotalDetoxMinutes, data['totalDetoxMinutes'] as int);
+      }
+      if (data['totalDetoxSessions'] is int) {
+        await _prefs?.setInt(_keyTotalDetoxSessions, data['totalDetoxSessions'] as int);
       }
       return true;
     } catch (_) {

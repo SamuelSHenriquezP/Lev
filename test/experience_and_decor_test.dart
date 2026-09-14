@@ -290,7 +290,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.textContaining('Qué hermoso alivio'), findsOneWidget);
 
-      final finishButton = find.textContaining('Hecho, gracias Lev');
+      final finishButton = find.textContaining('volver a la vida real');
       expect(finishButton, findsOneWidget);
       await tester.ensureVisible(finishButton);
       await tester.pump(const Duration(milliseconds: 100));

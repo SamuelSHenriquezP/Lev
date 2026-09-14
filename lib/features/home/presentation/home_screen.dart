@@ -1,10 +1,12 @@
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/core/theme/lev_theme.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
+import 'package:lev/features/detox/presentation/phone_down_screen.dart';
 import 'package:lev/features/habits/data/habits_database.dart';
 import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 import 'package:lev/features/home/presentation/widgets/sanctuary_audio_dialog.dart';
@@ -33,6 +35,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _hasCheckedGreeting = false;
   DateTime _lastPetTime = DateTime.fromMillisecondsSinceEpoch(0);
 
+  // Física continua de seguimiento suave con inercia acuática (cero teletransportación)
+  Offset _currentSmoothedOffset = Offset.zero;
+  Offset _targetOffset = Offset.zero;
+  double _currentInfluence = 0.0;
+  double _targetInfluence = 0.0;
+
   late final AnimationController _ambientController;
   late final AnimationController _wrapController;
   late final AnimationController _sleepController;
@@ -51,7 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _ambientController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3600),
-    )..repeat();
+    )..addListener(_onAmbientTick)..repeat();
 
     _wrapController = AnimationController(
       vsync: this,
@@ -104,8 +112,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  void _onAmbientTick() {
+    if (!mounted) return;
+    final nextOffset = Offset.lerp(_currentSmoothedOffset, _targetOffset, 0.14)!;
+    final nextInfluence = (lerpDouble(_currentInfluence, _targetInfluence, 0.12) ?? 0.0);
+
+    if ((nextOffset - _currentSmoothedOffset).distanceSquared > 0.000001 ||
+        (nextInfluence - _currentInfluence).abs() > 0.001) {
+      setState(() {
+        _currentSmoothedOffset = nextOffset;
+        _currentInfluence = nextInfluence;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _ambientController.removeListener(_onAmbientTick);
     _ambientController.dispose();
     _wrapController.dispose();
     _sleepController.dispose();
@@ -501,25 +524,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   final centerX = areaWidth * 0.5;
                   final centerY = areaHeight * 0.48;
 
-                  Offset? normOffset;
                   double touchDist = 999.0;
-                  if (_touchPosition != null && _isFingerActive) {
+                  if (_touchPosition != null) {
                     final dx = _touchPosition!.dx - centerX;
                     final dy = _touchPosition!.dy - centerY;
                     touchDist = sqrt(dx * dx + dy * dy);
-                    normOffset = Offset(
-                      (dx / (areaWidth * 0.5)).clamp(-1.0, 1.0),
-                      (dy / (areaHeight * 0.48)).clamp(-1.0, 1.0),
-                    );
                   }
 
                   void handleTouch(Offset localPos) {
-                    setState(() {
-                      _touchPosition = localPos;
-                      _isFingerActive = true;
-                    });
+                    _touchPosition = localPos;
+                    _isFingerActive = true;
+                    _targetInfluence = 1.0;
+
                     final dx = localPos.dx - centerX;
                     final dy = localPos.dy - centerY;
+                    _targetOffset = Offset(
+                      (dx / (areaWidth * 0.5)).clamp(-1.0, 1.0),
+                      (dy / (areaHeight * 0.48)).clamp(-1.0, 1.0),
+                    );
+
                     final dist = sqrt(dx * dx + dy * dy);
                     if (dist < 92.0) {
                       final now = DateTime.now();
@@ -531,10 +554,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   }
 
                   void handleTouchEnd() {
-                    setState(() {
-                      _isFingerActive = false;
-                      _touchPosition = null;
-                    });
+                    _isFingerActive = false;
+                    _targetInfluence = 0.0;
+                    _targetOffset = Offset.zero;
                   }
 
                   return GestureDetector(
@@ -577,10 +599,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 growthFactor: sanctuary.growthFactor,
                                 activeDecors: sanctuary.activeDecors,
                                 activeAccessory: sanctuary.activeAccessory,
-                                touchNormalizedOffset: normOffset,
+                                touchNormalizedOffset: _currentSmoothedOffset,
                                 touchLocalPosition: _touchPosition,
-                                isFingerActive: _isFingerActive,
-                                touchDistance: touchDist,
+                                isFingerActive: _isFingerActive || _currentInfluence > 0.02,
+                                touchDistance: _touchPosition != null ? touchDist : (_currentSmoothedOffset.distance * 100.0),
                                 weather: sanctuary.weather,
                                 isWatering: sanctuary.isWatering,
                                 leafWrapProgress: _wrapController.value,
@@ -722,6 +744,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
+                    _buildPillAction(
+                      icon: Icons.phone_android_rounded,
+                      label: 'Soltar Móvil',
+                      accentColor: LevTheme.levMatchaDark,
+                      isActive: false,
+                      onTap: () {
+                        HapticsHelper.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const PhoneDownScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
                     _buildPillAction(
                       icon: Icons.water_drop_rounded,
                       label: 'Regar',

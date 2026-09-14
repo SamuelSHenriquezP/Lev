@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,12 @@ class LivingHabitatCard extends ConsumerStatefulWidget {
 class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+
+  // Física continua de seguimiento suave con inercia acuática (cero teletransportación)
+  Offset _currentSmoothedOffset = Offset.zero;
+  Offset _targetOffset = Offset.zero;
+  double _currentInfluence = 0.0;
+  double _targetInfluence = 0.0;
   Offset? _touchPosition;
   bool _isFingerActive = false;
 
@@ -26,11 +33,27 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3800),
-    )..repeat();
+    )..addListener(_onTick)..repeat();
+  }
+
+  void _onTick() {
+    if (!mounted) return;
+    // LERP continuo en cada fotograma
+    final nextOffset = Offset.lerp(_currentSmoothedOffset, _targetOffset, 0.14)!;
+    final nextInfluence = (lerpDouble(_currentInfluence, _targetInfluence, 0.12) ?? 0.0);
+
+    if ((nextOffset - _currentSmoothedOffset).distanceSquared > 0.000001 ||
+        (nextInfluence - _currentInfluence).abs() > 0.001) {
+      setState(() {
+        _currentSmoothedOffset = nextOffset;
+        _currentInfluence = nextInfluence;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onTick);
     _controller.dispose();
     super.dispose();
   }
@@ -63,7 +86,7 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
         borderRadius: BorderRadius.circular(32),
         child: Stack(
           children: [
-            // Lienzo interactivo del estanque con reactividad táctil continua
+            // Lienzo interactivo del estanque con reactividad táctil continua y fluida
             Positioned.fill(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -72,25 +95,25 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                   final centerX = cardWidth * 0.5;
                   final centerY = cardHeight * 0.48;
 
-                  Offset? normOffset;
                   double touchDist = 999.0;
-                  if (_touchPosition != null && _isFingerActive) {
+                  if (_touchPosition != null) {
                     final dx = _touchPosition!.dx - centerX;
                     final dy = _touchPosition!.dy - centerY;
                     touchDist = sqrt(dx * dx + dy * dy);
-                    normOffset = Offset(
-                      (dx / (cardWidth * 0.5)).clamp(-1.0, 1.0),
-                      (dy / (cardHeight * 0.48)).clamp(-1.0, 1.0),
-                    );
                   }
 
                   void handleTouch(Offset localPos) {
-                    setState(() {
-                      _touchPosition = localPos;
-                      _isFingerActive = true;
-                    });
+                    _touchPosition = localPos;
+                    _isFingerActive = true;
+                    _targetInfluence = 1.0;
+
                     final dx = localPos.dx - centerX;
                     final dy = localPos.dy - centerY;
+                    _targetOffset = Offset(
+                      (dx / (cardWidth * 0.5)).clamp(-1.0, 1.0),
+                      (dy / (cardHeight * 0.48)).clamp(-1.0, 1.0),
+                    );
+
                     final dist = sqrt(dx * dx + dy * dy);
                     if (dist < 85.0) {
                       ref.read(sanctuaryProvider.notifier).petLev();
@@ -98,10 +121,10 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                   }
 
                   void handleTouchEnd() {
-                    setState(() {
-                      _isFingerActive = false;
-                      _touchPosition = null;
-                    });
+                    // Al levantar el dedo, el objetivo vuelve suavemente al centro
+                    _isFingerActive = false;
+                    _targetInfluence = 0.0;
+                    _targetOffset = Offset.zero;
                   }
 
                   return GestureDetector(
@@ -128,10 +151,10 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                             growthFactor: sanctuary.growthFactor,
                             activeDecors: sanctuary.activeDecors,
                             activeAccessory: sanctuary.activeAccessory,
-                            touchNormalizedOffset: normOffset,
+                            touchNormalizedOffset: _currentSmoothedOffset,
                             touchLocalPosition: _touchPosition,
-                            isFingerActive: _isFingerActive,
-                            touchDistance: touchDist,
+                            isFingerActive: _isFingerActive || _currentInfluence > 0.02,
+                            touchDistance: _touchPosition != null ? touchDist : (_currentSmoothedOffset.distance * 100.0),
                           ),
                         );
                       },

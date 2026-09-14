@@ -267,7 +267,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
     // --- 5. REACTIVIDAD TÁCTIL Y CARICIAS ADAPTADAS A CADA ETAPA ---
     final touchX = touchNormalizedOffset?.dx.clamp(-1.0, 1.0) ?? 0.0;
     final touchY = touchNormalizedOffset?.dy.clamp(-1.0, 1.0) ?? 0.0;
-    final touchInfluence = isFingerActive ? 1.0 : 0.0;
+    final touchMagnitude = (touchNormalizedOffset?.distance ?? 0.0).clamp(0.0, 1.0);
+    final touchInfluence = isFingerActive ? 1.0 : touchMagnitude;
 
     // Desplazamiento orgánico físico del cuerpo de Lev persiguiendo al dedo en la pantalla
     final touchTranslateX = (touchX * 36.0) * touchInfluence;

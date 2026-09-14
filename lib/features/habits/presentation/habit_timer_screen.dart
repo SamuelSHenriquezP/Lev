@@ -1011,6 +1011,36 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      // Mensaje guía: Apaga la pantalla y vuelve a la vida real
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: LevTheme.levMatcha.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: LevTheme.levMatcha.withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Text('📵', style: TextStyle(fontSize: 20)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Has regulado tu cuerpo. Ahora apaga tu pantalla y continúa tu momento en el mundo real.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: LevTheme.levMatchaDark,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1033,7 +1063,7 @@ class _LevCelebrationModalState extends ConsumerState<_LevCelebrationModal>
                             ),
                           ),
                           child: Text(
-                            'Hecho, gracias Lev 🌿',
+                            'Listo, volver a la vida real 🌿',
                             style: GoogleFonts.quicksand(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
