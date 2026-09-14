@@ -19,9 +19,10 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  // Física continua de seguimiento suave con inercia acuática (cero teletransportación)
+  // Física continua de seguimiento suave con inercia acuática y muelle elástico de retorno
   Offset _currentSmoothedOffset = Offset.zero;
   Offset _targetOffset = Offset.zero;
+  Offset _touchVelocity = Offset.zero;
   double _currentInfluence = 0.0;
   double _targetInfluence = 0.0;
   Offset? _touchPosition;
@@ -38,9 +39,28 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
 
   void _onTick() {
     if (!mounted) return;
-    // LERP continuo en cada fotograma
-    final nextOffset = Offset.lerp(_currentSmoothedOffset, _targetOffset, 0.14)!;
-    final nextInfluence = (lerpDouble(_currentInfluence, _targetInfluence, 0.12) ?? 0.0);
+
+    Offset nextOffset;
+    if (_isFingerActive) {
+      nextOffset = Offset.lerp(_currentSmoothedOffset, _targetOffset, 0.20)!;
+      _touchVelocity = nextOffset - _currentSmoothedOffset;
+    } else {
+      // Retorno elástico amortiguado orgánico al soltar el dedo
+      const double springStiffness = 0.12;
+      const double fluidDamping = 0.82;
+      _touchVelocity = (_touchVelocity + (_targetOffset - _currentSmoothedOffset) * springStiffness) * fluidDamping;
+      if (_touchVelocity.distance > 0.12) {
+        _touchVelocity = (_touchVelocity / _touchVelocity.distance) * 0.12;
+      }
+      nextOffset = _currentSmoothedOffset + _touchVelocity;
+
+      if (nextOffset.distanceSquared < 0.00002 && _touchVelocity.distanceSquared < 0.00002) {
+        nextOffset = Offset.zero;
+        _touchVelocity = Offset.zero;
+      }
+    }
+
+    final nextInfluence = (lerpDouble(_currentInfluence, _targetInfluence, 0.14) ?? 0.0);
 
     if ((nextOffset - _currentSmoothedOffset).distanceSquared > 0.000001 ||
         (nextInfluence - _currentInfluence).abs() > 0.001) {
@@ -125,6 +145,7 @@ class _LivingHabitatCardState extends ConsumerState<LivingHabitatCard>
                     _isFingerActive = false;
                     _targetInfluence = 0.0;
                     _targetOffset = Offset.zero;
+                    _touchPosition = null;
                   }
 
                   return GestureDetector(

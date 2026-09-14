@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -185,7 +186,7 @@ void main() {
       );
       expect(painterActive.isFingerActive, isTrue);
 
-      // When finger is lifted but offset is decaying back to center
+      // When finger is lifted but offset is decaying back to center with spring physics
       final painterDecaying = LivingSeedSpiritPainter(
         animationValue: 0.5,
         emotion: LevEmotion.peaceful,
@@ -195,6 +196,23 @@ void main() {
       );
       expect(painterDecaying.isFingerActive, isFalse);
       expect(painterDecaying.touchNormalizedOffset, equals(const Offset(0.3, 0.2)));
+
+      // Verifies all 8 stages can paint during spring return without throwing
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      for (final stage in LevGrowthStage.values) {
+        final stagePainter = LivingSeedSpiritPainter(
+          animationValue: 0.4,
+          emotion: LevEmotion.peaceful,
+          isPetting: false,
+          growthStage: stage,
+          touchNormalizedOffset: const Offset(0.25, -0.15),
+          isFingerActive: false,
+        );
+        stagePainter.paint(canvas, const Size(400, 400));
+      }
+      final picture = recorder.endRecording();
+      expect(picture, isNotNull);
     });
 
     testWidgets('HabitTimerScreen displays unified steps timeline with no duplicate cards', (tester) async {

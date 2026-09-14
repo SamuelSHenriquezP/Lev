@@ -267,21 +267,21 @@ class LivingSeedSpiritPainter extends CustomPainter {
     // --- 5. REACTIVIDAD TÁCTIL Y CARICIAS ADAPTADAS A CADA ETAPA ---
     final touchX = touchNormalizedOffset?.dx.clamp(-1.0, 1.0) ?? 0.0;
     final touchY = touchNormalizedOffset?.dy.clamp(-1.0, 1.0) ?? 0.0;
-    final touchInfluence = isFingerActive ? 1.0 : 0.0;
 
-    // Desplazamiento orgánico físico del cuerpo de Lev persiguiendo al dedo en la pantalla
-    final touchTranslateX = (touchX * 36.0) * touchInfluence;
+    // Desplazamiento orgánico físico del cuerpo de Lev persiguiendo al dedo en la pantalla.
+    // Depende directamente de la posición continua suavizada (touchX, touchY) sin truncar a 0
+    // al levantar el dedo, permitiendo que Lev retorne con física elástica de muelle orgánico.
+    final touchTranslateX = (touchX * 36.0);
 
     // Inclinación corporal elástica y expresiva orientada al dedo (hasta ~22°)
-    final touchSway = (touchX * 0.38 * stageTouchSwayMultiplier) * touchInfluence;
+    final touchSway = (touchX * 0.38 * stageTouchSwayMultiplier);
 
     // Deformación somática viva: estiramiento al mirar hacia arriba, compresión al agacharse y caricia directa
-    final touchStretchY = (touchY < 0
-            ? -touchY * stageTouchStretchMultiplier * 1.6
-            : -touchY * stageTouchStretchMultiplier * 0.8) *
-        touchInfluence;
+    final touchStretchY = touchY < 0
+        ? -touchY * stageTouchStretchMultiplier * 1.6
+        : -touchY * stageTouchStretchMultiplier * 0.8;
     final touchStretchX = -touchStretchY * 0.5;
-    final touchFloatY = (touchY * (stageBaseFloatY.abs() > 10 ? 8.0 : 12.0)) * touchInfluence;
+    final touchFloatY = touchY * (stageBaseFloatY.abs() > 10 ? 8.0 : 12.0);
     final directTouchSquash = isTouchingLev ? 0.08 : 0.0;
     final pettingSquash = effectiveIsPetting ? (sin(cycle * 8.0) * stagePetSquashMultiplier) : directTouchSquash;
 
@@ -398,7 +398,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effCurious,
       effTired,
       effAnxious,
-      touchGazeOffset: Offset(touchX * 9.5 * touchInfluence, touchY * 7.0 * touchInfluence),
+      touchGazeOffset: Offset(touchX * 9.5, touchY * 7.0),
       isTouchingLev: isTouchingLev,
       isFingerActive: isFingerActive,
       effectiveIsPetting: effectiveIsPetting,
@@ -613,14 +613,14 @@ class LivingSeedSpiritPainter extends CustomPainter {
 
       case LevGrowthStage.sprout:
         // Los cotiledones se mueven con curiosidad hacia el dedo y aletean al acariciar
-        final sproutLeft = leftAngle + (isFingerActive ? touchX * 0.12 : 0.0) + (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
-        final sproutRight = rightAngle + (isFingerActive ? touchX * 0.12 : 0.0) - (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
+        final sproutLeft = leftAngle + (touchX * 0.12) + (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
+        final sproutRight = rightAngle + (touchX * 0.12) - (effectiveIsPetting ? sin(cycle * 14.0) * 0.20 : 0.0);
         _drawSucculentPair(canvas, sproutLeft, sproutRight, const Size(54, 28), 0.0);
         break;
 
       case LevGrowthStage.seedling:
-        final seedlingLeft = leftAngle + (isFingerActive ? touchX * 0.10 : 0.0) + (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
-        final seedlingRight = rightAngle + (isFingerActive ? touchX * 0.10 : 0.0) - (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
+        final seedlingLeft = leftAngle + (touchX * 0.10) + (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
+        final seedlingRight = rightAngle + (touchX * 0.10) - (effectiveIsPetting ? sin(cycle * 8.0) * 0.12 : 0.0);
         _drawSucculentPair(canvas, seedlingLeft, seedlingRight, const Size(78, 36), 0.0);
         break;
 
@@ -638,15 +638,15 @@ class LivingSeedSpiritPainter extends CustomPainter {
         break;
 
       case LevGrowthStage.youngTree:
-        final upperLeft = leftAngle * 0.72 - 0.20 + sin(cycle * 1.4) * 0.04 + (isFingerActive ? touchX * 0.06 : 0.0);
-        final upperRight = rightAngle * 0.72 + 0.20 - sin(cycle * 1.4) * 0.04 + (isFingerActive ? touchX * 0.06 : 0.0);
+        final upperLeft = leftAngle * 0.72 - 0.20 + sin(cycle * 1.4) * 0.04 + (touchX * 0.06);
+        final upperRight = rightAngle * 0.72 + 0.20 - sin(cycle * 1.4) * 0.04 + (touchX * 0.06);
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(70, 32), -26.0, hasVeins: true);
         _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(110, 46), 0.0, hasVeins: true);
         break;
 
       case LevGrowthStage.adultTree:
-        final upperLeft = leftAngle * 0.75 - 0.24 + sin(cycle * 1.5) * 0.05 + (isFingerActive ? touchX * 0.07 : 0.0);
-        final upperRight = rightAngle * 0.75 + 0.24 - sin(cycle * 1.5) * 0.05 + (isFingerActive ? touchX * 0.07 : 0.0);
+        final upperLeft = leftAngle * 0.75 - 0.24 + sin(cycle * 1.5) * 0.05 + (touchX * 0.07);
+        final upperRight = rightAngle * 0.75 + 0.24 - sin(cycle * 1.5) * 0.05 + (touchX * 0.07);
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(82, 36), -30.0, hasVeins: true);
         _drawSucculentPair(canvas, leftAngle, rightAngle, const Size(116, 48), 0.0, hasVeins: true);
         break;
@@ -654,14 +654,14 @@ class LivingSeedSpiritPainter extends CustomPainter {
       case LevGrowthStage.forestSpirit:
         // Alas triples celestiales: dinámica polifónica independiente en 3 frecuencias
         final fanOut = effectiveIsPetting ? 0.28 : 0.0;
-        final upperLeft = -0.68 - fanOut + sin(cycle * 2.2) * 0.08 + (isFingerActive ? touchY * 0.12 : 0.0);
-        final upperRight = 0.68 + fanOut - sin(cycle * 2.2) * 0.08 - (isFingerActive ? touchY * 0.12 : 0.0);
+        final upperLeft = -0.68 - fanOut + sin(cycle * 2.2) * 0.08 + (touchY * 0.12);
+        final upperRight = 0.68 + fanOut - sin(cycle * 2.2) * 0.08 - (touchY * 0.12);
 
         final midLeft = leftAngle - (fanOut * 0.4) + sin(cycle * 1.6 + 1.2) * 0.06;
         final midRight = rightAngle + (fanOut * 0.4) - sin(cycle * 1.6 + 1.2) * 0.06;
 
-        final lowerLeft = -0.22 + (fanOut * 0.6) + sin(cycle * 1.1 + 2.4) * 0.05 - (isFingerActive ? touchY * 0.08 : 0.0);
-        final lowerRight = 0.22 - (fanOut * 0.6) - sin(cycle * 1.1 + 2.4) * 0.05 + (isFingerActive ? touchY * 0.08 : 0.0);
+        final lowerLeft = -0.22 + (fanOut * 0.6) + sin(cycle * 1.1 + 2.4) * 0.05 - (touchY * 0.08);
+        final lowerRight = 0.22 - (fanOut * 0.6) - sin(cycle * 1.1 + 2.4) * 0.05 + (touchY * 0.08);
 
         _drawSucculentPair(canvas, upperLeft, upperRight, const Size(90, 38), -44.0, hasVeins: true, celestialGlow: true);
         _drawSucculentPair(canvas, midLeft, midRight, const Size(122, 50), 0.0, hasVeins: true, celestialGlow: true);
@@ -1302,7 +1302,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: effectiveIsPetting ? 0.95 : (0.55 + glint * 0.40))
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
 
-    final shiftX = isFingerActive ? touchX * 4.0 : 0.0;
+    final shiftX = touchX * 4.0;
     final tremble = effectiveIsPetting ? sin(cycle * 16.0) * 1.8 : 0.0;
 
     canvas.drawCircle(Offset(-42 + shiftX, 38 + tremble), effectiveIsPetting ? 4.5 : 3.5, dewdropPaint);
@@ -1331,8 +1331,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
   }) {
     final bob = sin(cycle * (effectiveIsPetting ? 5.0 : 2.0)) * 3.5;
     // La antena apunta dinámicamente en dirección al dedo
-    final targetBendX = isFingerActive ? (touchX * 18.0).clamp(-22.0, 22.0) : 0.0;
-    final targetBendY = isFingerActive ? (touchY * 8.0).clamp(-12.0, 12.0) : 0.0;
+    final targetBendX = (touchX * 18.0).clamp(-22.0, 22.0);
+    final targetBendY = (touchY * 8.0).clamp(-12.0, 12.0);
 
     // Pirueta en bucle cuando está siendo acariciado
     final petAcrobatics = effectiveIsPetting ? sin(cycle * 8.0) * 12.0 : 0.0;
@@ -1384,8 +1384,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
     required double touchX,
     required bool isFingerActive,
   }) {
-    // Si el dedo está activo, la oreja más cercana se asoma curiosa hacia el dedo
-    final earBias = isFingerActive ? (touchX * 0.25).clamp(-0.35, 0.35) : 0.0;
+    // La oreja más cercana se asoma curiosa hacia la dirección táctil
+    final earBias = (touchX * 0.25).clamp(-0.35, 0.35);
     // Si se acaricia, ambas orejitas aletean en un ronroneo cadencioso
     final purrFlutter = effectiveIsPetting ? sin(cycle * 10.0) * 0.16 : 0.0;
     final twitch = sin(cycle * 4.0).abs() * 0.08;
@@ -1421,8 +1421,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
           .withValues(alpha: effectiveIsPetting ? 0.95 : 0.80);
 
     final speedMult = effectiveIsPetting ? 1.8 : 1.0;
-    final attractX = isFingerActive ? touchX * 42.0 : 0.0;
-    final attractY = isFingerActive ? touchY * 28.0 : 0.0;
+    final attractX = touchX * 42.0;
+    final attractY = touchY * 28.0;
 
     for (int i = 0; i < 6; i++) {
       final p = ((t * speedMult) + (i / 6.0)) % 1.0;
@@ -1457,7 +1457,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = effectiveIsPetting ? 2.2 : 1.5;
 
-    final targetShift = isFingerActive ? Offset(touchX * 10.0, touchY * 6.0) : Offset.zero;
+    final targetShift = Offset(touchX * 10.0, touchY * 6.0);
     canvas.drawCircle(const Offset(0, -52) + targetShift * 0.4, 8.0 + pulse * 14.0, ringPaint);
 
     final gemPaint = Paint()
@@ -1476,8 +1476,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
     required bool isFingerActive,
   }) {
     final count = effectiveIsPetting ? 9 : 7;
-    final attractX = isFingerActive ? touchX * 42.0 : 0.0;
-    final attractY = isFingerActive ? touchY * 30.0 : 0.0;
+    final attractX = touchX * 42.0;
+    final attractY = touchY * 30.0;
 
     for (int i = 0; i < count; i++) {
       final phase = (t + (i * (1.0 / count))) % 1.0;
@@ -1507,7 +1507,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       ..strokeWidth = effectiveIsPetting ? 1.8 : 1.2
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
-    final shift = isFingerActive ? Offset(touchX * 14.0, touchY * 10.0) : Offset.zero;
+    final shift = Offset(touchX * 14.0, touchY * 10.0);
 
     canvas.drawOval(
       Rect.fromCenter(center: const Offset(0, -35) + shift, width: 140, height: 42),
@@ -1536,8 +1536,8 @@ class LivingSeedSpiritPainter extends CustomPainter {
           .withValues(alpha: effectiveIsPetting ? 0.95 : 0.75);
 
     final speed = effectiveIsPetting ? 2.2 : 0.5;
-    final tiltX = isFingerActive ? touchX * 8.0 : 0.0;
-    final tiltY = isFingerActive ? touchY * 5.0 : 0.0;
+    final tiltX = touchX * 8.0;
+    final tiltY = touchY * 5.0;
 
     for (int i = 0; i < 7; i++) {
       final angle = (i * (2 * pi / 7)) + (t * speed);
