@@ -108,24 +108,27 @@ class MicroHabit {
   IconData get icon => taskAction.icon;
 }
 
-/// Tipo de interacción del microhábito — define qué widget se muestra al usuario.
+/// Modo de guía somática del microhábito — diseñado para desconectar de la pantalla y conectar con el cuerpo
 enum HabitInteractionType {
-  /// Temporizador circular con Lev animado (fallback)
+  /// Temporizador sereno con Lev en reposo meditativo y campanillas suaves
   timer,
-  /// Lev se expande/contrae guiando la respiración — usuario inhala/exhala
+  /// Ritmo respiratorio guiado para ejecutar con ojos cerrados o mirada suave
   breathGuided,
-  /// Dos botones lado a lado para golpeteo bilateral (mariposa EMDR)
-  bilateralTap,
-  /// Usuario mantiene presionado la pantalla, Lev pulsa en sincronía
-  holdPressure,
-  /// Deslizador de tensión→relajación, Lev se sacude y luego se suaviza
-  slideRelease,
-  /// Lev se mueve en figura 8, usuario lo sigue con los ojos y el dedo
-  eyeTracker,
-  /// Dibujar libremente en la pantalla (grounding visual táctil)
-  gestureInput,
-  /// Contador de respiraciones con Lev contando junto
+  /// Guía para dejar el teléfono sobre la mesa y realizar la acción somática en el entorno
+  audioGrounding,
+  /// Guía física de estiramiento y liberación postural fuera del dispositivo
+  postureRelease,
+  /// Anclaje sensorial en el entorno real (texturas, ventana, temperatura, sonidos)
+  sensoryAnchor,
+  /// Contador de ciclos respiratorios conscientes
   countingBreath,
+
+  // Fallbacks retrocompatibles
+  bilateralTap,
+  holdPressure,
+  slideRelease,
+  eyeTracker,
+  gestureInput,
 }
 
 enum LevTaskAction {

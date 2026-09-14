@@ -34,6 +34,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
   bool _isRunning = true;
   bool _isCompleted = false;
   bool _triggerPetals = false;
+  bool _eyesClosedMode = false;
 
   // Animaciones de paso
   late final AnimationController _stepSlideController;
@@ -66,6 +67,9 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
         final newStep = _getActiveStepIndex;
         if (newStep != _currentStepIndex && !_isAnimating) {
           _animateToStep(newStep);
+          // Campanilla auditiva suave al cambiar de paso para poder estar con ojos cerrados
+          ref.read(sanctuaryAudioProvider.notifier).playWaterDropSfx();
+          HapticsHelper.selection();
         }
         setState(() => _remainingSeconds--);
         if (_remainingSeconds % 15 == 0) HapticsHelper.selection();
@@ -119,6 +123,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
 
   void _onFinish() {
     HapticsHelper.medium();
+    ref.read(sanctuaryAudioProvider.notifier).playChimeSfx();
     setState(() => _triggerPetals = true);
     ref.read(sanctuaryProvider.notifier).onHabitCompleted(widget.habit.id);
     _showCompletionDialog();
@@ -171,6 +176,10 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_eyesClosedMode) {
+      return _buildEyesClosedView();
+    }
+
     final audioState = ref.watch(sanctuaryAudioProvider);
     final progress = 1.0 - (_remainingSeconds / widget.habit.durationSeconds);
     final accentColor = LevTheme.getEmotionAccentColor(widget.habit.category);
@@ -216,7 +225,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
         body: SafeArea(
           child: Column(
             children: [
-              // Badge + título
+              // Badge + título + toggle Ojos Cerrados
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Column(
@@ -236,7 +245,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       widget.habit.title,
                       textAlign: TextAlign.center,
@@ -244,6 +253,42 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: LevTheme.levTextDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () {
+                        HapticsHelper.selection();
+                        setState(() => _eyesClosedMode = true);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: LevTheme.levMatcha.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: LevTheme.levMatcha.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.bedtime_outlined,
+                              size: 14,
+                              color: LevTheme.levMatchaDark,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Cerrar Ojos / Dejar Móvil 📵',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: LevTheme.levMatchaDark,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -327,12 +372,150 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
     );
   }
 
+  Widget _buildEyesClosedView() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A1310),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white70),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+            onPressed: _resetTimer,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              SizedBox(
+                width: 140,
+                height: 140,
+                child: AnimatedBuilder(
+                  animation: _levController,
+                  builder: (context, _) => CustomPaint(
+                    painter: LivingSeedSpiritPainter(
+                      animationValue: _levController.value,
+                      emotion: LevEmotion.peaceful,
+                      isPetting: false,
+                      sizeScale: 0.75,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Ojos Cerrados',
+                style: GoogleFonts.quicksand(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Deja tu teléfono a un lado y respira.\nLev te avisará con una campanilla en cada cambio de paso.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '$_remainingSeconds s',
+                style: GoogleFonts.quicksand(
+                  fontSize: 38,
+                  fontWeight: FontWeight.w700,
+                  color: LevTheme.levMatchaLight,
+                ),
+              ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticsHelper.light();
+                        setState(() => _eyesClosedMode = false);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                      label: Text(
+                        'Ver pantalla',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _onFinish,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: LevTheme.levMatcha,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Completar',
+                        style: GoogleFonts.quicksand(fontSize: 13.5, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInteractiveArea() {
+    final currentInstruction = widget.habit.steps.isNotEmpty
+        ? widget.habit.steps[_currentStepIndex.clamp(0, widget.habit.steps.length - 1)]
+        : widget.habit.levIntro;
+
     switch (widget.habit.interactionType) {
       case HabitInteractionType.breathGuided:
         return BreathGuideWidget(
           isPhysiologicalSigh: widget.habit.id == 'anx_01',
         );
+      case HabitInteractionType.audioGrounding:
+        return AudioGroundingCard(
+          title: widget.habit.title,
+          actionPrompt: currentInstruction,
+          physiologicalNote: widget.habit.psychologicalBasis,
+        );
+      case HabitInteractionType.postureRelease:
+        return PostureReleaseCard(
+          focusArea: widget.habit.taskAction.label,
+          instructions: currentInstruction,
+        );
+      case HabitInteractionType.sensoryAnchor:
+        return SensoryAnchorCard(
+          sensoryPrompt: currentInstruction,
+        );
+      case HabitInteractionType.countingBreath:
+        return const CountingBreathWidget(targetCycles: 6);
       case HabitInteractionType.bilateralTap:
         return const BilateralTapWidget();
       case HabitInteractionType.holdPressure:
@@ -341,10 +524,7 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
         return const SlideReleaseWidget();
       case HabitInteractionType.eyeTracker:
         return const EyeTrackerWidget();
-      case HabitInteractionType.countingBreath:
-        return const CountingBreathWidget(targetCycles: 6);
       case HabitInteractionType.gestureInput:
-        return _buildGestureInputArea();
       case HabitInteractionType.timer:
         return _buildLevWithTimer();
     }
@@ -393,61 +573,6 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
           ],
         );
       },
-    );
-  }
-
-  Widget _buildGestureInputArea() {
-    final List<Offset> points = [];
-    return Column(
-      children: [
-        AnimatedBuilder(
-          animation: _levController,
-          builder: (context, _) => SizedBox(
-            width: 120,
-            height: 120,
-            child: CustomPaint(
-              painter: LivingSeedSpiritPainter(
-                animationValue: _levController.value,
-                emotion: LevEmotion.peaceful,
-                isPetting: false,
-                sizeScale: 0.55,
-                taskAction: widget.habit.taskAction,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          widget.habit.levIntro,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontStyle: FontStyle.italic,
-            color: LevTheme.levTextMuted,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: 260,
-          height: 150,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: StatefulBuilder(
-              builder: (context, setInner) {
-                return GestureDetector(
-                  onPanUpdate: (d) => setInner(() => points.add(d.localPosition)),
-                  child: Container(
-                    color: const Color(0xFFF2ECE1),
-                    child: CustomPaint(
-                      painter: _GesturePainter(List.from(points)),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -520,32 +645,6 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
       },
     );
   }
-}
-
-class _GesturePainter extends CustomPainter {
-  final List<Offset> points;
-  _GesturePainter(this.points);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final furrow = Paint()
-      ..color = const Color(0xFFD4C8B5)
-      ..strokeWidth = 14
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    if (points.length > 1) {
-      final path = Path()..moveTo(points.first.dx, points.first.dy);
-      for (final p in points.skip(1)) {
-        path.lineTo(p.dx, p.dy);
-      }
-      canvas.drawPath(path, furrow);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GesturePainter old) => true;
 }
 
 /// Pantalla modal de celebración orgánica y luminosa para Lev al terminar el hábito.

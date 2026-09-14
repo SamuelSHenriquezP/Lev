@@ -120,8 +120,8 @@ void main() {
       expect(find.text('Meta Principal'), findsOneWidget);
       expect(find.text('Iniciar Desconexión (5 - 60 min)'), findsOneWidget);
 
-      // Minigames row also preserved
-      expect(find.text('Minijuegos de Concentración'), findsOneWidget);
+      // Somatic regulation row
+      expect(find.text('Herramientas Somáticas de Calma'), findsOneWidget);
     });
 
     testWidgets('HomeScreen action bar contains Soltar Móvil pill action', (tester) async {

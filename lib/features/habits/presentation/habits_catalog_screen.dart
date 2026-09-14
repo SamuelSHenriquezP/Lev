@@ -346,9 +346,9 @@ class _HabitsCatalogScreenState extends State<HabitsCatalogScreen> {
                   ),
                 ),
 
-                // 2. SECCIÓN: MINIJUEGOS SOMÁTICOS DE CONCENTRACIÓN
+                // 2. SECCIÓN: HERRAMIENTAS SOMÁTICAS DE REGULACIÓN
                 Text(
-                  'Minijuegos de Concentración',
+                  'Herramientas Somáticas de Calma',
                   style: GoogleFonts.quicksand(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,

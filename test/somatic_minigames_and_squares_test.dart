@@ -8,6 +8,8 @@ import 'package:lev/features/habits/presentation/habits_catalog_screen.dart';
 import 'package:lev/features/habits/presentation/emotion_detail_screen.dart';
 import 'package:lev/features/habits/presentation/widgets/somatic_focus_minigames.dart';
 import 'package:lev/features/companion/presentation/companion_chat_screen.dart';
+import 'package:lev/features/habits/domain/micro_habit.dart';
+import 'package:lev/features/habits/presentation/habit_timer_screen.dart';
 
 void main() {
   setUp(() async {
@@ -36,8 +38,8 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('Buscar por síntoma (ojos, pecho, dormir...)'), findsOneWidget);
 
-      // Minigames quick cards
-      expect(find.text('Minijuegos de Concentración'), findsOneWidget);
+      // Somatic tools quick cards
+      expect(find.text('Herramientas Somáticas de Calma'), findsOneWidget);
       expect(find.text('Burbujas Pop'), findsOneWidget);
       expect(find.text('Arena Zen'), findsOneWidget);
       expect(find.text('Foco de Luz'), findsOneWidget);
@@ -220,6 +222,60 @@ void main() {
       // Reset tower
       await tester.tap(find.text('Reiniciar'));
       await tester.pump(const Duration(milliseconds: 100));
+    });
+
+    testWidgets('SomaticMinigamesContainer provides prominent exit button to release phone', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SomaticMinigamesContainer(initialIndex: 0),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('Ya me siento en calma, soltar teléfono 🌿'), findsOneWidget);
+    });
+
+    testWidgets('HabitTimerScreen provides Cerrar Ojos / Dejar Móvil toggle and zen screen', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      const testHabit = MicroHabit(
+        id: 'test_somatic_01',
+        title: 'Mirada Lejana al Horizonte',
+        levIntro: 'Lev mira a lo lejos contigo.',
+        steps: ['Mira por la ventana', 'Parpadea suavemente', 'Respira tres veces'],
+        psychologicalBasis: 'Descanso ciliar y corte de dopamina rápida.',
+        category: 'Doomscrolling / Sobrecarga Digital',
+        interactionType: HabitInteractionType.audioGrounding,
+      );
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: HabitTimerScreen(habit: testHabit),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Toggle button is displayed
+      expect(find.text('Cerrar Ojos / Dejar Móvil 📵'), findsOneWidget);
+      expect(find.text('Acción Fuera de Pantalla'), findsOneWidget);
+
+      // Tap toggle to activate eyes-closed mode
+      await tester.tap(find.text('Cerrar Ojos / Dejar Móvil 📵'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Zen screen is displayed with sleeping Lev and instruction
+      expect(find.text('Ojos Cerrados'), findsOneWidget);
+      expect(find.textContaining('Deja tu teléfono a un lado y respira'), findsOneWidget);
+      expect(find.text('Ver pantalla'), findsOneWidget);
+
+      // Tap Ver pantalla to return
+      await tester.tap(find.text('Ver pantalla'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Cerrar Ojos / Dejar Móvil 📵'), findsOneWidget);
     });
   });
 }

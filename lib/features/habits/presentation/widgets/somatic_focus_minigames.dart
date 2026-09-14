@@ -89,7 +89,7 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
           ),
           const SizedBox(height: 16),
 
-          // Área interactiva del juego activo (7 minijuegos de concentración)
+          // Área interactiva del anclaje activo
           Expanded(
             child: IndexedStack(
               index: _currentIndex,
@@ -102,6 +102,37 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
                 DandelionMinigame(),
                 StoneBalanceMinigame(),
               ],
+            ),
+          ),
+
+          // Invitación activa a soltar la pantalla y volver a la vida real
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticsHelper.medium();
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: LevTheme.levMatcha,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                label: Text(
+                  'Ya me siento en calma, soltar teléfono 🌿',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
