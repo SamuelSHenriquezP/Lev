@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lev/features/profile/domain/user_profile.dart';
 
 /// Servicio de almacenamiento local offline-first para Lev.
 /// La salud mental es privada: todo permanece en el dispositivo del usuario.
@@ -14,6 +15,7 @@ class LocalStorageService {
   static const String _keyCompletedHabitIds = 'lev_completed_habit_ids';
   static const String _keyFavoriteHabitIds = 'lev_favorite_habit_ids';
   static const String _keyUserName = 'lev_user_name';
+  static const String _keyUserAge = 'lev_user_age';
 
   static SharedPreferences? _prefs;
 
@@ -161,13 +163,36 @@ class LocalStorageService {
     await _prefs?.setString(_keyCbtCards, jsonStr);
   }
 
-  // --- NOMBRE DE USUARIO / APODO ---
+  // --- NOMBRE Y EDAD DEL USUARIO ---
   static String getUserName() {
     return _prefs?.getString(_keyUserName) ?? 'Humano';
   }
 
   static Future<void> setUserName(String name) async {
     await _prefs?.setString(_keyUserName, name);
+  }
+
+  static int getUserAge() {
+    return _prefs?.getInt(_keyUserAge) ?? 25;
+  }
+
+  static Future<void> setUserAge(int age) async {
+    await _prefs?.setInt(_keyUserAge, age);
+  }
+
+  static UserProfile getUserProfile() {
+    final name = getUserName();
+    final age = getUserAge();
+    return UserProfile(name: name, age: age);
+  }
+
+  static Future<void> saveUserProfile(UserProfile profile) async {
+    await setUserName(profile.name);
+    await setUserAge(profile.age);
+  }
+
+  static LevUserStage getUserStage() {
+    return getUserProfile().stage;
   }
 
   // --- ACCESORIOS BOTÁNICOS DE LEV ---

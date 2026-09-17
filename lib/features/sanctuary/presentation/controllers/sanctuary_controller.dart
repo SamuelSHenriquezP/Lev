@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lev/core/audio/sanctuary_audio_service.dart';
 import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
+import 'package:lev/features/profile/domain/user_profile.dart';
 import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 
 class SanctuaryController extends Notifier<SanctuaryState> {
@@ -66,13 +67,14 @@ class SanctuaryController extends Notifier<SanctuaryState> {
 
     final weatherStr = LocalStorageService.getSanctuaryWeather();
     final weather = SanctuaryWeather.fromId(weatherStr);
+    final profile = LocalStorageService.getUserProfile();
 
     return SanctuaryState(
       careDrops: drops,
       experiencePoints: xp,
       bloomingFlowers: flowers,
       emotion: LevEmotion.peaceful,
-      dialogue: _getGreeting(_calculateTimeOfDay()),
+      dialogue: _getGreeting(_calculateTimeOfDay(), profile),
       timeOfDay: _calculateTimeOfDay(),
       unlockedDecors: unlocked,
       activeDecors: active,
@@ -81,19 +83,59 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       unlockedAccessories: unlockedAcc,
       circadianOverride: circadianOverride,
       weather: weather,
+      userProfile: profile,
     );
   }
 
-  static String _getGreeting(SanctuaryTimeOfDay time) {
-    switch (time) {
-      case SanctuaryTimeOfDay.morning:
-        return 'Buenos días. Qué bien empezar el día juntos.';
-      case SanctuaryTimeOfDay.afternoon:
-        return 'Buenas tardes. Este rincón siempre es tuyo.';
-      case SanctuaryTimeOfDay.dusk:
-        return 'El atardecer es mi momento favorito. Gracias por estar aquí.';
-      case SanctuaryTimeOfDay.night:
-        return 'La noche llegó. Respira conmigo y suelta lo que cargaste hoy.';
+  static String _getGreeting(SanctuaryTimeOfDay time, [UserProfile? profile]) {
+    final name = profile?.name ?? LocalStorageService.getUserName();
+    final stage = profile?.stage ?? LocalStorageService.getUserStage();
+
+    switch (stage) {
+      case LevUserStage.child:
+        switch (time) {
+          case SanctuaryTimeOfDay.morning:
+            return '¡Buenos días, $name! 🎈 ¡Mira cómo nado en el agua! ¿Jugamos un ratito?';
+          case SanctuaryTimeOfDay.afternoon:
+            return '¡Hola, $name! 🌟 Qué lindo que viniste. Vamos a inflar la pancita como un globo.';
+          case SanctuaryTimeOfDay.dusk:
+            return 'Ya se va el sol, $name. Hora de guardar los juguetes y descansar las hojitas.';
+          case SanctuaryTimeOfDay.night:
+            return 'Buenas noches, $name. Jesús y yo cuidamos tus sueños con mucho amor. ✨';
+        }
+      case LevUserStage.teen:
+        switch (time) {
+          case SanctuaryTimeOfDay.morning:
+            return 'Buenos días, $name. Hoy no tienes que demostrarle nada a nadie. Un paso a la vez.';
+          case SanctuaryTimeOfDay.afternoon:
+            return 'Hey $name. Si el instituto o las redes saturan, este es tu espacio seguro sin juicios.';
+          case SanctuaryTimeOfDay.dusk:
+            return 'Fin de la jornada, $name. Suelta la pantalla y regálale un respiro real a tu mente.';
+          case SanctuaryTimeOfDay.night:
+            return 'Buenas noches, $name. Mañana es otra oportunidad; suelta el móvil y descansa en paz.';
+        }
+      case LevUserStage.senior:
+        switch (time) {
+          case SanctuaryTimeOfDay.morning:
+            return 'Muy buenos días, $name. Qué bendición comenzar este nuevo día con su grata presencia.';
+          case SanctuaryTimeOfDay.afternoon:
+            return 'Buenas tardes, $name. Tomemos un sosiego pausado en este rincón de paz y verdor.';
+          case SanctuaryTimeOfDay.dusk:
+            return 'La tarde cae en sosiego, $name. Demos gracias por cada bendición del camino.';
+          case SanctuaryTimeOfDay.night:
+            return 'Buenas noches, $name. Que el Señor guarde su reposo en completa serenidad y paz.';
+        }
+      case LevUserStage.adult:
+        switch (time) {
+          case SanctuaryTimeOfDay.morning:
+            return 'Buenos días, $name. Que la paz de Dios guíe tu día. Empecemos con serenidad.';
+          case SanctuaryTimeOfDay.afternoon:
+            return 'Buenas tardes, $name. Sé que el día pesa; regálate 60 segundos para existir.';
+          case SanctuaryTimeOfDay.dusk:
+            return 'El atardecer en calma, $name. Suelta las exigencias del trabajo y vuelve a tu centro.';
+          case SanctuaryTimeOfDay.night:
+            return 'La noche llegó, $name. «En paz me acostaré... porque solo tú, Señor, me haces vivir confiado».';
+        }
     }
   }
 
@@ -356,31 +398,76 @@ class SanctuaryController extends Notifier<SanctuaryState> {
   }
 
   /// Activar respiración guiada
+  /// Actualizar perfil de usuario (nombre y edad) y adaptar comportamiento de Lev
+  void updateUserProfile(UserProfile profile) {
+    state = state.copyWith(
+      userProfile: profile,
+      dialogue: _getProfileUpdatedDialogue(profile),
+    );
+  }
+
+  static String _getProfileUpdatedDialogue(UserProfile profile) {
+    switch (profile.stage) {
+      case LevUserStage.child:
+        return '¡Qué lindo nombre tienes, ${profile.name}! 🎈 ¡Seremos los mejores amigos del estanque!';
+      case LevUserStage.teen:
+        return 'Gusto en conocerte, ${profile.name}. Aquí siempre tendrás un espacio libre de juicios.';
+      case LevUserStage.senior:
+        return 'Es un gran honor recibirle, ${profile.name}. Este santuario está dedicado a su sosiego.';
+      case LevUserStage.adult:
+        return 'Gusto en conocerte, ${profile.name}. Adaptaré mis pausas para ayudarte a soltar el estrés.';
+    }
+  }
+
+  /// Activar respiración guiada personalizada por edad
   Future<void> startBreathing() async {
     await HapticsHelper.medium();
+    final name = state.userProfile.name;
+    final stage = state.userProfile.stage;
+    String breatheText;
+    switch (stage) {
+      case LevUserStage.child:
+        breatheText = '¡Vamos a inflar la pancita como un globo y soplar velitas, $name! 🎈';
+        break;
+      case LevUserStage.teen:
+        breatheText = 'Inhala hondo, $name... exhala largo y suelta la sobrecarga mental.';
+        break;
+      case LevUserStage.senior:
+        breatheText = 'Respiremos suave y acompasado, $name. Sienta cómo entra la paz divina.';
+        break;
+      case LevUserStage.adult:
+        breatheText = 'Inhala conmigo cuando me expanda, $name... exhala cuando me contraiga.';
+        break;
+    }
     state = state.copyWith(
       emotion: LevEmotion.breathing,
-      dialogue: 'Inhala conmigo cuando me expanda... exhala cuando me contraiga.',
+      dialogue: breatheText,
       tapCount: state.tapCount + 1,
     );
   }
 
-  /// Abrazo protector según la anatomía de cada etapa
+  /// Abrazo protector según la anatomía de cada etapa y edad
   Future<void> hugLev() async {
     await HapticsHelper.medium();
-    final String hugText;
-    switch (state.growthStage) {
-      case LevGrowthStage.seed:
-        hugText = 'Aquí estoy contigo, cobijadito tibio para darte calma.';
+    final name = state.userProfile.name;
+    final stage = state.userProfile.stage;
+    String hugText;
+    switch (stage) {
+      case LevUserStage.child:
+        hugText = '¡Abrazo gigante de hojitas tibias para ti, $name! Estás súper a salvo. 🤗';
         break;
-      case LevGrowthStage.sprout:
-        hugText = 'Mis primeros cotiledones te dan un tierno micro-abrazo.';
+      case LevUserStage.teen:
+        hugText = 'Cero juicios ni exigencias, $name. Te cubro con mis hojas para que descanses.';
         break;
-      case LevGrowthStage.forestSpirit:
-        hugText = 'Mis tres pares de alas celestiales te cobijan en paz infinita.';
+      case LevUserStage.senior:
+        hugText = 'Un abrazo de sosiego y paz profunda, $name. La gracia del Señor nos cobija.';
         break;
-      default:
-        hugText = 'Aquí estoy contigo. Mis hojitas te cubren y te cuidan.';
+      case LevUserStage.adult:
+        if (state.growthStage == LevGrowthStage.forestSpirit) {
+          hugText = 'Mis alas celestiales te cobijan en paz infinita, $name.';
+        } else {
+          hugText = 'Aquí estoy contigo, $name. Mis hojitas te cubren y te cuidan en calma.';
+        }
         break;
     }
     state = state.copyWith(
@@ -390,27 +477,63 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     );
   }
 
-  /// Modo siesta
+  /// Modo siesta adaptado
   Future<void> putToSleep() async {
     await HapticsHelper.light();
+    final name = state.userProfile.name;
+    final stage = state.userProfile.stage;
+    String sleepText;
+    switch (stage) {
+      case LevUserStage.child:
+        sleepText = 'A dormir calientitos, $name. Dios y yo cuidamos tus sueños. Zzz... ✨';
+        break;
+      case LevUserStage.teen:
+        sleepText = 'Zzz... desconéctate de las pantallas, $name. Tu mente merece un descanso real.';
+        break;
+      case LevUserStage.senior:
+        sleepText = 'Zzz... «En paz me acostaré y asimismo dormiré», $name. Descanse en sosiego.';
+        break;
+      case LevUserStage.adult:
+        sleepText = 'Zzz... momento de soltar la mente y aflojar el cuerpo, $name.';
+        break;
+    }
     state = state.copyWith(
       emotion: LevEmotion.sleeping,
-      dialogue: 'Zzz... momento de soltar la mente y aflojar el cuerpo.',
+      dialogue: sleepText,
       tapCount: state.tapCount + 1,
     );
   }
 
-  /// Modo de oración y meditación bíblica cristiana con Lev
+  /// Modo de oración y meditación bíblica cristiana con Lev adaptado
   Future<void> prayWithLev() async {
-    await HapticsHelper.light();
+    final name = state.userProfile.name;
+    final stage = state.userProfile.stage;
     final rand = Random();
     final verse = _biblicalVersesAndPrayers[rand.nextInt(_biblicalVersesAndPrayers.length)];
+
+    String prayerDialogue;
+    switch (stage) {
+      case LevUserStage.child:
+        prayerDialogue = 'Oremos juntos, $name: "Diosito me ama, me cuida y quita todo mi temor" 🕊️\n\n$verse';
+        break;
+      case LevUserStage.teen:
+        prayerDialogue = '$name, Dios conoce tus batallas secretas y te acepta tal como eres:\n\n$verse';
+        break;
+      case LevUserStage.senior:
+        prayerDialogue = 'Oremos con reposada fe, $name:\n\n$verse';
+        break;
+      case LevUserStage.adult:
+        prayerDialogue = 'Oremos en entrega, $name:\n\n$verse';
+        break;
+    }
+
     state = state.copyWith(
       emotion: LevEmotion.praying,
-      dialogue: verse,
+      dialogue: prayerDialogue,
       tapCount: state.tapCount + 1,
       isPetting: false,
     );
+    await HapticsHelper.light();
   }
 
   /// Comparte un versículo bíblico reconfortante con su cita
@@ -423,12 +546,30 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     );
   }
 
-  /// Salto de alegría con voz exclusiva por etapa
+  /// Salto de alegría con voz exclusiva por etapa y edad
   Future<void> triggerJoyJump() async {
     await HapticsHelper.selection();
+    final name = state.userProfile.name;
+    final stage = state.userProfile.stage;
+    String joyText;
+    switch (stage) {
+      case LevUserStage.child:
+        joyText = '¡Súper salto de alegría, $name! ¡Wiiii! 🚀✨';
+        break;
+      case LevUserStage.teen:
+        joyText = '¡Eso es, $name! Rompiste la inercia, ¡celebremos! ⚡🌱';
+        break;
+      case LevUserStage.senior:
+        joyText = '¡Qué bendición de constancia y alegría en el corazón, $name! 🌸';
+        break;
+      case LevUserStage.adult:
+        final praise = (name.isEmpty || name == 'Humano') ? '' : ' ¡Bien hecho, $name!';
+        joyText = '${getStageJoyDialogue(state.growthStage)}$praise';
+        break;
+    }
     state = state.copyWith(
       emotion: LevEmotion.joyJump,
-      dialogue: getStageJoyDialogue(state.growthStage),
+      dialogue: joyText,
       tapCount: state.tapCount + 1,
     );
     Future.delayed(const Duration(milliseconds: 2400), () {

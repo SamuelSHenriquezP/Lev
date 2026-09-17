@@ -516,3 +516,4 @@ class _PrayerCandlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PrayerCandlePainter oldDelegate) => true;
 }
+

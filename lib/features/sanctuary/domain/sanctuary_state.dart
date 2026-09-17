@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lev/features/profile/domain/user_profile.dart';
 
 enum LevEmotion {
   peaceful,
@@ -369,6 +370,7 @@ class SanctuaryState {
   final SanctuaryWeather weather;
   final bool isWatering;
   final LevGrowthStage? pendingEvolutionStage;
+  final UserProfile userProfile;
 
   SanctuaryState({
     required this.careDrops,
@@ -389,10 +391,12 @@ class SanctuaryState {
     this.weather = SanctuaryWeather.calm,
     this.isWatering = false,
     this.pendingEvolutionStage,
+    UserProfile? userProfile,
   })  : unlockedDecors = unlockedDecors ?? const {},
         activeDecors = activeDecors ?? const {},
         customDecorPositions = customDecorPositions ?? const {},
-        unlockedAccessories = unlockedAccessories ?? const {LevAccessory.none};
+        unlockedAccessories = unlockedAccessories ?? const {LevAccessory.none},
+        userProfile = userProfile ?? UserProfile.defaultProfile();
 
   /// Obtiene la posición normalizada (0.0-1.0) de un objeto decorativo (personalizada o por defecto).
   Offset getDecorPosition(SanctuaryDecorItem item) {
@@ -542,6 +546,7 @@ class SanctuaryState {
     bool? isWatering,
     LevGrowthStage? pendingEvolutionStage,
     bool clearPendingEvolution = false,
+    UserProfile? userProfile,
   }) {
     return SanctuaryState(
       careDrops: careDrops ?? this.careDrops,
@@ -562,6 +567,7 @@ class SanctuaryState {
       weather: weather ?? this.weather,
       isWatering: isWatering ?? this.isWatering,
       pendingEvolutionStage: clearPendingEvolution ? null : (pendingEvolutionStage ?? this.pendingEvolutionStage),
+      userProfile: userProfile ?? this.userProfile,
     );
   }
 }

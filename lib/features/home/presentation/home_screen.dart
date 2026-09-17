@@ -18,6 +18,8 @@ import 'package:lev/features/crisis/presentation/crisis_sos_modal.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_weather_sheet.dart';
 import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_growth_dialog.dart';
 import 'package:lev/features/settings/presentation/widgets/privacy_offline_dialog.dart';
+import 'package:lev/features/profile/domain/user_profile.dart';
+import 'package:lev/features/profile/presentation/user_profile_sheet.dart';
 
 /// Pantalla Principal del Santuario:
 /// Lev como protagonista absoluto en el centro con transiciones somáticas orgánicas
@@ -324,7 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       onTap: () => showSanctuaryGrowthDialog(context, ref, sanctuary, onNavigateToTab: widget.onNavigateToTab),
                       borderRadius: LevTheme.pillRadius,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
                               ? LevTheme.levDarkSurface
@@ -342,28 +344,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           children: [
                             Icon(
                               sanctuary.stageMaterialIcon,
-                              size: 16,
+                              size: 15,
                               color: Theme.of(context).brightness == Brightness.dark
                                   ? LevTheme.levMatchaNight
                                   : LevTheme.levMatchaDark,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Flexible(
                               child: Text(
                                 sanctuary.stageName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.quicksand(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: 1),
                             Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              size: 15,
+                              size: 14,
                               color: LevTheme.levTextMuted,
                             ),
                           ],
@@ -371,7 +373,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
 
                   // Botones de acción derecha
                   Row(
@@ -389,7 +391,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         },
                         borderRadius: LevTheme.pillRadius,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: LevTheme.pillRadius,
@@ -401,14 +403,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             children: [
                               const Icon(
                                 Icons.water_drop_rounded,
-                                size: 14,
+                                size: 13,
                                 color: Color(0xFF64B5F6),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Text(
                                 '${sanctuary.careDrops}',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: LevTheme.levTextDark,
                                 ),
@@ -417,7 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 3),
 
                       // Audio ambiental
                       _HeaderIconBtn(
@@ -428,7 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           builder: (context) => const SanctuaryAudioDialog(),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 3),
 
                       // Clima dinámico del Santuario
                       _HeaderIconBtn(
@@ -436,7 +438,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         tooltip: 'Clima: ${sanctuary.weather.label}',
                         onTap: () => showSanctuaryWeatherSheet(context, controller, sanctuary.weather),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 3),
+
+                      // Perfil de Usuario (Nombre y Edad)
+                      _HeaderIconBtn(
+                        icon: Icons.person_outline_rounded,
+                        tooltip: 'Perfil: ${sanctuary.userProfile.name} (${sanctuary.userProfile.stage.shortLabel})',
+                        onTap: () => UserProfileSheet.show(context),
+                      ),
+                      const SizedBox(width: 3),
 
                       // Botón Privacidad y Datos Offline
                       _HeaderIconBtn(
@@ -445,7 +455,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         tooltip: 'Privacidad y datos',
                         onTap: () => showPrivacyOfflineDialog(context),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 3),
 
                       // Botón SOS / Crisis
                       _HeaderIconBtn(
