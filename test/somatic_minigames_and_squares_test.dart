@@ -50,6 +50,7 @@ void main() {
       expect(find.text('Sobrecarga'), findsOneWidget);
       expect(find.text('Tristeza'), findsOneWidget);
       expect(find.text('Insomnio'), findsOneWidget);
+      expect(find.text('Oración & Fe'), findsOneWidget);
       expect(find.text('Favoritos'), findsOneWidget);
     });
 
@@ -120,6 +121,14 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(StoneBalanceMinigame), findsOneWidget);
+
+      // Switch tab to Vela de Fe
+      await tester.ensureVisible(find.text('Vela de Fe'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Vela de Fe'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(PrayerCandleMinigame), findsOneWidget);
     });
 
     testWidgets('Tapping an emotion square navigates to EmotionDetailScreen with reactive Lev', (tester) async {
@@ -222,6 +231,23 @@ void main() {
       // Reset tower
       await tester.tap(find.text('Reiniciar'));
       await tester.pump(const Duration(milliseconds: 100));
+
+      // 5. PrayerCandleMinigame
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: PrayerCandleMinigame()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Toca para elevar una plegaria'), findsOneWidget);
+      expect(find.text('Promesa'), findsOneWidget);
+      // Tap to spawn prayer sparks
+      await tester.tapAt(const Offset(215, 350));
+      await tester.pump(const Duration(milliseconds: 100));
+      // Tap Promesa button to cycle verse
+      await tester.tap(find.text('Promesa'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(PrayerCandleMinigame), findsOneWidget);
     });
 
     testWidgets('SomaticMinigamesContainer provides prominent exit button to release phone', (tester) async {

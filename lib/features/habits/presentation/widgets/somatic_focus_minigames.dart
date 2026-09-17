@@ -10,6 +10,7 @@ export 'minigames/water_ripple_minigame.dart';
 export 'minigames/tibetan_bowl_minigame.dart';
 export 'minigames/dandelion_minigame.dart';
 export 'minigames/stone_balance_minigame.dart';
+export 'minigames/prayer_candle_minigame.dart';
 
 import 'minigames/bubble_pop_minigame.dart';
 import 'minigames/zen_sand_minigame.dart';
@@ -18,6 +19,7 @@ import 'minigames/water_ripple_minigame.dart';
 import 'minigames/tibetan_bowl_minigame.dart';
 import 'minigames/dandelion_minigame.dart';
 import 'minigames/stone_balance_minigame.dart';
+import 'minigames/prayer_candle_minigame.dart';
 
 /// Modal o pantalla para abrir cualquiera de los minijuegos somáticos de concentración.
 class SomaticMinigameModal {
@@ -99,6 +101,8 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
                 _buildGameTab(5, 'Diente León', Icons.nature_people_rounded),
                 const SizedBox(width: 8),
                 _buildGameTab(6, 'Piedras Zen', Icons.filter_hdr_rounded),
+                const SizedBox(width: 8),
+                _buildGameTab(7, 'Vela de Fe', Icons.lightbulb_rounded),
               ],
             ),
           ),
@@ -116,6 +120,7 @@ class _SomaticMinigamesContainerState extends State<SomaticMinigamesContainer> {
                 TibetanBowlMinigame(),
                 DandelionMinigame(),
                 StoneBalanceMinigame(),
+                PrayerCandleMinigame(),
               ],
             ),
           ),

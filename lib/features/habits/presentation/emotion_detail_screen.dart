@@ -59,6 +59,9 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
   }
 
   LevEmotion _getEmotionForCategory(String category) {
+    if (category.contains('Oración') || category.contains('Fe') || category.contains('Bíblica')) {
+      return LevEmotion.praying;
+    }
     if (category.contains('Ansiedad')) return LevEmotion.breathing;
     if (category.contains('Tristeza')) return LevEmotion.sheltered;
     if (category.contains('Insomnio')) return LevEmotion.sleeping;
@@ -69,6 +72,9 @@ class _EmotionDetailScreenState extends State<EmotionDetailScreen>
   }
 
   String _getNonObviousMessage(String category) {
+    if (category.contains('Oración') || category.contains('Fe') || category.contains('Bíblica')) {
+      return 'No tienes que sostener el peso del mundo en soledad. En este minuto sagrado, descansa en la fidelidad de Dios y entrega tu carga.';
+    }
     if (category.contains('Doomscrolling')) {
       return 'El mundo digital está diseñado para que nunca sientas que viste suficiente. No tienes la culpa. Regálate un minuto de silencio real.';
     }
