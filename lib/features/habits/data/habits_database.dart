@@ -47,6 +47,12 @@ class HabitsDatabase {
       emoji: '🧱',
       description: 'Micro-paso motor de fricción cero para romper la inercia sin sobrecarga ejecutiva.',
     ),
+    HabitCategoryInfo(
+      name: 'Oración / Meditación Bíblica / Fe',
+      shortName: 'Oración y Fe',
+      emoji: '🕊️',
+      description: 'Entrega de cargas al Creador, meditación en versículos de paz y renovación de la confianza.',
+    ),
   ];
 
   static final List<MicroHabit> allHabits = [
@@ -894,6 +900,100 @@ class HabitsDatabase {
       tags: ['herramienta', 'teclado', 'lápiz', 'evitación', 'arranque'],
       interactionType: HabitInteractionType.holdPressure,
     ),
+
+    // ----------------------------------------------------
+    // 8. ORACIÓN / MEDITACIÓN BÍBLICA / FE Y CONFIANZA
+    // ----------------------------------------------------
+    const MicroHabit(
+      id: 'pray_01',
+      title: 'Oración de Entrega y Calma (Filipenses 4:6-7)',
+      levIntro: 'Cierra tus ojos. Pongamos juntos todo lo que te preocupa en las manos de Dios.',
+      steps: [
+        'Cierra los ojos suavemente y respira hondo sintiendo el latido de tu pecho.',
+        'Nombra en silencio aquello que te inquieta y dile a Dios: "Te lo entrego hoy, Señor".',
+        'Medita en la promesa: "Por nada estéis afanosos... y la paz de Dios guardará vuestros corazones". (Filipenses 4:6-7)',
+      ],
+      psychologicalBasis: 'Regulación emocional espiritual mediante desahogo y transferencia de control al Creador.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '🕊️',
+      tags: ['oración', 'paz', 'filipenses', 'entrega', 'ansiedad', 'fe', 'dios'],
+      interactionType: HabitInteractionType.timer,
+    ),
+    const MicroHabit(
+      id: 'pray_02',
+      title: 'Meditación en el Buen Pastor (Salmo 23:1-3)',
+      levIntro: 'Inhala la certeza de que nada te faltará. El Señor cuida de cada detalle de tu vida.',
+      steps: [
+        'Inhala despacio repitiendo en tu mente: "El Señor es mi pastor, nada me faltará". (Salmos 23:1)',
+        'Exhala despacio soltando la necesidad de apresurarte: "En lugares de delicados pastos me hará descansar". (Salmos 23:2)',
+        'Permite que Su presencia serene tu mente: "Confortará mi alma; me guiará por sendas de justicia". (Salmos 23:3)',
+      ],
+      psychologicalBasis: 'Anclaje en apego seguro espiritual y reducción de la rumiación existencial mediante Salmos.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '🌿',
+      tags: ['salmo23', 'pastor', 'descanso', 'serenidad', 'fe', 'confianza'],
+      interactionType: HabitInteractionType.breathGuided,
+    ),
+    const MicroHabit(
+      id: 'pray_03',
+      title: 'Descanso en la Gracia (Mateo 11:28)',
+      levIntro: 'No tienes que sostenerlo todo tú solo. Jesús te invita a soltar la pesadez.',
+      steps: [
+        'Escucha en tu interior la invitación amorosa: "Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar". (Mateo 11:28)',
+        'Baja conscientemente los hombros y afloja la mandíbula en señal de reverencia y entrega.',
+        'Respira profundo recibiendo descanso para tu alma, sabiendo que Su gracia es suficiente.',
+      ],
+      psychologicalBasis: 'Alivio del agotamiento por hiperresponsabilidad mediante compasión divina y descanso neurosomático.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '🤲',
+      tags: ['gracia', 'mateo11', 'descanso', 'agotamiento', 'cansancio', 'oración'],
+      interactionType: HabitInteractionType.timer,
+    ),
+    const MicroHabit(
+      id: 'pray_04',
+      title: 'Fortaleza y Valentía (Josué 1:9 / Isaías 41:10)',
+      levIntro: 'Si sientes miedo o incertidumbre, aférrate a esta promesa de Su fidelidad.',
+      steps: [
+        'Repite con convicción: "Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque el Señor tu Dios estará contigo". (Josué 1:9)',
+        'Inhala fortaleza de Dios; exhala la sensación de desamparo.',
+        'Siente la promesa: "No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo; siempre te ayudaré". (Isaías 41:10)',
+      ],
+      psychologicalBasis: 'Reestructuración cognitiva basada en fe activa contra la indefensión aprendida.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '🛡️',
+      tags: ['josué', 'valentía', 'fuerza', 'fe', 'ánimo', 'confianza', 'dios'],
+      interactionType: HabitInteractionType.postureRelease,
+    ),
+    const MicroHabit(
+      id: 'pray_05',
+      title: 'Plegaria de Gratitud y Alabanza (Salmo 103:1-4)',
+      levIntro: 'Agradecer abre los ojos del corazón. Demos gracias por las bendiciones de hoy.',
+      steps: [
+        'Di en silencio: "Bendice, alma mía, al Señor, y no olvides ninguno de sus beneficios". (Salmos 103:2)',
+        'Trae a tu memoria 3 bendiciones concretas de hoy (el aire que respiras, un abrazo, una provisión).',
+        'Sonríe suavemente agradeciendo a Dios por Su amor incondicional y Su fidelidad.',
+      ],
+      psychologicalBasis: 'Inducción de afecto positivo y liberación de dopamina/serotonina mediante gratitud teocéntrica.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '✨',
+      tags: ['gratitud', 'alabanza', 'salmo103', 'gozo', 'bendición', 'agradecer'],
+      interactionType: HabitInteractionType.timer,
+    ),
+    const MicroHabit(
+      id: 'pray_06',
+      title: 'Paz Nocturna de Entrega (Salmo 4:8)',
+      levIntro: 'Apaga el ruido del día. Dios cuida de ti mientras duermes.',
+      steps: [
+        'Deja el teléfono a un lado y cierra los ojos.',
+        'Pronuncia en tu mente: "En paz me acostaré, y asimismo dormiré; porque solo tú, Señor, me haces vivir confiado". (Salmos 4:8)',
+        'Visualiza que el Señor guarda tu descanso y Su paz cubre tu hogar esta noche.',
+      ],
+      psychologicalBasis: 'Inducción del sueño mediante desactivación del sistema simpático anclado en confianza espiritual.',
+      category: 'Oración / Meditación Bíblica / Fe',
+      iconEmoji: '🌙',
+      tags: ['dormir', 'noche', 'salmo4', 'paz', 'insomnio', 'oración'],
+      interactionType: HabitInteractionType.audioGrounding,
+    ),
   ];
 
   static MicroHabit? getById(String id) {
@@ -929,6 +1029,9 @@ class HabitsDatabase {
 
   static MicroHabit getRecommendedForMood(String moodTag) {
     final m = moodTag.toLowerCase();
+    if (m.contains('orar') || m.contains('oracion') || m.contains('oración') || m.contains('dios') || m.contains('fe') || m.contains('versiculo') || m.contains('versículo') || m.contains('biblia')) {
+      return getById('pray_01') ?? allHabits.first;
+    }
     if (m.contains('tiktok') || m.contains('scroll') || m.contains('redes') || m.contains('pantalla')) {
       return getById('doom_01') ?? allHabits.first;
     }

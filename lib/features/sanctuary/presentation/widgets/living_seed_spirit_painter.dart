@@ -34,6 +34,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
   final double? anxiousProgress;    // Ansiedad somática: microtemblor y respiración superficial
   final double? tiredProgress;      // Cansancio: parpadeo pesado y cabeceo
   final double? celebrateProgress;  // Celebración: giro festivo y lluvia botánica
+  final double? prayProgress;       // Oración y fe: hojas en plegaria, ojos serenos y resplandor celestial
   final LevAccessory activeAccessory; // Accesorio botánico equipado
   final Offset? touchNormalizedOffset; // (-1.0 a 1.0 relativo al centro de Lev)
   final bool isFingerActive;
@@ -61,6 +62,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     this.anxiousProgress,
     this.tiredProgress,
     this.celebrateProgress,
+    this.prayProgress,
   });
 
   @override
@@ -85,6 +87,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final effAnxious = anxiousProgress ?? (emotion == LevEmotion.anxious ? 1.0 : 0.0);
     final effTired = tiredProgress ?? (emotion == LevEmotion.tired ? 1.0 : 0.0);
     final effCelebrate = celebrateProgress ?? ((emotion == LevEmotion.celebrating || isJoyJumping) ? 1.0 : 0.0);
+    final effPray = prayProgress ?? (emotion == LevEmotion.praying ? 1.0 : 0.0);
 
     // --- 1. CINEMÁTICA Y BIOMECÁNICA INDEPENDIENTE POR ETAPA ---
     final double stageBaseFloatY;
@@ -331,6 +334,10 @@ class LivingSeedSpiritPainter extends CustomPainter {
         case LevTaskAction.warmTeaHold:
           taskFloatY = sin(cycle) * 4.0;
           break;
+        case LevTaskAction.prayer:
+          taskFloatY = sin(cycle * 1.5) * 2.5;
+          taskSway = sin(cycle * 1.5) * 0.015;
+          break;
       }
     }
 
@@ -341,10 +348,13 @@ class LivingSeedSpiritPainter extends CustomPainter {
     final effectiveCelebrateFloat = isJoyJumping ? (celebrateFloat * 0.25) : celebrateFloat;
     final effectiveBaseFloat = isJoyJumping ? (baseFloatY * 0.2) : baseFloatY;
 
+    final prayFloatY = sin(t * 1.6 * pi) * 2.5 * effPray;
+    final prayBow = sin(t * 1.6 * pi) * 0.015 * effPray;
+
     final finalFloatY = effectiveBaseFloat + sleepFloat + happyFloat + curiousFloat +
-        sadFloat + tiredFloat + effectiveCelebrateFloat + jumpFloatY + taskFloatY + taskShakeY + touchFloatY;
+        sadFloat + tiredFloat + effectiveCelebrateFloat + jumpFloatY + taskFloatY + taskShakeY + touchFloatY + prayFloatY;
     final finalSway = baseSway + sleepSway + happySway + curiousSway + sadSway +
-        celebrateSway + jumpSway + taskSway + touchSway;
+        celebrateSway + jumpSway + taskSway + touchSway + prayBow;
     final finalScaleY = 1.0 + baseBreatheY + deepBreatheY + jumpScaleY + taskScaleY + touchStretchY - pettingSquash + celebrateScaleY;
     final finalScaleX = 1.0 + baseBreatheX + deepBreatheX + jumpScaleX + taskScaleX + touchStretchX + pettingSquash + celebrateScaleX;
 
@@ -365,7 +375,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
 
     // 1. Resplandor áurico ambiental adaptativo
-    _drawAmbientAura(canvas, t, effSleep, effBreath, effAnxious, effCelebrate);
+    _drawAmbientAura(canvas, t, effSleep, effBreath, effAnxious, effCelebrate, effPray: effPray);
 
     // 2. Alas suculentas / Follaje según la etapa de crecimiento reactivo
     _drawGrowthFoliage(
@@ -376,6 +386,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effHappy,
       effSad,
       effCurious,
+      effPray: effPray,
       effectiveIsPetting: effectiveIsPetting,
       touchX: touchX,
       touchY: touchY,
@@ -401,6 +412,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
       effCurious,
       effTired,
       effAnxious,
+      effPray: effPray,
       touchGazeOffset: Offset(touchX * 9.5, touchY * 7.0),
       isTouchingLev: isTouchingLev,
       isFingerActive: isFingerActive,
@@ -421,6 +433,9 @@ class LivingSeedSpiritPainter extends CustomPainter {
     // 8. Efectos y partículas emocionales
     if (effSleep > 0.05) {
       _drawSleepingZzz(canvas, t, effSleep);
+    }
+    if (effPray > 0.05) {
+      _drawPrayerGraceParticles(canvas, t, effPray);
     }
     if (effHappy > 0.05 || isPetting) {
       _drawMagicSpores(canvas, t, max(effHappy, isPetting ? 1.0 : 0.0));
@@ -480,8 +495,9 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effSleep,
     double effBreath,
     double effAnxious,
-    double effCelebrate,
-  ) {
+    double effCelebrate, {
+    double effPray = 0.0,
+  }) {
     var baseAlpha = 0.32;
     var baseRadius = 170.0;
     Color auraColor = const Color(0xFFFFE899);
@@ -519,6 +535,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
         break;
     }
 
+    if (effPray > 0.05) {
+      auraColor = const Color(0xFFFFD54F);
+      baseAlpha = (baseAlpha + 0.24 * effPray).clamp(0.20, 0.75);
+      baseRadius += 35.0 * effPray;
+    }
+
     final sleepAlphaMod = lerpDouble(0.0, -0.16, effSleep)!;
     final breathingPulse = (sin(t * 2 * pi) + 1.0) * 0.5 * 0.28 * effBreath;
     final celebratePulse = (sin(t * 4 * pi) + 1.0) * 0.5 * 0.15 * effCelebrate;
@@ -543,6 +565,13 @@ class LivingSeedSpiritPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 65);
       canvas.drawCircle(const Offset(0, -26), finalRadius * 0.75, divineGlow);
     }
+
+    if (effPray > 0.05) {
+      final prayerGlow = Paint()
+        ..color = const Color(0xFFFFE082).withValues(alpha: (0.26 + sin(t * 2 * pi) * 0.12) * effPray)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 55);
+      canvas.drawCircle(const Offset(0, -20), finalRadius * 0.85, prayerGlow);
+    }
   }
 
   void _drawGrowthFoliage(
@@ -553,6 +582,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effHappy,
     double effSad,
     double effCurious, {
+    double effPray = 0.0,
     required bool effectiveIsPetting,
     required double touchX,
     required double touchY,
@@ -579,6 +609,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
       rightAngle = lerpDouble(rightAngle, 0.22, effSleep)!;
     }
 
+    if (effPray > 0.05) {
+      // Manos/hojas unidas en reverente oración hacia el corazón
+      leftAngle = lerpDouble(leftAngle, -0.74, effPray)!;
+      rightAngle = lerpDouble(rightAngle, 0.74, effPray)!;
+    }
+
     if (taskAction != null) {
       switch (taskAction!) {
         case LevTaskAction.chestStretch:
@@ -596,6 +632,10 @@ class LivingSeedSpiritPainter extends CustomPainter {
         case LevTaskAction.warmTeaHold:
           leftAngle = -0.58;
           rightAngle = 0.58;
+          break;
+        case LevTaskAction.prayer:
+          leftAngle = -0.74 + sin(cycle * 0.8) * 0.03;
+          rightAngle = 0.74 - sin(cycle * 0.8) * 0.03;
           break;
         default:
           break;
@@ -1039,6 +1079,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double effCurious,
     double effTired,
     double effAnxious, {
+    double effPray = 0.0,
     Offset touchGazeOffset = Offset.zero,
     bool isTouchingLev = false,
     bool isFingerActive = false,
@@ -1055,7 +1096,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
         ..strokeWidth = 3.2
         ..strokeCap = StrokeCap.round;
 
-      if (isFingerActive && !effectiveIsPetting && effSleep < 0.3) {
+      if (isFingerActive && !effectiveIsPetting && effSleep < 0.3 && effPray < 0.3) {
         // Bebé semilla abre ojos curiosos tiernos con pupilas y reflejos siguiendo el dedo
         final babyPupil = Paint()..color = const Color(0xFF0E382B);
         final babyGlint = Paint()..color = Colors.white;
@@ -1064,7 +1105,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
         canvas.drawCircle(Offset(babyEyeDist + touchGazeOffset.dx * 0.4, babyEyeY), 3.4, babyPupil);
         canvas.drawCircle(Offset(babyEyeDist - 1.0 + touchGazeOffset.dx * 0.4, babyEyeY - 1.0), 1.2, babyGlint);
       } else {
-        // Ojos durmientes curvos tiernos descansando en paz zen
+        // Ojos durmientes curvos tiernos descansando en paz zen o en oración
         final leftEyePath = Path()
           ..moveTo(-babyEyeDist - 5, babyEyeY)
           ..quadraticBezierTo(-babyEyeDist, babyEyeY + 3.5, -babyEyeDist + 5, babyEyeY);
@@ -1107,12 +1148,12 @@ class LivingSeedSpiritPainter extends CustomPainter {
     if (isBlinking) {
       canvas.drawLine(Offset(leftCenter.dx - 5, eyeY), Offset(leftCenter.dx + 5, eyeY), featurePaint);
       canvas.drawLine(Offset(rightCenter.dx - 5, eyeY), Offset(rightCenter.dx + 5, eyeY), featurePaint);
-    } else if (isFingerActive && !effectiveIsPetting && effSleep < 0.3) {
+    } else if (isFingerActive && !effectiveIsPetting && effSleep < 0.3 && effPray < 0.3) {
       // Dedo activo sobre la pantalla: Lev abre sus ojos curiosos siguiendo la mirada
       _drawCuriousEye(canvas, leftCenter, 13.0, featurePaint);
       _drawCuriousEye(canvas, rightCenter, 13.0, featurePaint);
     } else {
-      // Dedo libre o reposo zen: Lev cierra los ojos serenamente
+      // Dedo libre, reposo zen u oración: Lev cierra los ojos serenamente
       _drawDynamicEye(canvas, leftCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired, effectiveIsPetting);
       _drawDynamicEye(canvas, rightCenter, 14.0, featurePaint, effHappy, effSleep, effSad, effTired, effectiveIsPetting);
     }
@@ -1300,6 +1341,50 @@ class LivingSeedSpiritPainter extends CustomPainter {
     }
   }
 
+  void _drawPrayerGraceParticles(Canvas canvas, double t, double effPray) {
+    if (effPray <= 0.05) return;
+
+    // 1. Rayos celestiales de luz cálida que emanan con reverencia
+    final rayPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    const rayCount = 8;
+    for (int i = 0; i < rayCount; i++) {
+      final angle = (i * 2 * pi / rayCount) + sin(t * pi) * 0.08;
+      final rayLength = 35.0 + sin(t * 3 * pi + i) * 8.0;
+      final rayAlpha = (0.28 + 0.18 * sin(t * 2 * pi + i)).clamp(0.0, 1.0) * effPray;
+      rayPaint
+        ..strokeWidth = 2.0
+        ..color = const Color(0xFFFFE082).withValues(alpha: rayAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      final start = Offset(cos(angle) * 30, -10 + sin(angle) * 30);
+      final end = Offset(cos(angle) * (30 + rayLength), -10 + sin(angle) * (30 + rayLength));
+      canvas.drawLine(start, end, rayPaint);
+    }
+
+    // 2. Partículas doradas de oración que ascienden serenamente
+    final particlePaint = Paint()
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    for (int p = 0; p < 7; p++) {
+      final phase = (t * 0.8 + p * 0.14) % 1.0;
+      final px = sin(phase * 2 * pi + p * 2.0) * (26.0 + p * 4.0);
+      final py = 20.0 - phase * 90.0;
+      final pAlpha = sin(phase * pi) * 0.75 * effPray;
+      particlePaint.color = const Color(0xFFFFF9C4).withValues(alpha: pAlpha);
+      canvas.drawCircle(Offset(px, py), 2.2 + sin(phase * pi) * 1.5, particlePaint);
+    }
+
+    // 3. Destello de paz en el centro del pecho
+    final crossGlow = Paint()
+      ..color = const Color(0xFFFFD54F).withValues(alpha: (0.50 + sin(t * 3 * pi) * 0.20) * effPray)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    canvas.drawCircle(const Offset(0, 18), 12, crossGlow);
+    final coreGlint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85 * effPray);
+    canvas.drawCircle(const Offset(0, 18), 2.4, coreGlint);
+  }
+
   void _drawTaskEffects(Canvas canvas, double t) {
     LevTaskEffectsPainter.draw(
       canvas,
@@ -1333,6 +1418,7 @@ class LivingSeedSpiritPainter extends CustomPainter {
         oldDelegate.anxiousProgress != anxiousProgress ||
         oldDelegate.tiredProgress != tiredProgress ||
         oldDelegate.celebrateProgress != celebrateProgress ||
+        oldDelegate.prayProgress != prayProgress ||
         oldDelegate.touchNormalizedOffset != touchNormalizedOffset ||
         oldDelegate.isFingerActive != isFingerActive ||
         oldDelegate.touchDistance != touchDistance;

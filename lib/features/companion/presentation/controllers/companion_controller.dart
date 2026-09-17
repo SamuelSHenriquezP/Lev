@@ -44,10 +44,12 @@ class CompanionController extends Notifier<CompanionState> {
       timestamp: DateTime.now(),
       quickReplies: const [
         'Me siento abrumado',
+        'Quiero orar o meditar',
         'Mucho TikTok/procrastinando',
         'No puedo dormir',
         'Bloqueo para empezar',
         'Triste o solo',
+        'Un versículo de paz',
         'Solo pasaba a verte',
       ],
     );
@@ -92,7 +94,26 @@ class CompanionController extends Notifier<CompanionState> {
     MicroHabit? habit;
     List<String> nextReplies = ['Hacer la pausa (60s)', 'Prefiero solo charlar', 'Gracias, Lev'];
 
-    if (lower.contains('dormir') || lower.contains('insomnio') || lower.contains('desvelo') || lower.contains('no puedo dormir')) {
+    if (lower.contains('orar') ||
+        lower.contains('oracion') ||
+        lower.contains('oración') ||
+        lower.contains('dios') ||
+        lower.contains('jesus') ||
+        lower.contains('jesús') ||
+        lower.contains('fe') ||
+        lower.contains('versiculo') ||
+        lower.contains('versículo') ||
+        lower.contains('biblia') ||
+        lower.contains('bíblico') ||
+        lower.contains('biblico') ||
+        lower.contains('salmo') ||
+        lower.contains('plegaria')) {
+      ref.read(sanctuaryProvider.notifier).prayWithLev();
+      levReply =
+          'Oremos y reposemos juntos en la presencia de Dios. No tienes que sostener todas las cosas con tus propias fuerzas.\n\n«Por nada estéis afanosos, sino sean conocidas vuestras peticiones delante de Dios en toda oración y ruego, con acción de gracias. Y la paz de Dios, que sobrepasa todo entendimiento, guardará vuestros corazones y vuestros pensamientos en Cristo Jesús.» — Filipenses 4:6-7\n\nCierra tus ojos un momento conmigo, suelta la carga y descansa en Su gracia.';
+      habit = HabitsDatabase.getById('pray_01');
+      nextReplies = ['Oración de Entrega (Fil 4:6-7)', 'Meditación Salmo 23', 'Descanso en la Gracia (Mt 11:28)', 'Gracias, Lev'];
+    } else if (lower.contains('dormir') || lower.contains('insomnio') || lower.contains('desvelo') || lower.contains('no puedo dormir')) {
       ref.read(sanctuaryProvider.notifier).putToSleep();
       levReply =
           'La noche es el momento en que la mente intenta resolver lo que el cuerpo ya no puede sostener. Es normal que te sientas inquieto.\n\nEntrégale tus preocupaciones a las aguas de mi estanque. No tienes que forzarte a dormir de golpe; solo dejemos que tus párpados pesen un poco.';

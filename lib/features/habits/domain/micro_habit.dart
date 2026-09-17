@@ -92,6 +92,7 @@ class MicroHabit {
     if (id == 'doom_02' || id == 'anx_02') return LevTaskAction.grounding;
     if (id == 'anx_01' || id == 'slp_03' || id == 'ang_02') return LevTaskAction.breathing;
     if (id == 'anx_04' || id == 'blk_02') return LevTaskAction.coldSplash;
+    if (id.startsWith('pray_') || category.contains('Oración') || category.contains('Fe')) return LevTaskAction.prayer;
     if (id == 'sad_01' || id == 'sad_02' || id == 'crt_01') return LevTaskAction.soothingTouch;
     if (id == 'sad_03' || id == 'crt_02') return LevTaskAction.warmTeaHold;
     if (id == 'ang_01' || id == 'blk_01') return LevTaskAction.tensionShake;
@@ -140,7 +141,8 @@ enum LevTaskAction {
   tensionShake(label: 'Sacudida', badgeEmoji: '⚡'),
   sleepDrift(label: 'Modo Siesta', badgeEmoji: '🌙'),
   grounding(label: 'Anclaje', badgeEmoji: '🦶'),
-  warmTeaHold(label: 'Calor Suave', badgeEmoji: '🍵');
+  warmTeaHold(label: 'Calor Suave', badgeEmoji: '🍵'),
+  prayer(label: 'Oración y Fe', badgeEmoji: '🕊️');
 
   final String label;
   final String badgeEmoji;
@@ -158,6 +160,7 @@ enum LevTaskAction {
       case LevTaskAction.sleepDrift: return Icons.bedtime_rounded;
       case LevTaskAction.grounding: return Icons.park_rounded;
       case LevTaskAction.warmTeaHold: return Icons.local_cafe_rounded;
+      case LevTaskAction.prayer: return Icons.auto_awesome_rounded;
     }
   }
 }
@@ -176,6 +179,7 @@ class HabitCategoryInfo {
   });
 
   IconData get icon {
+    if (name.contains('Oración') || name.contains('Fe') || name.contains('Bíblica')) return Icons.auto_awesome_rounded;
     if (name.contains('Doomscrolling') || name.contains('Pantallas')) return Icons.smartphone_rounded;
     if (name.contains('Ansiedad')) return Icons.waves_rounded;
     if (name.contains('Tristeza')) return Icons.spa_rounded;

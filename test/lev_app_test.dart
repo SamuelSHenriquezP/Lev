@@ -23,15 +23,15 @@ void main() {
     await initializeDateFormatting('es', null);
   });
 
-  group('Expanded Clinical Habits & Somatic Minigames Suite (54 habits across 7 emotions)', () {
-    test('All 7 core psychological categories are populated with 54 unique habits', () {
+  group('Expanded Clinical Habits & Somatic Minigames Suite (60 habits across 8 categories)', () {
+    test('All 8 core categories are populated with 60 unique habits', () {
       final categories = HabitsDatabase.categories;
-      expect(categories.length, 7);
+      expect(categories.length, 8);
 
-      expect(HabitsDatabase.allHabits.length, equals(54));
+      expect(HabitsDatabase.allHabits.length, equals(60));
 
       final uniqueIds = HabitsDatabase.allHabits.map((h) => h.id).toSet();
-      expect(uniqueIds.length, equals(54));
+      expect(uniqueIds.length, equals(60));
 
       final doomHabits = HabitsDatabase.getByCategory('Doomscrolling / Sobrecarga Digital');
       expect(doomHabits.length, equals(8));
@@ -53,6 +53,9 @@ void main() {
 
       final blkHabits = HabitsDatabase.getByCategory('Bloqueo / Procrastinación / Parálisis TDAH');
       expect(blkHabits.length, equals(7));
+
+      final prayHabits = HabitsDatabase.getByCategory('Oración / Meditación Bíblica / Fe');
+      expect(prayHabits.length, equals(6));
     });
 
     test('Habits contain step-by-step instructions, tags, psychological basis and interaction minigames', () {

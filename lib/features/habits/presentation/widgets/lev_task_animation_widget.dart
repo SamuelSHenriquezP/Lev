@@ -57,6 +57,8 @@ class _LevTaskAnimationWidgetState extends State<LevTaskAnimationWidget>
       case LevTaskAction.grounding:
       case LevTaskAction.warmTeaHold:
         return LevEmotion.peaceful;
+      case LevTaskAction.prayer:
+        return LevEmotion.praying;
     }
   }
 
@@ -80,6 +82,7 @@ class _LevTaskAnimationWidgetState extends State<LevTaskAnimationWidget>
                 ? 1.0
                 : (widget.action == LevTaskAction.eyeRest ? 0.45 : 0.0),
             breathingProgress: widget.action == LevTaskAction.breathing ? 1.0 : 0.0,
+            prayProgress: widget.action == LevTaskAction.prayer ? 1.0 : 0.0,
           ),
         );
       },

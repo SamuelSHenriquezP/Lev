@@ -58,6 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final AnimationController _anxiousController;
   late final AnimationController _tiredController;
   late final AnimationController _celebrateController;
+  late final AnimationController _prayController;
 
   @override
   void initState() {
@@ -116,6 +117,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+
+    _prayController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
   }
 
   void _onAmbientTick() {
@@ -168,6 +174,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _anxiousController.dispose();
     _tiredController.dispose();
     _celebrateController.dispose();
+    _prayController.dispose();
     super.dispose();
   }
 
@@ -281,6 +288,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _celebrateController.animateTo(1.0, curve: Curves.easeOutBack);
       } else {
         _celebrateController.animateTo(0.0, curve: Curves.easeInOutCubic);
+      }
+
+      // Oración y devoción
+      if (next.emotion == LevEmotion.praying) {
+        _prayController.animateTo(1.0, curve: Curves.easeInOutCubic);
+      } else {
+        _prayController.animateTo(0.0, curve: Curves.easeInOutCubic);
       }
 
       // Salto elástico con física de 4 fases
@@ -516,6 +530,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             _anxiousController,
                             _tiredController,
                             _celebrateController,
+                            _prayController,
                           ]),
                           builder: (context, child) {
                             return CustomPaint(
@@ -547,10 +562,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 anxiousProgress: _anxiousController.value,
                                 tiredProgress: _tiredController.value,
                                 celebrateProgress: _celebrateController.value,
+                                prayProgress: _prayController.value,
                               ),
                             );
                           },
                         ),
+
+                    // Indicador de modo oración y confianza bíblica
+                    if (sanctuary.emotion == LevEmotion.praying)
+                      Positioned(
+                        top: 16,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 400),
+                          opacity: 1.0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.94),
+                              borderRadius: LevTheme.pillRadius,
+                              border: Border.all(
+                                color: const Color(0xFFFFD54F),
+                                width: 1.5,
+                              ),
+                              boxShadow: LevTheme.softShadow,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 17,
+                                  color: Color(0xFFD4AF37),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Momento de Oración y Confianza',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF8D6E00),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
                     // Indicador de modo respiración / calma
                     if (sanctuary.emotion == LevEmotion.breathing ||
@@ -713,6 +771,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
+                      icon: Icons.auto_awesome_rounded,
+                      label: 'Orar',
+                      accentColor: const Color(0xFFD4AF37),
+                      isActive: sanctuary.emotion == LevEmotion.praying,
+                      onTap: () {
+                        if (sanctuary.emotion == LevEmotion.praying) {
+                          controller.setPeacefulState();
+                        } else {
+                          controller.prayWithLev();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPillAction(
                       icon: Icons.favorite_rounded,
                       label: 'Acariciar',
                       isActive: sanctuary.isPetting || sanctuary.emotion == LevEmotion.happy,
@@ -806,6 +878,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return Icons.bedtime_rounded;
       case LevEmotion.joyJump:
       case LevEmotion.celebrating:
+      case LevEmotion.praying:
         return Icons.auto_awesome_rounded;
       case LevEmotion.happy:
         return Icons.favorite_rounded;
@@ -817,6 +890,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Color _getDialogueIconColor(LevEmotion emotion, bool isPetting) {
     if (isPetting) return LevTheme.levPeach;
     switch (emotion) {
+      case LevEmotion.praying:
+        return const Color(0xFFD4AF37);
       case LevEmotion.sad:
         return const Color(0xFF5C85A0);
       case LevEmotion.anxious:

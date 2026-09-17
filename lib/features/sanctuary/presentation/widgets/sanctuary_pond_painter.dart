@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/lev_theme.dart';
 import '../../domain/sanctuary_state.dart';
@@ -37,6 +37,7 @@ class SanctuaryPondPainter extends CustomPainter {
   final double? anxiousProgress;
   final double? tiredProgress;
   final double? celebrateProgress;
+  final double? prayProgress;
   final SanctuaryWeather weather;
   final bool isWatering;
 
@@ -68,6 +69,7 @@ class SanctuaryPondPainter extends CustomPainter {
     this.anxiousProgress,
     this.tiredProgress,
     this.celebrateProgress,
+    this.prayProgress,
   });
 
   @override
@@ -427,6 +429,7 @@ class SanctuaryPondPainter extends CustomPainter {
       anxiousProgress: anxiousProgress,
       tiredProgress: tiredProgress,
       celebrateProgress: celebrateProgress,
+      prayProgress: prayProgress,
     );
     spiritPainter.paint(canvas, size);
   }
@@ -550,6 +553,7 @@ class SanctuaryPondPainter extends CustomPainter {
         oldDelegate.anxiousProgress != anxiousProgress ||
         oldDelegate.tiredProgress != tiredProgress ||
         oldDelegate.celebrateProgress != celebrateProgress ||
+        oldDelegate.prayProgress != prayProgress ||
         oldDelegate.weather != weather ||
         oldDelegate.isWatering != isWatering;
   }

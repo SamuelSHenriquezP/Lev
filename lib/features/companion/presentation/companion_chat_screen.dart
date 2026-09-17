@@ -464,6 +464,8 @@ class _CompanionChatScreenState extends ConsumerState<CompanionChatScreen> {
         return 'Calmando juntos la tormenta';
       case LevEmotion.tired:
         return 'Descansando a tu lado';
+      case LevEmotion.praying:
+        return 'Orando contigo • Paz y confianza en Dios';
       case LevEmotion.peaceful:
         return 'Aquí contigo • Sin juicios';
     }

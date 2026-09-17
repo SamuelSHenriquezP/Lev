@@ -97,46 +97,68 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     }
   }
 
+  static const List<String> _biblicalVersesAndPrayers = [
+    '«El Señor es mi pastor; nada me faltará. En lugares de delicados pastos me hará descansar.» — Salmos 23:1-2',
+    '«Por nada estéis afanosos, sino sean conocidas vuestras peticiones delante de Dios en toda oración y ruego... y la paz de Dios guardará vuestros corazones.» — Filipenses 4:6-7',
+    '«Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar.» — Mateo 11:28',
+    '«Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque el Señor tu Dios estará contigo dondequiera que vayas.» — Josué 1:9',
+    '«Echando toda vuestra ansiedad sobre Él, porque Él tiene cuidado de vosotros.» — 1 Pedro 5:7',
+    '«La paz os dejo, mi paz os doy; yo no os la doy como el mundo la da. No se turbe vuestro corazón, ni tenga miedo.» — Juan 14:27',
+    '«Todo lo puedo en Cristo que me fortalece.» — Filipenses 4:13',
+    '«Los que esperan a Jehová tendrán nuevas fuerzas; levantarán alas como las águilas; correrán, y no se cansarán.» — Isaías 40:31',
+    '«En paz me acostaré, y asimismo dormiré; porque solo tú, Señor, me haces vivir confiado.» — Salmos 4:8',
+    '«Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en las tribulaciones.» — Salmos 46:1',
+    '«Estad quietos, y conoced que yo soy Dios.» — Salmos 46:10. Respira hondo y reposa en Su amor.',
+    '«Con sus plumas te cubrirá, y debajo de sus alas estarás seguro.» — Salmos 91:4',
+    '«Clama a mí, y yo te responderé, y te enseñaré cosas grandes y ocultas que tú no conoces.» — Jeremías 33:3',
+    '«Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia.» — Proverbios 3:5',
+    '«El Señor te bendiga y te guarde; haga resplandecer su rostro sobre ti y ponga en ti paz.» — Números 6:24-26',
+    '«El gozo del Señor es vuestra fuerza.» — Nehemías 8:10. ¡Eres amado y sostenido hoy!',
+    '«Este es el día que hizo el Señor; nos gozaremos y alegraremos en él.» — Salmos 118:24',
+    '«Porque yo sé los pensamientos que tengo acerca de vosotros, dice el Señor, pensamientos de paz, y no de mal.» — Jeremías 29:11',
+  ];
+
   static const List<String> _peacefulDialogues = [
-    'Qué rico se siente este momento. Gracias por estar aquí conmigo.',
-    'No hay prisa en nuestro rinconcito. Respira a tu ritmo.',
-    'Cuidar de mí es aprender a cuidar de ti.',
-    'Mira cómo flotamos suavemente... todo pasa, esto también pasará.',
-    'Si hoy solo pudiste respirar, ya es suficiente.',
-    'Me gusta cuando nos sentamos juntos sin hacer nada.',
-    '¿Tomaste un vasito de agua hoy? Recuerda aflojar los hombros.',
-    'No tienes que ser perfecto. Estar aquí ya es un logro.',
+    'Qué bendición este momento juntos. «El Señor es mi luz y mi salvación; ¿de quién temeré?» — Salmos 27:1',
+    'No hay prisa en nuestro rinconcito. Respira a tu ritmo y descansa en la gracia de Dios.',
+    'Cuidar de mí es aprender a cuidar del templo que Dios te dio.',
+    '«La paz de Dios, que sobrepasa todo entendimiento, guardará vuestro corazón.» — Filipenses 4:7',
+    'Mira cómo flotamos suavemente... «Estad quietos, y conoced que yo soy Dios.» — Salmos 46:10',
+    'Si hoy solo pudiste respirar, ya es suficiente. Dios renueva tus fuerzas a cada instante.',
+    'Me gusta cuando oramos y reposamos juntos en silencio ante el Creador.',
+    '«Fíate de Jehová de todo tu corazón.» — Proverbios 3:5. No tienes que controlarlo todo hoy.',
+    ..._biblicalVersesAndPrayers,
   ];
 
   static const List<String> _shelteredDialogues = [
-    'Me abracé con mis hojitas para acompañarte en tu silencio.',
-    'No tienes que fingir que todo está bien. Yo me quedo contigo.',
-    'A veces el mundo pesa mucho. Descansemos aquí un ratito.',
-    'Aquí no hay nada que arreglar ahora mismo. Estás a salvo.',
-    'Las hojas más fuertes también se doblan con el viento.',
+    'Me abracé con mis hojitas para acompañarte. «Con sus plumas te cubrirá, y debajo de sus alas estarás seguro.» — Salmos 91:4',
+    'No tienes que fingir que todo está bien. Dios conoce tu corazón y yo me quedo contigo.',
+    'A veces el mundo pesa mucho. «Venid a mí... y yo os haré descansar.» — Mateo 11:28',
+    'Aquí no hay nada que arreglar ahora mismo. Estás cobijado bajo la gracia divina.',
+    '«El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente.» — Salmos 91:1',
   ];
 
   static const List<String> _sadDialogues = [
-    'Veo que algo pesa en tu corazón hoy. Te escucho.',
-    'No tienes que estar bien todo el tiempo. Yo también tengo días grises.',
-    'La tristeza tiene un ritmo propio. No hay que apresurarla.',
-    'Estoy aquí contigo en silencio. Sin prisa, sin presión.',
-    'A veces simplemente acompañar ya es mucho. Aquí estoy.',
+    'Veo que algo pesa en tu corazón. «Cercano está el Señor a los quebrantados de corazón.» — Salmos 34:18',
+    'No tienes que estar fuerte todo el tiempo. «Él sana a los quebrantados de corazón, y venda sus heridas.» — Salmos 147:3',
+    '«Bienaventurados los que lloran, porque ellos recibirán consolación.» — Mateo 5:4. Aquí estoy contigo.',
+    'La tristeza tiene su tiempo, pero el gozo viene por la mañana. Descansa en Su amor.',
+    'Oremos en silencio. Dios escucha cada suspiro que las palabras no alcanzan a decir.',
   ];
 
   static const List<String> _anxiousDialogues = [
-    'Respira conmigo. Inhala... sostén... exhala. Una vez más.',
-    'Ese pensamiento no es la realidad entera. Solo una parte.',
-    'Tu sistema nervioso está trabajando duro. Ayudémoslo a calmarse.',
-    'Pies en el suelo. Espalda en la silla. Estás físicamente a salvo.',
-    'La ansiedad miente sobre el futuro. Tú estás aquí, ahora.',
+    '«Echa sobre el Señor tu carga, y Él te sustentará.» — Salmos 55:22. Respira hondo y entrégaselo.',
+    '«Por nada estéis afanosos... la paz de Dios guardará vuestros corazones.» — Filipenses 4:6-7',
+    '«No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios que te esfuerzo.» — Isaías 41:10',
+    '«Cuando en mí la angustia iba en aumento, tu consuelo llenaba mi alma de alegría.» — Salmos 94:19',
+    'Pies en el suelo. Dios sostiene este día. La ansiedad miente; Su fidelidad es para siempre.',
   ];
 
   static const List<String> _celebratingDialogues = [
-    '¡Sentí tu energía renovarse! Gracias por regalarte esta pausa.',
-    'Una gota más de cuidado para nosotros. Juntos crecemos.',
-    'Cada microhábito es una semilla de cambio real. Lo siento en mis raíces.',
-    'Tu sistema nervioso acaba de respirar. Yo también.',
+    '¡Demos gracias a Dios, porque Él es bueno! Cada paso que das es fruto de Su bendición.',
+    '«¡Grandes cosas ha hecho el Señor con nosotros; estaremos alegres!» — Salmos 126:3',
+    'Una gota más de cuidado y gratitud. Juntos crecemos en fe y constancia.',
+    '«El gozo del Señor es vuestra fuerza.» — Nehemías 8:10. ¡Celebremos con un corazón agradecido!',
   ];
 
   // Diálogos cariñosos y de reacción al acariciar específicos para cada una de las 8 etapas
@@ -374,6 +396,29 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     state = state.copyWith(
       emotion: LevEmotion.sleeping,
       dialogue: 'Zzz... momento de soltar la mente y aflojar el cuerpo.',
+      tapCount: state.tapCount + 1,
+    );
+  }
+
+  /// Modo de oración y meditación bíblica cristiana con Lev
+  Future<void> prayWithLev() async {
+    await HapticsHelper.light();
+    final rand = Random();
+    final verse = _biblicalVersesAndPrayers[rand.nextInt(_biblicalVersesAndPrayers.length)];
+    state = state.copyWith(
+      emotion: LevEmotion.praying,
+      dialogue: verse,
+      tapCount: state.tapCount + 1,
+      isPetting: false,
+    );
+  }
+
+  /// Comparte un versículo bíblico reconfortante con su cita
+  void shareBiblicalVerse() {
+    final rand = Random();
+    final verse = _biblicalVersesAndPrayers[rand.nextInt(_biblicalVersesAndPrayers.length)];
+    state = state.copyWith(
+      dialogue: verse,
       tapCount: state.tapCount + 1,
     );
   }

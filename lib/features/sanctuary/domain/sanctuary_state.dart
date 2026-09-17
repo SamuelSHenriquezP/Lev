@@ -12,6 +12,7 @@ enum LevEmotion {
   sad,         // Decaído pero intentando dar ánimo
   anxious,     // Agitado, respiración acelerada
   tired,       // Cansado, ojos entrecerrados
+  praying,     // Oración con ojos cerrados, hojas unidas y aura celestial de confianza
 }
 
 enum SanctuaryTimeOfDay {

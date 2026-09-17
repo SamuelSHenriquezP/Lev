@@ -130,10 +130,16 @@ class _PhoneDownScreenState extends ConsumerState<PhoneDownScreen>
 
   static const List<String> _peacefulQuotes = [
     'Lev está durmiendo plácidamente. Tu vida real está esperándote afuera.',
+    '«En paz me acostaré, y asimismo dormiré; porque solo tú, Señor, me haces vivir confiado.» — Salmos 4:8',
     'No te estás perdiendo de nada importante. Estás recuperando tu propia presencia.',
+    '«Estad quietos, y conoced que yo soy Dios.» — Salmos 46:10',
     'Nota la textura de lo que tocas, el sonido del viento o el silencio a tu alrededor.',
+    '«Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar.» — Mateo 11:28',
     'Tu mente se está desintoxicando del ruido digital. Respira hondo.',
-    'El aburrimiento no es una falla; es el espacio donde renace tu creatividad.',
+    '«Y la paz de Dios, que sobrepasa todo entendimiento, guardará vuestros corazones y vuestros pensamientos.» — Filipenses 4:7',
+    '«El Señor es mi pastor; nada me faltará. En lugares de delicados pastos me hará descansar.» — Salmos 23:1-2',
+    '«Echa sobre el Señor tu carga, y él te sustentará; no dejará para siempre caído al justo.» — Salmos 55:22',
+    'El aburrimiento no es una falla; es el espacio donde renace tu creatividad y gratitud.',
   ];
   int _quoteIndex = 0;
   Timer? _quoteTimer;

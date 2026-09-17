@@ -39,6 +39,26 @@ class LevTaskEffectsPainter {
         break;
       case LevTaskAction.chestStretch:
         break;
+      case LevTaskAction.prayer:
+        _drawPrayerCelestialAura(canvas, t);
+        break;
+    }
+  }
+
+  static void _drawPrayerCelestialAura(Canvas canvas, double t) {
+    final pulse = (sin(t * 2 * pi) + 1.0) * 0.5;
+    final glowPaint = Paint()
+      ..color = const Color(0xFFFFD54F).withValues(alpha: 0.35 + pulse * 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
+    canvas.drawCircle(const Offset(0, -10), 32 + pulse * 8, glowPaint);
+
+    final sparklePaint = Paint()
+      ..color = const Color(0xFFFFF9C4).withValues(alpha: 0.8)
+      ..style = PaintingStyle.fill;
+    for (int i = 0; i < 4; i++) {
+      final angle = (i * pi / 2) + t * pi;
+      final dist = 24.0 + pulse * 6.0;
+      canvas.drawCircle(Offset(cos(angle) * dist, -10 + sin(angle) * dist), 2.0, sparklePaint);
     }
   }
   static void _drawEyeRestGlow(Canvas canvas, double t) {
