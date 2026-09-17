@@ -366,16 +366,31 @@ class _PhoneDownScreenState extends ConsumerState<PhoneDownScreen>
 
   @override
   Widget build(BuildContext context) {
+    Widget currentView;
     switch (_phase) {
       case _SessionPhase.selection:
-        return _buildSelectionView();
+        currentView = _buildSelectionView();
+        break;
       case _SessionPhase.groundingPreparation:
-        return _buildPreparationView();
+        currentView = _buildPreparationView();
+        break;
       case _SessionPhase.restingAway:
-        return _buildRestingView();
+        currentView = _buildRestingView();
+        break;
       case _SessionPhase.completed:
-        return _buildCompletedView();
+        currentView = _buildCompletedView();
+        break;
     }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 700),
+      switchInCurve: Curves.easeInOutCubic,
+      switchOutCurve: Curves.easeInOutCubic,
+      child: KeyedSubtree(
+        key: ValueKey(_phase),
+        child: currentView,
+      ),
+    );
   }
 
   // --- VISTA 1: SELECCIÓN DE META ---

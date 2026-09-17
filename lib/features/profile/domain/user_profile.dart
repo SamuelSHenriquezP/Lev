@@ -112,3 +112,4 @@ class UserProfile {
     age: json['age'] as int? ?? 25,
   );
 }
+

@@ -175,18 +175,21 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_eyesClosedMode) {
-      return _buildEyesClosedView();
-    }
-
     final audioState = ref.watch(sanctuaryAudioProvider);
     final progress = 1.0 - (_remainingSeconds / widget.habit.durationSeconds);
     final accentColor = LevTheme.getEmotionAccentColor(widget.habit.category);
 
-    return PetalCelebrationOverlay(
-      showCelebration: _triggerPetals,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    final currentView = _eyesClosedMode
+        ? KeyedSubtree(
+            key: const ValueKey('eyes_closed_view'),
+            child: _buildEyesClosedView(),
+          )
+        : KeyedSubtree(
+            key: const ValueKey('timer_active_view'),
+            child: PetalCelebrationOverlay(
+              showCelebration: _triggerPetals,
+              child: Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -369,6 +372,14 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
           ),
         ),
       ),
+    ),
+  );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 650),
+      switchInCurve: Curves.easeInOutCubic,
+      switchOutCurve: Curves.easeInOutCubic,
+      child: currentView,
     );
   }
 

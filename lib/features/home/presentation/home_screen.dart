@@ -77,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     _sleepController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 900),
     );
 
     _happyController = AnimationController(
@@ -309,166 +309,193 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     _checkDailyGreetingAndEvolution(sanctuary, controller);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- CABECERA ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Etapa de crecimiento de Lev
-                  Flexible(
-                    child: InkWell(
-                      onTap: () => showSanctuaryGrowthDialog(context, ref, sanctuary, onNavigateToTab: widget.onNavigateToTab),
-                      borderRadius: LevTheme.pillRadius,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? LevTheme.levDarkSurface
-                              : Colors.white,
-                          borderRadius: LevTheme.pillRadius,
-                          border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? LevTheme.levDarkBorder
-                                : LevTheme.levBorder,
-                          ),
-                          boxShadow: LevTheme.softShadow,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              sanctuary.stageMaterialIcon,
-                              size: 15,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? LevTheme.levMatchaNight
-                                  : LevTheme.levMatchaDark,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                sanctuary.stageName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.quicksand(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 1),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 14,
-                              color: LevTheme.levTextMuted,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
+    return AnimatedBuilder(
+      animation: _sleepController,
+      builder: (context, _) {
+        final sleepVal = _sleepController.value;
+        final baseScaffoldBg = Theme.of(context).scaffoldBackgroundColor;
+        final scaffoldBg = Color.lerp(baseScaffoldBg, LevTheme.levDarkBg, sleepVal)!;
+        final isDarkEffective = Theme.of(context).brightness == Brightness.dark || sleepVal > 0.5;
 
-                  // Botones de acción derecha
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+        return Scaffold(
+          backgroundColor: scaffoldBg,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // --- CABECERA ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Gotas de cuidado -> Navegar a la Tienda
-                      InkWell(
-                        onTap: () {
-                          HapticsHelper.selection();
-                          if (widget.onNavigateToTab != null) {
-                            widget.onNavigateToTab!(2);
-                          } else {
-                            showSanctuaryGrowthDialog(context, ref, sanctuary, initialTab: 1, onNavigateToTab: widget.onNavigateToTab);
-                          }
-                        },
-                        borderRadius: LevTheme.pillRadius,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: LevTheme.pillRadius,
-                            border: Border.all(color: LevTheme.levBorder),
-                            boxShadow: LevTheme.softShadow,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.water_drop_rounded,
-                                size: 13,
-                                color: Color(0xFF64B5F6),
+                      // Etapa de crecimiento de Lev
+                      Flexible(
+                        child: InkWell(
+                          onTap: () => showSanctuaryGrowthDialog(context, ref, sanctuary, onNavigateToTab: widget.onNavigateToTab),
+                          borderRadius: LevTheme.pillRadius,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Color.lerp(
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? LevTheme.levDarkSurface
+                                    : Colors.white,
+                                LevTheme.levDarkSurface,
+                                sleepVal,
                               ),
-                              const SizedBox(width: 3),
-                              Text(
-                                '${sanctuary.careDrops}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: LevTheme.levTextDark,
+                              borderRadius: LevTheme.pillRadius,
+                              border: Border.all(
+                                color: Color.lerp(
+                                  Theme.of(context).brightness == Brightness.dark
+                                      ? LevTheme.levDarkBorder
+                                      : LevTheme.levBorder,
+                                  LevTheme.levDarkBorder,
+                                  sleepVal,
+                                )!,
+                              ),
+                              boxShadow: LevTheme.softShadow,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  sanctuary.stageMaterialIcon,
+                                  size: 15,
+                                  color: isDarkEffective
+                                      ? LevTheme.levMatchaNight
+                                      : LevTheme.levMatchaDark,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    sanctuary.stageName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.quicksand(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color.lerp(
+                                        Theme.of(context).colorScheme.onSurface,
+                                        LevTheme.levDarkText,
+                                        sleepVal,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 1),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 14,
+                                  color: Color.lerp(LevTheme.levTextMuted, LevTheme.levDarkTextMuted, sleepVal),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
 
-                      // Audio ambiental
-                      _HeaderIconBtn(
-                        icon: Icons.graphic_eq_rounded,
-                        tooltip: 'Sonidos del Santuario',
-                        onTap: () => showDialog(
-                          context: context,
-                          builder: (context) => const SanctuaryAudioDialog(),
-                        ),
-                      ),
-                      const SizedBox(width: 3),
+                      // Botones de acción derecha
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Gotas de cuidado -> Navegar a la Tienda
+                          InkWell(
+                            onTap: () {
+                              HapticsHelper.selection();
+                              if (widget.onNavigateToTab != null) {
+                                widget.onNavigateToTab!(2);
+                              } else {
+                                showSanctuaryGrowthDialog(context, ref, sanctuary, initialTab: 1, onNavigateToTab: widget.onNavigateToTab);
+                              }
+                            },
+                            borderRadius: LevTheme.pillRadius,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Color.lerp(Colors.white, LevTheme.levDarkSurface, sleepVal),
+                                borderRadius: LevTheme.pillRadius,
+                                border: Border.all(
+                                  color: Color.lerp(LevTheme.levBorder, LevTheme.levDarkBorder, sleepVal)!,
+                                ),
+                                boxShadow: LevTheme.softShadow,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.water_drop_rounded,
+                                    size: 13,
+                                    color: Color(0xFF64B5F6),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${sanctuary.careDrops}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color.lerp(LevTheme.levTextDark, LevTheme.levDarkText, sleepVal),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
 
-                      // Clima dinámico del Santuario
-                      _HeaderIconBtn(
-                        icon: sanctuary.weather.icon,
-                        tooltip: 'Clima: ${sanctuary.weather.label}',
-                        onTap: () => showSanctuaryWeatherSheet(context, controller, sanctuary.weather),
-                      ),
-                      const SizedBox(width: 3),
+                          // Audio ambiental
+                          _HeaderIconBtn(
+                            icon: Icons.graphic_eq_rounded,
+                            tooltip: 'Sonidos del Santuario',
+                            sleepProgress: sleepVal,
+                            onTap: () => showDialog(
+                              context: context,
+                              builder: (context) => const SanctuaryAudioDialog(),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
 
-                      // Perfil de Usuario (Nombre y Edad)
-                      _HeaderIconBtn(
-                        icon: Icons.person_outline_rounded,
-                        tooltip: 'Perfil: ${sanctuary.userProfile.name} (${sanctuary.userProfile.stage.shortLabel})',
-                        onTap: () => UserProfileSheet.show(context),
-                      ),
-                      const SizedBox(width: 3),
+                          // Clima dinámico del Santuario
+                          _HeaderIconBtn(
+                            icon: sanctuary.weather.icon,
+                            tooltip: 'Clima: ${sanctuary.weather.label}',
+                            sleepProgress: sleepVal,
+                            onTap: () => showSanctuaryWeatherSheet(context, controller, sanctuary.weather),
+                          ),
+                          const SizedBox(width: 3),
 
-                      // Botón Privacidad y Datos Offline
-                      _HeaderIconBtn(
-                        icon: Icons.shield_outlined,
-                        iconColor: LevTheme.levMatchaDark,
-                        tooltip: 'Privacidad y datos',
-                        onTap: () => showPrivacyOfflineDialog(context),
-                      ),
-                      const SizedBox(width: 3),
+                          // Perfil de Usuario (Nombre y Edad)
+                          _HeaderIconBtn(
+                            icon: Icons.person_outline_rounded,
+                            tooltip: 'Perfil: ${sanctuary.userProfile.name} (${sanctuary.userProfile.stage.shortLabel})',
+                            sleepProgress: sleepVal,
+                            onTap: () => UserProfileSheet.show(context),
+                          ),
+                          const SizedBox(width: 3),
 
-                      // Botón SOS / Crisis
-                      _HeaderIconBtn(
-                        icon: Icons.health_and_safety_rounded,
-                        iconColor: const Color(0xFFE57373),
-                        tooltip: 'Líneas de ayuda y SOS',
-                        onTap: () => CrisisSosModal.show(context),
+                          // Botón Privacidad y Datos Offline
+                          _HeaderIconBtn(
+                            icon: Icons.shield_outlined,
+                            iconColor: isDarkEffective ? LevTheme.levMatchaNight : LevTheme.levMatchaDark,
+                            tooltip: 'Privacidad y datos',
+                            sleepProgress: sleepVal,
+                            onTap: () => showPrivacyOfflineDialog(context),
+                          ),
+                          const SizedBox(width: 3),
+
+                          // Botón SOS / Crisis
+                          _HeaderIconBtn(
+                            icon: Icons.health_and_safety_rounded,
+                            iconColor: const Color(0xFFE57373),
+                            tooltip: 'Líneas de ayuda y SOS',
+                            sleepProgress: sleepVal,
+                            onTap: () => CrisisSosModal.show(context),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
             // --- ESPACIO CENTRAL: LEV COMO PROTAGONISTA ---
             Expanded(
@@ -694,10 +721,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 18, vertical: 13),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.94),
+                              color: Color.lerp(
+                                Colors.white.withValues(alpha: 0.94),
+                                LevTheme.levDarkSurface.withValues(alpha: 0.94),
+                                sleepVal,
+                              ),
                               borderRadius: LevTheme.cardRadius,
                               border: Border.all(
-                                color: LevTheme.levBorder,
+                                color: Color.lerp(LevTheme.levBorder, LevTheme.levDarkBorder, sleepVal)!,
                                 width: 1.0,
                               ),
                               boxShadow: LevTheme.softShadow,
@@ -717,7 +748,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w500,
-                                      color: LevTheme.levTextDark,
+                                      color: Color.lerp(
+                                        LevTheme.levTextDark,
+                                        LevTheme.levDarkText,
+                                        sleepVal,
+                                      ),
                                       height: 1.35,
                                     ),
                                     textAlign: TextAlign.left,
@@ -749,6 +784,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       label: 'Soltar Móvil',
                       accentColor: LevTheme.levMatchaDark,
                       isActive: false,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         HapticsHelper.selection();
                         Navigator.of(context).push(
@@ -764,6 +800,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       label: 'Regar',
                       accentColor: const Color(0xFF64B5F6),
                       isActive: sanctuary.isWatering,
+                      sleepProgress: sleepVal,
                       onTap: () => controller.waterLev(),
                     ),
                     const SizedBox(width: 8),
@@ -771,6 +808,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.air_rounded,
                       label: 'Respirar',
                       isActive: sanctuary.emotion == LevEmotion.breathing,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.breathing) {
                           controller.setPeacefulState();
@@ -785,6 +823,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       label: 'Orar',
                       accentColor: const Color(0xFFD4AF37),
                       isActive: sanctuary.emotion == LevEmotion.praying,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.praying) {
                           controller.setPeacefulState();
@@ -798,6 +837,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.favorite_rounded,
                       label: 'Acariciar',
                       isActive: sanctuary.isPetting || sanctuary.emotion == LevEmotion.happy,
+                      sleepProgress: sleepVal,
                       onTap: () => controller.petLev(),
                     ),
                     const SizedBox(width: 8),
@@ -805,6 +845,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.spa_rounded,
                       label: 'Abrazo',
                       isActive: sanctuary.emotion == LevEmotion.sheltered,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.sheltered) {
                           controller.setPeacefulState();
@@ -818,6 +859,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.lightbulb_outline_rounded,
                       label: 'Curioso',
                       isActive: sanctuary.emotion == LevEmotion.curious,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.curious) {
                           controller.setPeacefulState();
@@ -831,6 +873,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.bedtime_rounded,
                       label: 'Dormir',
                       isActive: sanctuary.emotion == LevEmotion.sleeping,
+                      sleepProgress: sleepVal,
                       onTap: () {
                         if (sanctuary.emotion == LevEmotion.sleeping) {
                           controller.petLev();
@@ -844,6 +887,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.auto_awesome_rounded,
                       label: 'Alegrar',
                       isActive: sanctuary.emotion == LevEmotion.joyJump,
+                      sleepProgress: sleepVal,
                       onTap: () => controller.triggerJoyJump(),
                     ),
                     const SizedBox(width: 8),
@@ -851,6 +895,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icons.celebration_rounded,
                       label: 'Celebrar',
                       isActive: sanctuary.emotion == LevEmotion.celebrating,
+                      sleepProgress: sleepVal,
                       onTap: () => controller.setCelebratingState(),
                     ),
                     const SizedBox(width: 8),
@@ -859,6 +904,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       label: 'Pausa 60s',
                       isActive: false,
                       accentColor: LevTheme.levMatcha,
+                      sleepProgress: sleepVal,
                       onTap: _triggerRandomHabit,
                     ),
                   ],
@@ -869,6 +915,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
     );
+  },
+);
   }
 
 
@@ -922,8 +970,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     required bool isActive,
     required VoidCallback onTap,
     Color? accentColor,
+    double sleepProgress = 0.0,
   }) {
     final activeColor = accentColor ?? LevTheme.levMatchaDark;
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final baseBg = isDarkTheme ? LevTheme.levDarkSurfaceVariant : Colors.white;
+    final targetBg = LevTheme.levDarkSurfaceVariant;
+    final baseBorder = isDarkTheme ? LevTheme.levDarkBorder : LevTheme.levBorder;
+    final targetBorder = LevTheme.levDarkBorder;
+    final baseText = isDarkTheme ? LevTheme.levDarkText : LevTheme.levTextDark;
+    final targetText = LevTheme.levDarkText;
+    final baseIcon = isDarkTheme ? LevTheme.levMatchaNight : LevTheme.levMatchaDark;
+    final targetIcon = LevTheme.levMatchaNight;
 
     return InkWell(
       onTap: () {
@@ -935,10 +993,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         duration: const Duration(milliseconds: 240),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? activeColor : Colors.white,
+          color: isActive
+              ? activeColor
+              : Color.lerp(baseBg, targetBg, sleepProgress),
           borderRadius: LevTheme.pillRadius,
           border: Border.all(
-            color: isActive ? activeColor : LevTheme.levBorder,
+            color: isActive
+                ? activeColor
+                : Color.lerp(baseBorder, targetBorder, sleepProgress)!,
             width: isActive ? 1.5 : 1.0,
           ),
           boxShadow: isActive ? LevTheme.glowShadow : LevTheme.softShadow,
@@ -949,7 +1011,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Icon(
               icon,
               size: 16,
-              color: isActive ? Colors.white : LevTheme.levMatchaDark,
+              color: isActive
+                  ? Colors.white
+                  : Color.lerp(baseIcon, targetIcon, sleepProgress),
             ),
             const SizedBox(width: 7),
             Text(
@@ -957,7 +1021,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               style: GoogleFonts.quicksand(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isActive ? Colors.white : LevTheme.levTextDark,
+                color: isActive
+                    ? Colors.white
+                    : Color.lerp(baseText, targetText, sleepProgress),
               ),
             ),
           ],
@@ -972,16 +1038,26 @@ class _HeaderIconBtn extends StatelessWidget {
   final Color? iconColor;
   final String tooltip;
   final VoidCallback onTap;
+  final double sleepProgress;
 
   const _HeaderIconBtn({
     required this.icon,
     this.iconColor,
     required this.tooltip,
     required this.onTap,
+    this.sleepProgress = 0.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final baseBg = isDarkTheme ? LevTheme.levDarkSurface : Colors.white;
+    final targetBg = LevTheme.levDarkSurface;
+    final baseBorder = isDarkTheme ? LevTheme.levDarkBorder : LevTheme.levBorder;
+    final targetBorder = LevTheme.levDarkBorder;
+    final baseText = isDarkTheme ? LevTheme.levDarkText : LevTheme.levTextDark;
+    final targetText = LevTheme.levDarkText;
+
     return IconButton(
       tooltip: tooltip,
       padding: EdgeInsets.zero,
@@ -990,12 +1066,18 @@ class _HeaderIconBtn extends StatelessWidget {
       icon: Container(
         padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color.lerp(baseBg, targetBg, sleepProgress),
           shape: BoxShape.circle,
-          border: Border.all(color: LevTheme.levBorder),
+          border: Border.all(
+            color: Color.lerp(baseBorder, targetBorder, sleepProgress)!,
+          ),
           boxShadow: LevTheme.softShadow,
         ),
-        child: Icon(icon, size: 15, color: iconColor ?? LevTheme.levTextDark),
+        child: Icon(
+          icon,
+          size: 15,
+          color: iconColor ?? Color.lerp(baseText, targetText, sleepProgress),
+        ),
       ),
       onPressed: onTap,
     );

@@ -238,7 +238,7 @@ class SanctuaryPondPainter extends CustomPainter {
     }
   }
 
-  /// Fondo crema botánico cálido suave adaptado al ciclo circadiano natural
+  /// Fondo crema botánico cálido suave adaptado al ciclo circadiano natural y reposo animado
   void _drawCreamBackground(Canvas canvas, Rect rect) {
     final List<Color> bgColors;
     final Color glowColor;
@@ -278,34 +278,61 @@ class SanctuaryPondPainter extends CustomPainter {
         break;
     }
 
+    // Transición suave animada al color oscuro en reposo (dormir)
+    final effSleep = (sleepProgress ?? (emotion == LevEmotion.sleeping ? 1.0 : 0.0)).clamp(0.0, 1.0);
+    final List<Color> finalBgColors;
+    final Color finalGlowColor;
+
+    if (effSleep > 0.0 && timeOfDay != SanctuaryTimeOfDay.night) {
+      const nightColors = [
+        Color(0xFF0D1612), // Obsidiana botánica nocturna
+        Color(0xFF13221C),
+        Color(0xFF1A2D25),
+      ];
+      finalBgColors = [
+        Color.lerp(bgColors[0], nightColors[0], effSleep)!,
+        Color.lerp(bgColors[1], nightColors[1], effSleep)!,
+        Color.lerp(bgColors[2], nightColors[2], effSleep)!,
+      ];
+      finalGlowColor = Color.lerp(
+        glowColor,
+        const Color(0xFF80E2BF).withValues(alpha: 0.22),
+        effSleep,
+      )!;
+    } else {
+      finalBgColors = bgColors;
+      finalGlowColor = glowColor;
+    }
+
     final bgPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: bgColors,
+        colors: finalBgColors,
       ).createShader(rect);
 
     canvas.drawRect(rect, bgPaint);
 
     // Halo muy sutil y amplio de calidez detrás de Lev
     final warmGlowPaint = Paint()
-      ..color = glowColor
+      ..color = finalGlowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
 
     canvas.drawCircle(Offset(rect.width * 0.5, rect.height * 0.48), 120, warmGlowPaint);
 
-    // Si es de noche, dibujamos cielo estrellado sereno sin luz azul y luna creciente
-    if (timeOfDay == SanctuaryTimeOfDay.night) {
-      _drawNightStarsAndMoon(canvas, rect);
+    // Si es de noche o entra en reposo, dibujamos cielo estrellado sereno y luna creciente con opacidad animada
+    final nightWeight = (timeOfDay == SanctuaryTimeOfDay.night ? 1.0 : effSleep).clamp(0.0, 1.0);
+    if (nightWeight > 0.01) {
+      _drawNightStarsAndMoon(canvas, rect, nightWeight);
     }
   }
 
   /// Dibuja estrellas titilantes suaves y una luna creciente botánica para noche relajante
-  void _drawNightStarsAndMoon(Canvas canvas, Rect rect) {
+  void _drawNightStarsAndMoon(Canvas canvas, Rect rect, [double opacity = 1.0]) {
     // 1. Luna creciente suave en la esquina superior derecha
     final moonCenter = Offset(rect.width * 0.82, rect.height * 0.12);
     final moonGlow = Paint()
-      ..color = const Color(0xFFFFFCE8).withValues(alpha: 0.18)
+      ..color = const Color(0xFFFFFCE8).withValues(alpha: 0.18 * opacity)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
     canvas.drawCircle(moonCenter, 24, moonGlow);
 
@@ -315,7 +342,7 @@ class SanctuaryPondPainter extends CustomPainter {
       ..addOval(Rect.fromCircle(center: moonCenter.translate(-7, -4), radius: 15));
     final crescent = Path.combine(PathOperation.difference, moonPath, cutPath);
 
-    final moonPaint = Paint()..color = const Color(0xFFFFF9E0);
+    final moonPaint = Paint()..color = const Color(0xFFFFF9E0).withValues(alpha: opacity);
     canvas.drawPath(crescent, moonPaint);
 
     // 2. Doce estrellas titilantes en el cielo nocturno
@@ -329,7 +356,7 @@ class SanctuaryPondPainter extends CustomPainter {
     for (var i = 0; i < stars.length; i++) {
       final s = stars[i];
       final twinkle = (sin(animationValue * 2 * pi * (1.2 + i * 0.3) + i * 0.9) + 1.0) * 0.5;
-      final starAlpha = 0.20 + 0.65 * twinkle;
+      final starAlpha = (0.20 + 0.65 * twinkle) * opacity;
       final starRadius = 1.1 + 0.9 * twinkle;
       final starPaint = Paint()
         ..color = const Color(0xFFFFFDF2).withValues(alpha: starAlpha);
