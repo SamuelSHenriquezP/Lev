@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="14dp">
+
+    <!-- Fila superior: Ícono de Lev + Título + Gotas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/widget_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="Lev" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Lev • Santuario Zen"
+            android:textColor="#80E2BF"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_drops"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌱 Creciendo"
+            android:textColor="#A0B5AC"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Frase o estado actual de Lev -->
+    <TextView
+        android:id="@+id/widget_quote"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="10dp"
+        android:text="Respira hondo... estás a salvo aquí."
+        android:textColor="#F0F4F2"
+        android:textSize="12.5sp"
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Botones de rescate rápido táctil -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_btn_sos"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/widget_btn_sos"
+            android:gravity="center"
+            android:paddingVertical="7dp"
+            android:paddingHorizontal="4dp"
+            android:text="⚡ SOS Ansiedad"
+            android:textColor="#FFAB91"
+            android:textSize="11.5sp"
+            android:textStyle="bold" />
+
+        <Space
+            android:layout_width="8dp"
+            android:layout_height="1dp" />
+
+        <TextView
+            android:id="@+id/widget_btn_pause"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/widget_btn_pause"
+            android:gravity="center"
+            android:paddingVertical="7dp"
+            android:paddingHorizontal="4dp"
+            android:text="🌿 Pausa 60s"
+            android:textColor="#80E2BF"
+            android:textSize="11.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

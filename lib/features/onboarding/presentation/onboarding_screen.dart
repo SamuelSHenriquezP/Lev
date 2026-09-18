@@ -301,24 +301,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           const SizedBox(height: 16),
           // Tip interactivo
-          AnimatedOpacity(
-            opacity: _interactiveSeedTaps == 0 ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 300),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.touch_app_rounded, size: 14, color: LevTheme.levMatchaDark),
-                const SizedBox(width: 4),
-                Text(
-                  'Toca la semilla para sentir su latido',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.5,
-                    color: LevTheme.levMatchaDark,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.touch_app_rounded, size: 14, color: LevTheme.levMatchaDark),
+              const SizedBox(width: 4),
+              Text(
+                'Toca a Lev para su latido • ¡Triple toque para SOS Ansiedad!',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  color: LevTheme.levMatchaDark,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 24),
@@ -333,7 +329,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'Un espíritu botánico que habita en tu santuario personal. No te exige rachas ni perfeccionismo; florece al compás de tu propia calma.',
+            'Un espíritu botánico que habita en tu santuario personal. Acarícialo con calma o da un triple toque rápido si sientes ansiedad para recibir un rescate somático inmediato.',
             textAlign: TextAlign.center,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14.5,
@@ -454,9 +450,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
           const SizedBox(height: 12),
           _buildFeatureCard(
-            emoji: '🌸',
-            title: 'Santuario a tu Medida',
-            desc: 'Coloca libremente 19 decoraciones botánicas, escucha la lluvia zen y acaricia a Lev cuando lo necesites.',
+            emoji: '⚡🌱',
+            title: 'SOS Ansiedad y Widget de Inicio',
+            desc: 'Da un triple toque en Lev o usa el Widget en tu pantalla de inicio para activar un rescate somático inmediato cuando sientas ansiedad.',
             isDark: isDark,
           ),
         ],

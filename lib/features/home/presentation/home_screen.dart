@@ -20,6 +20,8 @@ import 'package:lev/features/sanctuary/presentation/widgets/sanctuary_growth_dia
 import 'package:lev/features/settings/presentation/widgets/privacy_offline_dialog.dart';
 import 'package:lev/features/profile/domain/user_profile.dart';
 import 'package:lev/features/profile/presentation/user_profile_sheet.dart';
+import 'package:lev/core/services/widget_sync_service.dart';
+import 'package:lev/features/habits/presentation/widgets/somatic_focus_minigames.dart';
 
 /// Pantalla Principal del Santuario:
 /// Lev como protagonista absoluto en el centro con transiciones somáticas orgánicas
@@ -38,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _isFingerActive = false;
   bool _hasCheckedGreeting = false;
   DateTime _lastPetTime = DateTime.fromMillisecondsSinceEpoch(0);
+  final List<DateTime> _levTapHistory = [];
 
   // Física continua de seguimiento suave con inercia acuática y muelle de retorno orgánico
   Offset _currentSmoothedOffset = Offset.zero;
@@ -123,6 +126,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _prayController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
+    );
+
+    // Escucha de acciones provenientes del Widget de Android
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetSyncService.init(
+        onAction: (action) {
+          if (!mounted) return;
+          if (action == 'sos_rescue') {
+            _triggerTripleTapAnxietyRescue();
+          } else if (action == 'habit_pause') {
+            ref.read(sanctuaryProvider.notifier).triggerAnxietyRescue(forcedTechniqueIndex: 1);
+          }
+        },
+      );
+    });
+  }
+
+  /// Triple toque anti-ansiedad o acción rápida desde el Widget:
+  /// Dispara biofeedback somático triple, cambia el diálogo/emoción de Lev y abre el recurso calmante.
+  Future<void> _triggerTripleTapAnxietyRescue() async {
+    // Triple biofeedback háptico distintivo
+    HapticsHelper.heavy();
+    await Future.delayed(const Duration(milliseconds: 90));
+    HapticsHelper.medium();
+    await Future.delayed(const Duration(milliseconds: 90));
+    HapticsHelper.light();
+
+    if (!mounted) return;
+    final controller = ref.read(sanctuaryProvider.notifier);
+    final rescue = await controller.triggerAnxietyRescue();
+    final technique = rescue['technique'] as int;
+    final title = rescue['title'] as String;
+    final dialogue = rescue['dialogue'] as String;
+
+    if (!mounted) return;
+
+    // Si la técnica seleccionada es el minijuego somático interactivo, abrir el modal
+    if (technique == 0) {
+      final minigameIdx = rescue['minigameIndex'] as int? ?? 0;
+      SomaticMinigameModal.open(context, initialGameIndex: minigameIdx);
+    }
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: LevTheme.levMatchaDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Color(0x33FFFFFF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.bolt_rounded,
+                color: Color(0xFFFFD54F),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SOS Ansiedad: $title',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    dialogue,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: const Color(0xFFE0F2E9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -526,8 +622,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     );
 
                     final dist = sqrt(dx * dx + dy * dy);
-                    if (dist < 92.0) {
+                    if (dist < 110.0) {
                       final now = DateTime.now();
+
+                      // Detección de triple toque rápido (< 650 ms) para rescate somático de ansiedad
+                      _levTapHistory.removeWhere((t) => now.difference(t).inMilliseconds > 650);
+                      _levTapHistory.add(now);
+
+                      if (_levTapHistory.length >= 3) {
+                        _levTapHistory.clear();
+                        _triggerTripleTapAnxietyRescue();
+                        return;
+                      }
+
                       if (now.difference(_lastPetTime).inMilliseconds > 400) {
                         _lastPetTime = now;
                         controller.petLev();

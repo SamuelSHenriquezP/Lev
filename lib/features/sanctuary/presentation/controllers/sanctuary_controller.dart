@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lev/core/audio/sanctuary_audio_service.dart';
+import 'package:lev/core/services/widget_sync_service.dart';
 import 'package:lev/core/storage/local_storage_service.dart';
 import 'package:lev/core/utils/haptics_helper.dart';
 import 'package:lev/features/profile/domain/user_profile.dart';
@@ -961,6 +962,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
   Future<void> setCareDrops(int drops) async {
     await LocalStorageService.saveCareDropsRaw(drops);
     state = state.copyWith(careDrops: drops);
+    await WidgetSyncService.syncWidgetData();
   }
 
   Future<void> setExperiencePoints(int xp) async {
@@ -991,6 +993,119 @@ class SanctuaryController extends Notifier<SanctuaryState> {
     await setExperiencePoints(minXp);
   }
 
+  /// Dispara un rescate somático inmediato para la ansiedad (por triple toque en Lev o desde el Widget)
+  Future<Map<String, dynamic>> triggerAnxietyRescue({int? forcedTechniqueIndex}) async {
+    final profile = LocalStorageService.getUserProfile();
+    final name = profile.name.trim().isEmpty ? 'amigo' : profile.name.trim();
+    final stage = profile.stage;
+
+    // Técnicas anti-ansiedad:
+    // 0: Minijuego somático interactivo (regulación táctil del sistema nervioso)
+    // 1: Respiración guiada 4-7-8 (activación parasimpática y bajada de pulsaciones)
+    // 2: Abrazo somático contenedor (hojas protectoras y abrazo sensorial)
+    // 3: Oración y anclaje de paz (versículo bíblico de reposo y confianza)
+    final technique = forcedTechniqueIndex ?? Random().nextInt(4);
+
+    String dialogue;
+    LevEmotion targetEmotion;
+    String techniqueTitle;
+
+    switch (technique) {
+      case 0:
+        targetEmotion = LevEmotion.peaceful;
+        techniqueTitle = 'Minijuego Somático';
+        switch (stage) {
+          case LevUserStage.child:
+            dialogue = '¡$name! Vamos a jugar con mis burbujas y arena para que tu corazón vuelva a sonreír.';
+            break;
+          case LevUserStage.teen:
+            dialogue = 'Pausa táctil, $name. Deja el ruido fuera y enfoca tus sentidos en este juego.';
+            break;
+          case LevUserStage.senior:
+            dialogue = 'Estimado/a $name, concentremos los sentidos en esta serena actividad manual.';
+            break;
+          case LevUserStage.adult:
+            dialogue = '$name, anclemos tu mente aquí y ahora. Siente la textura física y suelta la tensión.';
+            break;
+        }
+        break;
+
+      case 1:
+        targetEmotion = LevEmotion.breathing;
+        techniqueTitle = 'Respiración 4-7-8';
+        switch (stage) {
+          case LevUserStage.child:
+            dialogue = '¡Respira conmigo como una plantita, $name! Inhala suave... sostén... y suelta despacito.';
+            break;
+          case LevUserStage.teen:
+            dialogue = 'Freno de mano, $name. Inhala 4s, sostén 7s y exhala en 8s. Tu cuerpo se calma ya.';
+            break;
+          case LevUserStage.senior:
+            dialogue = 'Paz, $name. Respiremos pausadamente juntos: llene sus pulmones de sosiego y suelte todo afán.';
+            break;
+          case LevUserStage.adult:
+            dialogue = 'Inhala paz (4s), retén en quietud (7s), exhala la sobrecarga (8s). Estás a salvo, $name.';
+            break;
+        }
+        break;
+
+      case 2:
+        targetEmotion = LevEmotion.sheltered;
+        techniqueTitle = 'Abrazo Somático';
+        switch (stage) {
+          case LevUserStage.child:
+            dialogue = '¡Abracito de hojas, $name! Te envuelvo con cariño para que no sientas ningún miedo.';
+            break;
+          case LevUserStage.teen:
+            dialogue = 'Nadie te está juzgando aquí, $name. Te cubro con mis hojas; quédate a resguardo.';
+            break;
+          case LevUserStage.senior:
+            dialogue = 'Un refugio de sosiego, $name. Debajo de estas ramas hay reposo seguro y bendición.';
+            break;
+          case LevUserStage.adult:
+            dialogue = 'Cierra los ojos un segundo, $name. Siente este abrazo botánico contenedor: no tienes que sostenerlo todo.';
+            break;
+        }
+        break;
+
+      case 3:
+      default:
+        targetEmotion = LevEmotion.praying;
+        techniqueTitle = 'Paz y Confianza';
+        final verse = _biblicalVersesAndPrayers[Random().nextInt(_biblicalVersesAndPrayers.length)];
+        switch (stage) {
+          case LevUserStage.child:
+            dialogue = 'Dios te cuida mucho, $name. $verse';
+            break;
+          case LevUserStage.teen:
+            dialogue = 'Descansa tus pensamientos, $name: $verse';
+            break;
+          case LevUserStage.senior:
+            dialogue = 'En Sus manos estamos seguros, $name. $verse';
+            break;
+          case LevUserStage.adult:
+            dialogue = 'Echa tu carga en Él, $name. $verse';
+            break;
+        }
+        break;
+    }
+
+    state = state.copyWith(
+      emotion: targetEmotion,
+      dialogue: dialogue,
+    );
+
+    await WidgetSyncService.syncWidgetData(dialogue: dialogue);
+
+    return {
+      'technique': technique,
+      'title': techniqueTitle,
+      'dialogue': dialogue,
+      'emotion': targetEmotion,
+      'minigameIndex': Random().nextInt(8),
+    };
+  }
+
   /// Restablecer todo a cero absoluto (Semilla)
   Future<void> resetAllToZero() async {
     await LocalStorageService.saveCareDropsRaw(0);
@@ -1013,6 +1128,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       emotion: LevEmotion.peaceful,
       dialogue: 'Comenzamos desde cero. Como una pequeña semilla llena de vida y serenidad.',
     );
+    await WidgetSyncService.syncWidgetData();
   }
 }
 
