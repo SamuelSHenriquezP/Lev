@@ -401,10 +401,12 @@ class SanctuaryController extends Notifier<SanctuaryState> {
   /// Activar respiración guiada
   /// Actualizar perfil de usuario (nombre y edad) y adaptar comportamiento de Lev
   void updateUserProfile(UserProfile profile) {
+    final newDialogue = _getProfileUpdatedDialogue(profile);
     state = state.copyWith(
       userProfile: profile,
-      dialogue: _getProfileUpdatedDialogue(profile),
+      dialogue: newDialogue,
     );
+    WidgetSyncService.syncWidgetData(dialogue: newDialogue);
   }
 
   static String _getProfileUpdatedDialogue(UserProfile profile) {
