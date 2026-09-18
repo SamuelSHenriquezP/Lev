@@ -49,7 +49,7 @@ class LevAppWidgetProvider : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.widget_quote, quote)
 
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
                 PendingIntent.FLAG_UPDATE_CURRENT
@@ -57,27 +57,27 @@ class LevAppWidgetProvider : AppWidgetProvider() {
 
             // Click en el fondo general abre la app
             val mainIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
-            val mainPendingIntent = PendingIntent.getActivity(context, 0, mainIntent, flags)
+            val mainPendingIntent = PendingIntent.getActivity(context, 0, mainIntent, pendingIntentFlags)
             views.setOnClickPendingIntent(R.id.widget_root, mainPendingIntent)
 
             // Click en SOS Ansiedad abre la app con acción especial
             val sosIntent = Intent(context, MainActivity::class.java).apply {
                 action = ACTION_SOS_RESCUE
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("action_type", "sos_rescue")
             }
-            val sosPendingIntent = PendingIntent.getActivity(context, 1, sosIntent, flags)
+            val sosPendingIntent = PendingIntent.getActivity(context, 1, sosIntent, pendingIntentFlags)
             views.setOnClickPendingIntent(R.id.widget_btn_sos, sosPendingIntent)
 
             // Click en Pausa 60s abre la app con acción de pausa
             val pauseIntent = Intent(context, MainActivity::class.java).apply {
                 action = ACTION_HABIT_PAUSE
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("action_type", "habit_pause")
             }
-            val pausePendingIntent = PendingIntent.getActivity(context, 2, pauseIntent, flags)
+            val pausePendingIntent = PendingIntent.getActivity(context, 2, pauseIntent, pendingIntentFlags)
             views.setOnClickPendingIntent(R.id.widget_btn_pause, pausePendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
