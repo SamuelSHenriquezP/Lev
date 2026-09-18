@@ -438,7 +438,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           _buildFeatureCard(
             emoji: '💧',
             title: 'Pausas y Gotas de Rocío',
-            desc: 'Realiza micro-respiraciones y pausas somáticas de 60s para ganar Gotas de Cuidado y regar a Lev.',
+            desc: 'Realiza micro-respiraciones y pausas somáticas de 60s para ganar Gotas de Cuidado y hacer florecer tu santuario.',
             isDark: isDark,
           ),
           const SizedBox(height: 12),

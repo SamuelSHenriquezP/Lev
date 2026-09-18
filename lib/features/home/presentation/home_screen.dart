@@ -903,15 +903,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(width: 8),
                     _buildPillAction(
-                      icon: Icons.water_drop_rounded,
-                      label: 'Regar',
-                      accentColor: const Color(0xFF64B5F6),
-                      isActive: sanctuary.isWatering,
-                      sleepProgress: sleepVal,
-                      onTap: () => controller.waterLev(),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildPillAction(
                       icon: Icons.air_rounded,
                       label: 'Respirar',
                       isActive: sanctuary.emotion == LevEmotion.breathing,

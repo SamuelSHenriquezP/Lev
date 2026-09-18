@@ -264,7 +264,7 @@ class SanctuaryController extends Notifier<SanctuaryState> {
   static const List<String> _youngTreePetDialogues = [
     'Siente la firmeza de mi tronco... ya puedo darte sombra y calma.',
     'La gema en mi frente vibra con tu serenidad. Nada nos derriba.',
-    'Nuestras raíces son profundas. Gracias por regar este árbol cada día.',
+    'Nuestras raíces son profundas. Gracias por cuidar este árbol cada día.',
     'El viento pasa entre mis ramas fuertes pero no nos mueve.',
   ];
 
@@ -655,6 +655,8 @@ class SanctuaryController extends Notifier<SanctuaryState> {
       pendingEvolutionStage: justLeveledUp ? newStage : null,
     );
 
+    await WidgetSyncService.syncWidgetData(dialogue: celebrationQuote);
+
     Future.delayed(const Duration(seconds: 5), () {
       try {
         state = state.copyWith(
@@ -663,64 +665,6 @@ class SanctuaryController extends Notifier<SanctuaryState> {
         );
       } catch (_) {}
     });
-  }
-
-  /// Regar a Lev con una gota de rocío — Cuidado directo y vínculo botánico
-  Future<bool> waterLev() async {
-    if (state.careDrops < 1) {
-      await HapticsHelper.light();
-      state = state.copyWith(
-        dialogue: 'Necesitas al menos 1 gota de rocío para regarme. ¡Completa una pausa consciente!',
-        emotion: LevEmotion.curious,
-      );
-      return false;
-    }
-
-    final prevStage = state.growthStage;
-    await LocalStorageService.addCareDrops(-1);
-    await LocalStorageService.addExperiencePoints(15); // +15 XP por riego amoroso
-    final drops = LocalStorageService.getCareDrops();
-    final xp = LocalStorageService.getExperiencePoints();
-
-    await HapticsHelper.medium();
-    ref.read(sanctuaryAudioProvider.notifier).playWaterDropSfx();
-
-    final tempState = state.copyWith(careDrops: drops, experiencePoints: xp);
-    final newStage = tempState.growthStage;
-    final justLeveledUp = newStage.index > prevStage.index;
-
-    if (justLeveledUp) {
-      ref.read(sanctuaryAudioProvider.notifier).playChimeSfx();
-    }
-
-    final waterDialogues = [
-      '¡Qué fresca se siente el agua! Siento mis hojas llenas de luz.',
-      '¡Glup! Una gota de amor puro. Gracias por cuidar de mí.',
-      'Siento la savia corriendo... florecemos juntos a cada paso.',
-      'El rocío me llena de energía. ¡Mira cómo brillo!',
-    ];
-    final quote = waterDialogues[Random().nextInt(waterDialogues.length)];
-
-    state = state.copyWith(
-      careDrops: drops,
-      experiencePoints: xp,
-      emotion: LevEmotion.celebrating,
-      isWatering: true,
-      dialogue: quote,
-      justLeveledUp: justLeveledUp,
-      pendingEvolutionStage: justLeveledUp ? newStage : null,
-    );
-
-    Future.delayed(const Duration(milliseconds: 2400), () {
-      try {
-        state = state.copyWith(
-          isWatering: false,
-          emotion: LevEmotion.happy,
-        );
-      } catch (_) {}
-    });
-
-    return true;
   }
 
   /// Chequeo diario matutino / primera apertura del día

@@ -18,40 +18,29 @@ void main() {
     await LocalStorageService.prefs.clear();
   });
 
-  group('Watering, Daily Greeting & Evolution Suite', () {
-    test('waterLev requires at least 1 drop and awards +15 XP with isWatering state', () async {
+  group('Experience, Daily Greeting & Evolution Suite', () {
+    test('onHabitCompleted awards +25 XP, +1 drop and triggers evolution when threshold is reached', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(sanctuaryProvider.notifier);
 
-      // Con 0 gotas, el riego falla
       expect(container.read(sanctuaryProvider).careDrops, equals(0));
-      final wateredFail = await notifier.waterLev();
-      expect(wateredFail, isFalse);
       expect(container.read(sanctuaryProvider).experiencePoints, equals(0));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.seed));
 
-      // Otorgamos 2 gotas
-      await LocalStorageService.saveCareDropsRaw(2);
-      await LocalStorageService.saveExperiencePointsRaw(30);
-      container.invalidate(sanctuaryProvider);
-
-      expect(container.read(sanctuaryProvider).careDrops, equals(2));
-      expect(container.read(sanctuaryProvider).experiencePoints, equals(30));
-
-      // Regamos a Lev (30 XP -> 45 XP, sigue en etapa Semilla)
-      final wateredSuccess = await notifier.waterLev();
-      expect(wateredSuccess, isTrue);
+      // Completar primer hábito: 0 XP -> 25 XP, +1 gota (sigue en Semilla)
+      await notifier.onHabitCompleted('habit_01');
       expect(container.read(sanctuaryProvider).careDrops, equals(1));
-      expect(container.read(sanctuaryProvider).experiencePoints, equals(45));
-      expect(container.read(sanctuaryProvider).isWatering, isTrue);
+      expect(container.read(sanctuaryProvider).experiencePoints, equals(25));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.seed));
       expect(container.read(sanctuaryProvider).pendingEvolutionStage, isNull);
 
-      // Regamos una vez más (45 XP -> 60 XP, cruza el umbral a Sprout >= 50 XP)
-      final wateredEvolve = await notifier.waterLev();
-      expect(wateredEvolve, isTrue);
-      expect(container.read(sanctuaryProvider).careDrops, equals(0));
-      expect(container.read(sanctuaryProvider).experiencePoints, equals(60));
+      // Completar segundo hábito: 25 XP -> 50 XP, +1 gota (cruza el umbral de Sprout >= 50 XP)
+      await notifier.onHabitCompleted('habit_02');
+      expect(container.read(sanctuaryProvider).careDrops, equals(2));
+      expect(container.read(sanctuaryProvider).experiencePoints, equals(50));
+      expect(container.read(sanctuaryProvider).growthStage, equals(LevGrowthStage.sprout));
       expect(container.read(sanctuaryProvider).pendingEvolutionStage, equals(LevGrowthStage.sprout));
 
       // Limpiamos la evolución tras la ceremonia
