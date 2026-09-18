@@ -7,13 +7,25 @@ import 'package:lev/features/sanctuary/domain/sanctuary_state.dart';
 
 // ============================================================================
 // 1. GUÍA DE RESPIRACIÓN SOMÁTICA — Pensada para realizar con ojos cerrados
+enum BreathPattern {
+  physiologicalSigh, // Inhala 2s + Inhala extra 1s + Exhala largo 5s = 8s
+  boxBreathing,      // Inhala 4s + Retén 4s + Exhala 4s + Pausa vacío 4s = 16s
+  fourSevenEight,    // Inhala 4s + Retén 7s + Exhala 8s = 19s
+  coherent,          // Inhala 5s + Exhala 5s = 10s
+  standardCalm,      // Inhala 4s + Retén 2s + Exhala 5s = 11s
+}
+
+// ============================================================================
+// 1. GUÍA DE RESPIRACIÓN SOMÁTICA — Calibración precisa y tiempos realistas
 // ============================================================================
 class BreathGuideWidget extends StatefulWidget {
+  final BreathPattern pattern;
   final bool isPhysiologicalSigh;
   final ValueChanged<bool>? onCycleComplete;
 
   const BreathGuideWidget({
     super.key,
+    this.pattern = BreathPattern.standardCalm,
     this.isPhysiologicalSigh = false,
     this.onCycleComplete,
   });
@@ -26,6 +38,27 @@ class _BreathGuideWidgetState extends State<BreathGuideWidget>
     with TickerProviderStateMixin {
   late final AnimationController _breathController;
   late final AnimationController _levController;
+  String _lastPhase = '';
+
+  BreathPattern get _effectivePattern {
+    if (widget.isPhysiologicalSigh) return BreathPattern.physiologicalSigh;
+    return widget.pattern;
+  }
+
+  int get _patternDurationMs {
+    switch (_effectivePattern) {
+      case BreathPattern.physiologicalSigh:
+        return 8000; // 2s + 1s + 5s
+      case BreathPattern.boxBreathing:
+        return 16000; // 4s + 4s + 4s + 4s
+      case BreathPattern.fourSevenEight:
+        return 19000; // 4s + 7s + 8s
+      case BreathPattern.coherent:
+        return 10000; // 5s + 5s
+      case BreathPattern.standardCalm:
+        return 11000; // 4s + 2s + 5s
+    }
+  }
 
   @override
   void initState() {
@@ -37,7 +70,7 @@ class _BreathGuideWidgetState extends State<BreathGuideWidget>
 
     _breathController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 8000),
+      duration: Duration(milliseconds: _patternDurationMs),
     )..addStatusListener(_onBreathStatus)..repeat();
   }
 
@@ -63,22 +96,130 @@ class _BreathGuideWidgetState extends State<BreathGuideWidget>
       animation: Listenable.merge([_breathController, _levController]),
       builder: (context, child) {
         final t = _breathController.value;
+        final totalSec = _patternDurationMs / 1000.0;
+        final currentSec = t * totalSec;
+
         String phase;
+        int remainingSecInPhase;
         Color phaseColor;
         double levScale;
 
-        if (t < 0.45) {
-          phase = widget.isPhysiologicalSigh && t > 0.30 ? 'Inhala más...' : 'Inhala...';
-          phaseColor = const Color(0xFF6A994E);
-          levScale = 0.7 + (t / 0.45) * 0.3;
-        } else if (t < 0.55) {
-          phase = 'Sostén...';
-          phaseColor = const Color(0xFFB7A648);
-          levScale = 1.0;
-        } else {
-          phase = 'Exhala largo...';
-          phaseColor = const Color(0xFF5C85A0);
-          levScale = 1.0 - ((t - 0.55) / 0.45) * 0.3;
+        switch (_effectivePattern) {
+          case BreathPattern.physiologicalSigh:
+            // 0s - 2s: Inhala (2s)
+            // 2s - 3s: Inhala extra (1s)
+            // 3s - 8s: Exhala largo (5s)
+            if (currentSec < 2.0) {
+              phase = 'Inhala profundo...';
+              remainingSecInPhase = (2.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF6A994E);
+              levScale = 0.70 + (currentSec / 2.0) * 0.22;
+            } else if (currentSec < 3.0) {
+              phase = 'Inhala un poco más...';
+              remainingSecInPhase = (3.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF80B918);
+              levScale = 0.92 + ((currentSec - 2.0) / 1.0) * 0.08;
+            } else {
+              phase = 'Exhala largo y suelta...';
+              remainingSecInPhase = (8.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF5C85A0);
+              levScale = 1.0 - ((currentSec - 3.0) / 5.0) * 0.30;
+            }
+            break;
+
+          case BreathPattern.boxBreathing:
+            // 0s - 4s: Inhala (4s)
+            // 4s - 8s: Sostén lleno (4s)
+            // 8s - 12s: Exhala (4s)
+            // 12s - 16s: Pausa vacío (4s)
+            if (currentSec < 4.0) {
+              phase = 'Inhala...';
+              remainingSecInPhase = (4.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF6A994E);
+              levScale = 0.70 + (currentSec / 4.0) * 0.30;
+            } else if (currentSec < 8.0) {
+              phase = 'Sostén lleno...';
+              remainingSecInPhase = (8.0 - currentSec).ceil();
+              phaseColor = const Color(0xFFD4A373);
+              levScale = 1.0;
+            } else if (currentSec < 12.0) {
+              phase = 'Exhala suave...';
+              remainingSecInPhase = (12.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF5C85A0);
+              levScale = 1.0 - ((currentSec - 8.0) / 4.0) * 0.30;
+            } else {
+              phase = 'Pausa en quietud...';
+              remainingSecInPhase = (16.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF9E8FB2);
+              levScale = 0.70;
+            }
+            break;
+
+          case BreathPattern.fourSevenEight:
+            // 0s - 4s: Inhala (4s)
+            // 4s - 11s: Sostén (7s)
+            // 11s - 19s: Exhala en 8s
+            if (currentSec < 4.0) {
+              phase = 'Inhala por la nariz...';
+              remainingSecInPhase = (4.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF6A994E);
+              levScale = 0.70 + (currentSec / 4.0) * 0.30;
+            } else if (currentSec < 11.0) {
+              phase = 'Retén en calma...';
+              remainingSecInPhase = (11.0 - currentSec).ceil();
+              phaseColor = const Color(0xFFD4A373);
+              levScale = 1.0;
+            } else {
+              phase = 'Exhala por la boca...';
+              remainingSecInPhase = (19.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF5C85A0);
+              levScale = 1.0 - ((currentSec - 11.0) / 8.0) * 0.30;
+            }
+            break;
+
+          case BreathPattern.coherent:
+            // 0s - 5s: Inhala
+            // 5s - 10s: Exhala
+            if (currentSec < 5.0) {
+              phase = 'Inhala continuo...';
+              remainingSecInPhase = (5.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF6A994E);
+              levScale = 0.70 + (currentSec / 5.0) * 0.30;
+            } else {
+              phase = 'Exhala sereno...';
+              remainingSecInPhase = (10.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF5C85A0);
+              levScale = 1.0 - ((currentSec - 5.0) / 5.0) * 0.30;
+            }
+            break;
+
+          case BreathPattern.standardCalm:
+            // 0s - 4s: Inhala
+            // 4s - 6s: Sostén
+            // 6s - 11s: Exhala
+            if (currentSec < 4.0) {
+              phase = 'Inhala paz...';
+              remainingSecInPhase = (4.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF6A994E);
+              levScale = 0.70 + (currentSec / 4.0) * 0.30;
+            } else if (currentSec < 6.0) {
+              phase = 'Sostén...';
+              remainingSecInPhase = (6.0 - currentSec).ceil();
+              phaseColor = const Color(0xFFB7A648);
+              levScale = 1.0;
+            } else {
+              phase = 'Exhala tensión...';
+              remainingSecInPhase = (11.0 - currentSec).ceil();
+              phaseColor = const Color(0xFF5C85A0);
+              levScale = 1.0 - ((currentSec - 6.0) / 5.0) * 0.30;
+            }
+            break;
+        }
+
+        // Háptica al cambiar de fase
+        if (phase != _lastPhase) {
+          _lastPhase = phase;
+          HapticsHelper.selection();
         }
 
         return Column(
@@ -97,28 +238,49 @@ class _BreathGuideWidgetState extends State<BreathGuideWidget>
                     emotion: LevEmotion.breathing,
                     isPetting: false,
                     sizeScale: 0.85,
-                    breathingProgress: levScale - 0.7,
+                    breathingProgress: (levScale - 0.70) / 0.30,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Fase actual
+            // Fase actual y segundero realista
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               decoration: BoxDecoration(
                 color: phaseColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: phaseColor.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: phaseColor.withValues(alpha: 0.35), width: 1.5),
               ),
-              child: Text(
-                phase,
-                style: GoogleFonts.quicksand(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: phaseColor,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    phase,
+                    style: GoogleFonts.quicksand(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: phaseColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: phaseColor.withValues(alpha: 0.20),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${remainingSecInPhase}s',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: phaseColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),

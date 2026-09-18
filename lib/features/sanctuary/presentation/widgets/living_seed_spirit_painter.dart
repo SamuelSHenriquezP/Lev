@@ -252,22 +252,26 @@ class LivingSeedSpiritPainter extends CustomPainter {
     double jumpSway = 0.0;
 
     if (isJoyJumping) {
-      final p = jumpProgress > 0.0 ? jumpProgress : (t % 1.0);
+      final p = (jumpProgress > 0.0 ? jumpProgress : (t % 1.0)).clamp(0.0, 1.0);
       final phi = p * 2 * pi;
-      final jumpSin = sin(phi);
+      final smoothEnvelope = (1.0 - cos(phi)) * 0.5;
 
-      if (jumpSin > 0) {
-        // Fase de impulso y elevación elástica según la masa de la etapa
-        jumpFloatY = -stageJumpHeight * jumpSin;
-        jumpScaleY = stageJumpSquash * jumpSin;
-        jumpScaleX = -(stageJumpSquash * 0.55) * jumpSin;
+      if (p < 0.55) {
+        // Fase de impulso y vuelo ágil
+        final flightPhase = (p / 0.55) * pi;
+        final s = sin(flightPhase);
+        jumpFloatY = -stageJumpHeight * s;
+        jumpScaleY = stageJumpSquash * (s * 0.85);
+        jumpScaleX = -(stageJumpSquash * 0.45) * s;
       } else {
-        // Fase de amortiguación elástica de aterrizaje
-        jumpFloatY = -(stageJumpHeight * 0.16) * jumpSin;
-        jumpScaleY = (stageJumpSquash * 0.75) * jumpSin;
-        jumpScaleX = -(stageJumpSquash * 0.45) * jumpSin;
+        // Fase de aterrizaje suave y retorno continuo a cero
+        final landPhase = ((p - 0.55) / 0.45) * pi;
+        final s = sin(landPhase);
+        jumpFloatY = (stageJumpHeight * 0.10) * s;
+        jumpScaleY = -(stageJumpSquash * 0.35) * s;
+        jumpScaleX = (stageJumpSquash * 0.25) * s;
       }
-      jumpSway = sin(phi * 2.0) * 0.05;
+      jumpSway = sin(phi * 2.0) * 0.04 * smoothEnvelope;
     }
 
     // --- 5. REACTIVIDAD TÁCTIL Y CARICIAS ADAPTADAS A CADA ETAPA ---

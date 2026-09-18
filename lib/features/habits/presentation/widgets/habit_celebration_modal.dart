@@ -38,7 +38,7 @@ class HabitCelebrationModalState extends ConsumerState<HabitCelebrationModal>
     super.initState();
     _jumpController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1750),
     )..repeat();
 
     _glowController = AnimationController(
@@ -140,49 +140,64 @@ class HabitCelebrationModalState extends ConsumerState<HabitCelebrationModal>
                             ),
                             const SizedBox(height: 12),
 
-                      // Medallón orgánico de Lev en salto de alegría
+                      // Medallón orgánico de Lev en salto de alegría sin recortes
                       AnimatedBuilder(
                         animation: Listenable.merge([_jumpController, _glowController]),
                         builder: (context, child) {
                           final glowVal = _glowController.value;
-                          return Container(
-                            width: 170,
-                            height: 170,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  const Color(0xFFFFF8E1),
-                                  const Color(0xFFFFF3D6).withValues(alpha: 0.8),
-                                  const Color(0xFFE8F5E9).withValues(alpha: 0.3),
-                                  Colors.transparent,
-                                ],
-                                stops: const [0.35, 0.65, 0.85, 1.0],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFD54F).withValues(alpha: 0.30 + glowVal * 0.20),
-                                  blurRadius: 32 + glowVal * 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Center(
-                              child: RepaintBoundary(
-                                child: CustomPaint(
-                                  size: const Size(170, 170),
-                                  painter: LivingSeedSpiritPainter(
-                                    animationValue: _jumpController.value,
-                                    emotion: LevEmotion.joyJump,
-                                    isPetting: true,
-                                    sizeScale: 0.88,
-                                    jumpProgress: _jumpController.value,
-                                    happyProgress: 1.0,
-                                    celebrateProgress: 1.0,
+                          return SizedBox(
+                            width: 180,
+                            height: 180,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Halo de luz y fondo místico
+                                Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        const Color(0xFFFFF8E1),
+                                        const Color(0xFFFFF3D6).withValues(alpha: 0.8),
+                                        const Color(0xFFE8F5E9).withValues(alpha: 0.3),
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.35, 0.65, 0.85, 1.0],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFFD54F).withValues(alpha: 0.30 + glowVal * 0.20),
+                                        blurRadius: 32 + glowVal * 12,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
+                                // Sprite de Lev con espacio vertical holgado para el salto
+                                Positioned(
+                                  top: -8,
+                                  bottom: -8,
+                                  left: 0,
+                                  right: 0,
+                                  child: RepaintBoundary(
+                                    child: CustomPaint(
+                                      size: const Size(180, 196),
+                                      painter: LivingSeedSpiritPainter(
+                                        animationValue: _jumpController.value,
+                                        emotion: LevEmotion.joyJump,
+                                        isPetting: true,
+                                        sizeScale: 0.82,
+                                        jumpProgress: _jumpController.value,
+                                        happyProgress: 1.0,
+                                        celebrateProgress: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },

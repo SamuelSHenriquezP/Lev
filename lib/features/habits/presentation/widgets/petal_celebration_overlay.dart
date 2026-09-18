@@ -26,7 +26,7 @@ class _PetalCelebrationOverlayState extends State<PetalCelebrationOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 4500),
     )..addListener(() {
         if (mounted) setState(() {});
       });
@@ -39,19 +39,19 @@ class _PetalCelebrationOverlayState extends State<PetalCelebrationOverlay>
 
   void _spawnPetals() {
     _petals.clear();
-    for (int i = 0; i < 28; i++) {
+    for (int i = 0; i < 32; i++) {
       _petals.add(
         _PetalParticle(
           x: _rand.nextDouble(),
-          y: -0.2 - (_rand.nextDouble() * 0.4),
-          speedY: 0.28 + (_rand.nextDouble() * 0.25),
-          speedX: (_rand.nextDouble() - 0.5) * 0.15,
+          y: -0.15 - (_rand.nextDouble() * 0.4),
+          speedY: 0.22 + (_rand.nextDouble() * 0.22),
+          speedX: (_rand.nextDouble() - 0.5) * 0.16,
           rotation: _rand.nextDouble() * 2 * pi,
-          rotationSpeed: (_rand.nextDouble() - 0.5) * 4,
-          size: 10 + (_rand.nextDouble() * 10),
+          rotationSpeed: (_rand.nextDouble() - 0.5) * 3,
+          size: 11 + (_rand.nextDouble() * 11),
           color: _rand.nextBool()
-              ? const Color(0xFFF9D0C4) // Melocotón
-              : const Color(0xFFE2D9F3), // Lavanda
+              ? const Color(0xFFF9D0C4) // Melocotón suave
+              : const Color(0xFFE2D9F3), // Lavanda zen
         ),
       );
     }
@@ -77,7 +77,7 @@ class _PetalCelebrationOverlayState extends State<PetalCelebrationOverlay>
     return Stack(
       children: [
         widget.child,
-        if (_controller.isAnimating)
+        if (_controller.value > 0.0 && _controller.value < 1.0)
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
@@ -128,15 +128,15 @@ class _PetalsPainter extends CustomPainter {
       final currentX = (p.x + (sin(progress * 4 + p.rotation) * p.speedX)) * size.width;
       final currentRot = p.rotation + (p.rotationSpeed * progress);
 
-      // Desvanecer cerca del final
-      final alpha = (1.0 - (progress * 0.8)).clamp(0.0, 1.0);
+      // Desvanecer suavemente hacia cero en el último tercio
+      final alpha = ((1.0 - progress) / 0.35).clamp(0.0, 1.0);
 
       canvas.save();
       canvas.translate(currentX, currentY);
       canvas.rotate(currentRot);
 
       final paint = Paint()
-        ..color = p.color.withValues(alpha: alpha * 0.85)
+        ..color = p.color.withValues(alpha: alpha * 0.90)
         ..style = PaintingStyle.fill;
 
       // Dibujar pétalo orgánico ovalado

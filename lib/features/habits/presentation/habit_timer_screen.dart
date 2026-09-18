@@ -503,8 +503,22 @@ class _HabitTimerScreenState extends ConsumerState<HabitTimerScreen>
 
   Widget _buildCompanionVisual() {
     if (widget.habit.interactionType == HabitInteractionType.breathGuided) {
+      final id = widget.habit.id;
+      final title = widget.habit.title.toLowerCase();
+
+      BreathPattern pattern = BreathPattern.standardCalm;
+      if (id == 'anx_01' || id == 'anx_06' || title.contains('suspiro')) {
+        pattern = BreathPattern.physiologicalSigh;
+      } else if (id == 'anx_08' || title.contains('caja') || title.contains('box') || title.contains('cuadrada')) {
+        pattern = BreathPattern.boxBreathing;
+      } else if (id == 'anx_04' || title.contains('4-7-8') || title.contains('fruncidos')) {
+        pattern = BreathPattern.fourSevenEight;
+      } else if (title.contains('coherencia') || title.contains('corazón')) {
+        pattern = BreathPattern.coherent;
+      }
+
       return BreathGuideWidget(
-        isPhysiologicalSigh: widget.habit.id == 'anx_01',
+        pattern: pattern,
       );
     }
 
